@@ -1060,6 +1060,24 @@
             }
         },
         { "id": 30001, "rawName": "MAV_CMD_PAYLOAD_PREPARE_DEPLOY", "friendlyName": "Payload prepare deploy" },
-        { "id": 30002, "rawName": "MAV_CMD_PAYLOAD_CONTROL_DEPLOY", "friendlyName": "Payload control deploy" }
+        { "id": 30002, "rawName": "MAV_CMD_PAYLOAD_CONTROL_DEPLOY", "friendlyName": "Payload control deploy" },
+
+        {
+            "id": 31010,
+            "rawName": "MAV_CMD_USER_1",
+            "friendlyName": "Open / close charging station",
+            "description": "Open or close the charging station",
+            "param1": {
+                "label":            "Charging station ID",
+                "default":          0,
+                "decimalPlaces":    0
+            },
+            "param2": {
+                "label":            "Action",
+                "enumStrings":      "Open,Close",
+                "enumValues":       "0,1"
+            }
+        }
+
     ]
 }
