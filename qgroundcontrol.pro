@@ -1045,6 +1045,14 @@ PX4FirmwarePluginFactory {
     SOURCES   += src/FirmwarePlugin/PX4/PX4FirmwarePluginFactory.cc
 }
 
+# Charging station plugin
+
+HEADERS += src/FirmwarePlugin/ChargingStation/ChargingStationFirmwarePlugin.h
+SOURCES += src/FirmwarePlugin/ChargingStation/ChargingStationFirmwarePlugin.cc
+
+HEADERS += src/FirmwarePlugin/ChargingStation/ChargingStationFirmwarePluginFactory.h
+SOURCES += src/FirmwarePlugin/ChargingStation/ChargingStationFirmwarePluginFactory.cc
+
 # Fact System code
 
 INCLUDEPATH += \
