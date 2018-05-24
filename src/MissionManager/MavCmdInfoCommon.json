@@ -1065,7 +1065,7 @@
         {
             "id": 31010,
             "rawName": "MAV_CMD_USER_1",
-            "friendlyName": "Open / close charging station",
+            "friendlyName": "Charging station",
             "description": "Open or close the charging station",
             "param1": {
                 "label":            "Charging station ID",
