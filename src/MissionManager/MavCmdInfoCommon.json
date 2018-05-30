@@ -1065,8 +1065,9 @@
         {
             "id": 31010,
             "rawName": "MAV_CMD_USER_1",
-            "friendlyName": "Charging station",
-            "description": "Open or close the charging station",
+            "friendlyName": "CS action",
+            "category": "Charging station",
+            "description": "Open or close charging station",
             "param1": {
                 "label":            "Charging station ID",
                 "default":          0,
@@ -1077,7 +1078,19 @@
                 "enumStrings":      "Open,Close",
                 "enumValues":       "0,1"
             }
+        },
+        {
+            "id": 31000,
+            "rawName": "MAV_CMD_WAYPOINT_USER_1",
+            "friendlyName": "Land to CS",
+            "category": "Charging station",
+            "specifiesCoordinate":  true,
+            "description": "Land to charging station",
+            "param3": {
+                "label":            "Charging station ID",
+                "default":          0,
+                "decimalPlaces":    0
+            }
         }
-
     ]
 }

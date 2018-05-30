@@ -300,7 +300,7 @@ QList<MAV_CMD> PX4FirmwarePlugin::supportedMissionCommands(void)
          << MAV_CMD_IMAGE_START_CAPTURE << MAV_CMD_IMAGE_STOP_CAPTURE << MAV_CMD_VIDEO_START_CAPTURE << MAV_CMD_VIDEO_STOP_CAPTURE
          << MAV_CMD_NAV_DELAY
          << MAV_CMD_CONDITION_YAW
-         << MAV_CMD_USER_1;
+         << MAV_CMD_USER_1 << MAV_CMD_WAYPOINT_USER_1;
 
     return list;
 }
