@@ -406,6 +406,7 @@ public:
     Q_PROPERTY(int                  rcRSSI                  READ rcRSSI                                                 NOTIFY rcRSSIChanged)
     Q_PROPERTY(bool                 px4Firmware             READ px4Firmware                                            NOTIFY firmwareTypeChanged)
     Q_PROPERTY(bool                 apmFirmware             READ apmFirmware                                            NOTIFY firmwareTypeChanged)
+    Q_PROPERTY(bool                 chargingStation         READ chargingStation                                        CONSTANT)
     Q_PROPERTY(bool                 soloFirmware            READ soloFirmware           WRITE setSoloFirmware           NOTIFY soloFirmwareChanged)
     Q_PROPERTY(bool                 genericFirmware         READ genericFirmware                                        CONSTANT)
     Q_PROPERTY(bool                 connectionLost          READ connectionLost                                         NOTIFY connectionLostChanged)
@@ -716,6 +717,7 @@ public:
     int             rcRSSI                  () { return _rcRSSI; }
     bool            px4Firmware             () const { return _firmwareType == MAV_AUTOPILOT_PX4; }
     bool            apmFirmware             () const { return _firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA; }
+    bool            chargingStation         () const { return _vehicleType == MAV_TYPE_CHARGING_STATION; }
     bool            genericFirmware         () const { return !px4Firmware() && !apmFirmware(); }
     bool            connectionLost          () const { return _connectionLost; }
     bool            connectionLostEnabled   () const { return _connectionLostEnabled; }

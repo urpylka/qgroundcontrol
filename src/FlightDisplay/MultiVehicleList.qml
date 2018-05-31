@@ -130,6 +130,7 @@ Item {
                         QGCLabel {
                             anchors.horizontalCenter:   parent.horizontalCenter
                             text:                       _vehicle.armed ? qsTr("Armed") : qsTr("Disarmed")
+                            visible:                    !_vehicle.chargingStation
                             color:                      _textColor
                         }
                     }
@@ -150,7 +151,7 @@ Item {
 
                     QGCButton {
                         text:       "Arm"
-                        visible:    !_vehicle.armed
+                        visible:    !_vehicle.armed && !_vehicle.chargingStation
                         onClicked:  _vehicle.armed = true
                     }
 
