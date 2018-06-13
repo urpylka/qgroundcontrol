@@ -1086,6 +1086,12 @@
             "category": "Charging station",
             "specifiesCoordinate":  true,
             "description": "Land to charging station",
+            "param2": {
+                "label":            "Precision land",
+                "default":          2,
+                "enumStrings":      "None,Opportunistic,Required",
+                "enumValues":       "0,1,2"
+            },
             "param3": {
                 "label":            "Charging station ID",
                 "default":          0,
