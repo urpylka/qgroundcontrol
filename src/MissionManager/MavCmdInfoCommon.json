@@ -156,6 +156,12 @@
                 "default":          25.0,
                 "decimalPlaces":    2
             },
+            "param2": {
+                "label":            "Precision land",
+                "default":          2,
+                "enumStrings":      "None,Opportunistic,Required",
+                "enumValues":       "0,1,2"
+            },
             "param4": {
                 "label":            "Heading",
                 "units":            "radians",
