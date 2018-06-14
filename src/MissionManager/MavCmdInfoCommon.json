@@ -1102,6 +1102,13 @@
                 "label":            "Charging station ID",
                 "default":          0,
                 "decimalPlaces":    0
+            },
+            "param4": {
+                "label":            "Heading",
+                "units":            "radians",
+                "nanUnchanged":     true,
+                "default":          null,
+                "decimalPlaces":    2
             }
         }
     ]
