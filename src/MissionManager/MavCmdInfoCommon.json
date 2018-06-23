@@ -1076,7 +1076,7 @@
             "description": "Open or close charging station",
             "param1": {
                 "label":            "Charging station ID",
-                "default":          0,
+                "default":          17,
                 "decimalPlaces":    0
             },
             "param2": {
@@ -1100,7 +1100,7 @@
             },
             "param3": {
                 "label":            "Charging station ID",
-                "default":          0,
+                "default":          17,
                 "decimalPlaces":    0
             },
             "param4": {
