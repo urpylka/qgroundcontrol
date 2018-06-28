@@ -158,7 +158,7 @@
             },
             "param2": {
                 "label":            "Precision land",
-                "default":          2,
+                "default":          0,
                 "enumStrings":      "None,Opportunistic,Required",
                 "enumValues":       "0,1,2"
             },
