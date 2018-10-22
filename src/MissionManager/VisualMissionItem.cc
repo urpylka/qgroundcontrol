@@ -32,6 +32,7 @@ VisualMissionItem::VisualMissionItem(Vehicle* vehicle, bool flyView, QObject* pa
     , _altDifference            (0.0)
     , _altPercent               (0.0)
     , _terrainPercent           (qQNaN())
+    , _terrainCollision         (false)
     , _azimuth                  (0.0)
     , _distance                 (0.0)
     , _missionGimbalYaw         (qQNaN())
@@ -52,6 +53,7 @@ VisualMissionItem::VisualMissionItem(const VisualMissionItem& other, bool flyVie
     , _altDifference            (0.0)
     , _altPercent               (0.0)
     , _terrainPercent           (qQNaN())
+    , _terrainCollision         (false)
     , _azimuth                  (0.0)
     , _distance                 (0.0)
 {
@@ -133,6 +135,14 @@ void VisualMissionItem::setTerrainPercent(double terrainPercent)
     }
 }
 
+void VisualMissionItem::setTerrainCollision(bool terrainCollision)
+{
+    if (terrainCollision != _terrainCollision) {
+        _terrainCollision = terrainCollision;
+        emit terrainCollisionChanged(terrainCollision);
+    }
+}
+
 void VisualMissionItem::setAzimuth(double azimuth)
 {
     if (!qFuzzyCompare(_azimuth, azimuth)) {
@@ -163,6 +173,10 @@ void VisualMissionItem::setMissionVehicleYaw(double vehicleYaw)
 
 void VisualMissionItem::_updateTerrainAltitude(void)
 {
+    if (coordinate().latitude() == 0 && coordinate().longitude() == 0) {
+        // This is an intermediate state we don't react to
+        return;
+    }
     if (!_flyView && coordinate().isValid()) {
         // We use a timer so that any additional requests before the timer fires result in only a single request
         _updateTerrainTimer.start();
@@ -176,7 +190,7 @@ void VisualMissionItem::_reallyUpdateTerrainAltitude(void)
         _lastLatTerrainQuery = coord.latitude();
         _lastLonTerrainQuery = coord.longitude();
         TerrainAtCoordinateQuery* terrain = new TerrainAtCoordinateQuery(this);
-        connect(terrain, &TerrainAtCoordinateQuery::terrainData, this, &VisualMissionItem::_terrainDataReceived);
+        connect(terrain, &TerrainAtCoordinateQuery::terrainDataReceived, this, &VisualMissionItem::_terrainDataReceived);
         QList<QGeoCoordinate> rgCoord;
         rgCoord.append(coordinate());
         terrain->requestData(rgCoord);
@@ -185,9 +199,7 @@ void VisualMissionItem::_reallyUpdateTerrainAltitude(void)
 
 void VisualMissionItem::_terrainDataReceived(bool success, QList<double> heights)
 {
-    if (success) {
-        _terrainAltitude = heights[0];
-        emit terrainAltitudeChanged(_terrainAltitude);
-        sender()->deleteLater();
-    }
+    _terrainAltitude = success ? heights[0] : qQNaN();
+    emit terrainAltitudeChanged(_terrainAltitude);
+    sender()->deleteLater();
 }

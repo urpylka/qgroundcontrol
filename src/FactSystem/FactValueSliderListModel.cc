@@ -27,9 +27,10 @@ FactValueSliderListModel::FactValueSliderListModel(Fact& fact, QObject* parent)
     , _cPrevValues              (0)
     , _cNextValues              (0)
     , _initialValue             (0)
-    , _initialValueRounded      (0)
+    , _initialValueAtPrecision  (0)
     , _increment                (0)
 {
+    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
 FactValueSliderListModel::~FactValueSliderListModel()
@@ -38,26 +39,30 @@ FactValueSliderListModel::~FactValueSliderListModel()
 
 int FactValueSliderListModel::resetInitialValue(void)
 {
-    // Remove any old rows
-    beginRemoveRows(QModelIndex(), 0, _cValues - 1);
-    _cValues = 0;
-    endRemoveRows();
+    if (_cValues > 0) {
+        // Remove any old rows
+        beginRemoveRows(QModelIndex(), 0, _cValues - 1);
+        _cValues = 0;
+        endRemoveRows();
+    }
 
     _initialValue = _fact.cookedValue().toDouble();
-    _initialValueRounded = qRound(_initialValue);
+    _initialValueAtPrecision = _valueAtPrecision(_initialValue);
     if (qRound(_fact.rawIncrement()) == _fact.rawIncrement()) {
         _increment = qRound(_fact.cookedIncrement());
     } else {
         _increment = _fact.cookedIncrement();
     }
-    _cPrevValues = qMin((_initialValue - _fact.cookedMin().toDouble()), 1000.0) / _increment;
-    _cNextValues = qMin((_fact.cookedMax().toDouble() - _initialValue), 1000.0) / _increment;
+    _cPrevValues = qMin((_initialValue - _fact.cookedMin().toDouble())  / _increment, 100.0);
+    _cNextValues = qMin((_fact.cookedMax().toDouble() - _initialValue)  / _increment, 100.0);
     _initialValueIndex = _cPrevValues;
 
     int totalValueCount = _cPrevValues + 1 + _cNextValues;
     beginInsertRows(QModelIndex(), 0, totalValueCount - 1);
     _cValues = totalValueCount;
     endInsertRows();
+
+    emit initialValueAtPrecisionChanged();
 
     return _initialValueIndex;
 }
@@ -88,12 +93,9 @@ QVariant FactValueSliderListModel::data(const QModelIndex &index, int role) cons
         if (cIncrementCount == 0) {
             value = _initialValue;
         } else {
-            value = _initialValueRounded + (cIncrementCount * _increment);
+            value = initialValueAtPrecision() + (cIncrementCount * _increment);
         }
-        double precision = qPow(10, _fact.decimalPlaces());
-        double atPrecision = qRound(value * precision) / precision;
-        //qDebug() << value << precision << atPrecision << _fact.decimalPlaces() << _fact.name();
-        return QVariant(atPrecision);
+        return QVariant(_valueAtPrecision(value));
     } else if (role == _valueIndexRole) {
         return QVariant::fromValue(valueIndex);
     } else {
@@ -122,4 +124,10 @@ double FactValueSliderListModel::valueAtModelIndex(int index)
 int FactValueSliderListModel::valueIndexAtModelIndex(int index)
 {
     return data(createIndex(index, 0), _valueIndexRole).toInt();
+}
+
+double FactValueSliderListModel::_valueAtPrecision(double value) const
+{
+    double precision = qPow(10, _fact.decimalPlaces());
+    return qRound(value * precision) / precision;
 }

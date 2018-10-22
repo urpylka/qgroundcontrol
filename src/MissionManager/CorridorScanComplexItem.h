@@ -23,7 +23,10 @@ class CorridorScanComplexItem : public TransectStyleComplexItem
     Q_OBJECT
 
 public:
-    CorridorScanComplexItem(Vehicle* vehicle, bool flyView, QObject* parent);
+    /// @param vehicle Vehicle which this is being contructed for
+    /// @param flyView true: Created for use in the Fly View, false: Created for use in the Plan View
+    /// @param kmlFile Polyline comes from this file, empty for default polyline
+    CorridorScanComplexItem(Vehicle* vehicle, bool flyView, const QString& kmlFile, QObject* parent);
 
     Q_PROPERTY(QGCMapPolyline*  corridorPolyline    READ corridorPolyline   CONSTANT)
     Q_PROPERTY(Fact*            corridorWidth       READ corridorWidth      CONSTANT)
@@ -33,15 +36,16 @@ public:
 
     Q_INVOKABLE void rotateEntryPoint(void);
 
-    // Overrides from ComplexMissionItem
-    bool    load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final;
-    QString mapVisualQML        (void) const final { return QStringLiteral("CorridorScanMapVisual.qml"); }
-
     // Overrides from TransectStyleComplexItem
     void    save                (QJsonArray&  planItems) final;
     bool    specifiesCoordinate (void) const final;
     void    appendMissionItems  (QList<MissionItem*>& items, QObject* missionItemParent) final;
     void    applyNewAltitude    (double newAltitude) final;
+    double  timeBetweenShots    (void) final;
+
+    // Overrides from ComplexMissionItem
+    bool    load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final;
+    QString mapVisualQML        (void) const final { return QStringLiteral("CorridorScanMapVisual.qml"); }
 
     // Overrides from VisualMissionionItem
     QString commandDescription  (void) const final { return tr("Corridor Scan"); }

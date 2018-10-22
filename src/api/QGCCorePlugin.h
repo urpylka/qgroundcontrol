@@ -31,6 +31,7 @@ class QQmlApplicationEngine;
 class Vehicle;
 class LinkInterface;
 class QmlObjectListModel;
+class VideoReceiver;
 
 class QGCCorePlugin : public QGCTool
 {
@@ -50,6 +51,8 @@ public:
     Q_PROPERTY(QString              brandImageOutdoor       READ brandImageOutdoor                              CONSTANT)
     Q_PROPERTY(QmlObjectListModel*  customMapItems          READ customMapItems                                 CONSTANT)
 
+    Q_INVOKABLE bool guidedActionsControllerLogging(void) const;
+
     /// The list of settings under the Settings Menu
     /// @return A list of QGCSettings
     virtual QVariantList& settingsPages(void);
@@ -67,14 +70,15 @@ public:
     virtual QGCOptions* options(void);
 
     /// Allows the core plugin to override the visibility for a settings group
-    ///     @param name - Setting group name
+    ///     @param name - SettingsGroup name
     /// @return true: Show settings ui, false: Hide settings ui
     virtual bool overrideSettingsGroupVisibility(QString name);
 
     /// Allows the core plugin to override the setting meta data before the setting fact is created.
+    ///     @param settingsGroup - QSettings group which contains this item
     ///     @param metaData - MetaData for setting fact
     /// @return true: Setting should be visible in ui, false: Setting should not be shown in ui
-    virtual bool adjustSettingMetaData(FactMetaData& metaData);
+    virtual bool adjustSettingMetaData(const QString& settingsGroup, FactMetaData& metaData);
 
     /// Return the resource file which contains the brand image for for Indoor theme.
     virtual QString brandImageIndoor(void) const { return QString(); }
@@ -97,6 +101,9 @@ public:
     /// Allows the plugin to override the creation of the root (native) window.
     virtual QQmlApplicationEngine* createRootWindow(QObject* parent);
 
+    /// Allows the plugin to override the creation of VideoReceiver.
+    virtual VideoReceiver* createVideoReceiver(QObject* parent);
+
     /// Allows the plugin to see all mavlink traffic to a vehicle
     /// @return true: Allow vehicle to continue processing, false: Vehicle should not process message
     virtual bool mavlinkMessage(Vehicle* vehicle, LinkInterface* link, mavlink_message_t message);
@@ -104,6 +111,18 @@ public:
     /// Allows custom builds to add custom items to the FlightMap. Objects put into QmlObjectListModel
     /// should derive from QmlComponentInfo and set the url property.
     virtual QmlObjectListModel* customMapItems(void);
+
+    /// Returns the url to download the stable version check file. Return QString() to indicate no version check should be performed.
+    /// Default QGC mainline implemenentation returns QGC Stable file location. Default QGC custom build code returns QString().
+    /// Custom builds can override to turn on and provide their own location.
+    /// The contents of this file should be a single line in the form:
+    ///     v3.4.4
+    /// This indicates the latest stable version number.
+    virtual QString stableVersionCheckFileUrl(void) const;
+
+    /// Returns the user visible url to show user where to download new stable builds from.
+    /// Custom builds must override to provide their own location.
+    virtual QString stableDownloadLocation(void) const { return QString("qgroundcontrol.com"); }
 
     bool showTouchAreas(void) const { return _showTouchAreas; }
     bool showAdvancedUI(void) const { return _showAdvancedUI; }

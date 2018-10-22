@@ -1,6 +1,7 @@
 pipeline {
-  agent any
+  agent none
   stages {
+
     stage('build') {
       parallel {
 
@@ -8,11 +9,11 @@ pipeline {
           environment {
             CCACHE_BASEDIR = "${env.WORKSPACE}"
             QGC_CONFIG = 'release'
-            QMAKE_VER = "5.9.2/android_armv7/bin/qmake"
+            QMAKE_VER = "5.11.0/android_armv7/bin/qmake"
           }
           agent {
             docker {
-              image 'mavlink/qgc-build-android:2018-04-14'
+              image 'mavlink/qgc-build-android:2018-06-08'
               args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw'
             }
           }
@@ -25,7 +26,11 @@ pipeline {
             sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=${QGC_CONFIG} CONFIG+=WarningsAsErrorsOn'
             sh 'cd build; make -j`nproc --all`'
             sh 'ccache -s'
-            sh 'git clean -ff -x -d .'
+          }
+          post {
+            cleanup {
+              sh 'git clean -ff -x -d .'
+            }
           }
         }
 
@@ -33,11 +38,11 @@ pipeline {
           environment {
             CCACHE_BASEDIR = "${env.WORKSPACE}"
             QGC_CONFIG = 'debug'
-            QMAKE_VER = "5.9.2/gcc_64/bin/qmake"
+            QMAKE_VER = "5.11.0/gcc_64/bin/qmake"
           }
           agent {
             docker {
-              image 'mavlink/qgc-build-linux:2018-04-14'
+              image 'mavlink/qgc-build-linux:2018-06-08'
               args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw'
             }
           }
@@ -50,7 +55,11 @@ pipeline {
             sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=${QGC_CONFIG} CONFIG+=WarningsAsErrorsOn'
             sh 'cd build; make -j`nproc --all`'
             sh 'ccache -s'
-            sh 'git clean -ff -x -d .'
+          }
+          post {
+            cleanup {
+              sh 'git clean -ff -x -d .'
+            }
           }
         }
 
@@ -58,11 +67,11 @@ pipeline {
           environment {
             CCACHE_BASEDIR = "${env.WORKSPACE}"
             QGC_CONFIG = 'release'
-            QMAKE_VER = "5.9.2/gcc_64/bin/qmake"
+            QMAKE_VER = "5.11.0/gcc_64/bin/qmake"
           }
           agent {
             docker {
-              image 'mavlink/qgc-build-linux:2018-04-14'
+              image 'mavlink/qgc-build-linux:2018-06-08'
               args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw'
             }
           }
@@ -75,7 +84,11 @@ pipeline {
             sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=${QGC_CONFIG} CONFIG+=WarningsAsErrorsOn'
             sh 'cd build; make -j`nproc --all`'
             sh 'ccache -s'
-            sh 'git clean -ff -x -d .'
+          }
+          post {
+            cleanup {
+              sh 'git clean -ff -x -d .'
+            }
           }
         }
 
@@ -88,7 +101,7 @@ pipeline {
           environment {
             CCACHE_BASEDIR = "${env.WORKSPACE}"
             QGC_CONFIG = 'debug'
-            QMAKE_VER = "5.9.3/clang_64/bin/qmake"
+            QMAKE_VER = "5.11.0/clang_64/bin/qmake"
           }
           steps {
             sh 'export'
@@ -99,7 +112,11 @@ pipeline {
             sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=${QGC_CONFIG} CONFIG+=WarningsAsErrorsOn'
             sh 'cd build; make -j`sysctl -n hw.ncpu`'
             sh 'ccache -s'
-            sh 'git clean -ff -x -d .'
+          }
+          post {
+            cleanup {
+              sh 'git clean -ff -x -d .'
+            }
           }
         }
 
@@ -112,7 +129,7 @@ pipeline {
           environment {
             CCACHE_BASEDIR = "${env.WORKSPACE}"
             QGC_CONFIG = 'installer'
-            QMAKE_VER = "5.9.3/clang_64/bin/qmake"
+            QMAKE_VER = "5.11.0/clang_64/bin/qmake"
           }
           steps {
             sh 'export'
@@ -123,14 +140,20 @@ pipeline {
             sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=${QGC_CONFIG} CONFIG+=WarningsAsErrorsOn'
             sh 'cd build; make -j`sysctl -n hw.ncpu`'
             sh 'ccache -s'
-            archiveArtifacts(artifacts: 'build/**/*.dmg', fingerprint: true, onlyIfSuccessful: true)
-            sh 'git clean -ff -x -d .'
+          }
+          post {
+            success {
+              archiveArtifacts(artifacts: 'build/**/*.dmg', fingerprint: true)
+            }
+            cleanup {
+              sh 'git clean -ff -x -d .'
+            }
           }
         }
 
-      }
-    }
-  }
+      } // parallel
+    } // stage('build')
+  } // stages
 
   environment {
     CCACHE_CPP2 = '1'
@@ -142,5 +165,4 @@ pipeline {
     buildDiscarder(logRotator(numToKeepStr: '10', artifactDaysToKeepStr: '30'))
     timeout(time: 60, unit: 'MINUTES')
   }
-
 }

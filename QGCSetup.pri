@@ -64,7 +64,6 @@ WindowsBuild {
     COPY_FILE_LIST = \
         $$BASEDIR\\libs\\lib\\sdl2\\msvc\\lib\\x86\\SDL2.dll \
         $$BASEDIR\\deploy\\libeay32.dll \
-        $$BASEDIR_WIN\\deploy\\libssl32.dll \
         $$BASEDIR_WIN\\deploy\\ssleay32.dll
 
     for(COPY_FILE, COPY_FILE_LIST) {
@@ -110,10 +109,11 @@ LinuxBuild {
         libQt5Gui.so.5 \
         libQt5Location.so.5 \
         libQt5Multimedia.so.5 \
-        libQt5MultimediaQuick_p.so.5 \
+        libQt5MultimediaQuick.so.5 \
         libQt5Network.so.5 \
         libQt5OpenGL.so.5 \
         libQt5Positioning.so.5 \
+        libQt5PositioningQuick.so.5 \
         libQt5PrintSupport.so.5 \
         libQt5Qml.so.5 \
         libQt5Quick.so.5 \

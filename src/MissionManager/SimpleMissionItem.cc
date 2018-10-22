@@ -78,7 +78,7 @@ SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, bool flyView, QObject* pa
     _connectSignals();
     _updateOptionalSections();
 
-    setDefaultsForCommand();
+    _setDefaultsForCommand();
     _rebuildFacts();
 
     setDirty(false);
@@ -127,7 +127,7 @@ SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, bool flyView, const Missi
     }
 
     _isCurrentItem = missionItem.isCurrentItem();
-    _altitudeFact.setRawValue(specifiesCoordinate() ? _missionItem._param7Fact.rawValue() : qQNaN());
+    _altitudeFact.setRawValue(specifiesCoordinate() || specifiesAltitudeOnly() ? _missionItem._param7Fact.rawValue() : qQNaN());
     _amslAltAboveTerrainFact.setRawValue(qQNaN());
 
     // In flyView we skip some of the intialization to save memory
@@ -205,13 +205,15 @@ void SimpleMissionItem::_connectSignals(void)
     connect(&_missionItem._param6Fact,  &Fact::valueChanged, this, &SimpleMissionItem::_sendCoordinateChanged);
     connect(&_missionItem._param7Fact,  &Fact::valueChanged, this, &SimpleMissionItem::_sendCoordinateChanged);
 
+    connect(&_missionItem._param1Fact,  &Fact::valueChanged, this, &SimpleMissionItem::_possibleAdditionalTimeDelayChanged);
+
     // The following changes may also change friendlyEditAllowed
     connect(&_missionItem._autoContinueFact,    &Fact::valueChanged, this, &SimpleMissionItem::_sendFriendlyEditAllowedChanged);
     connect(&_missionItem._commandFact,         &Fact::valueChanged, this, &SimpleMissionItem::_sendFriendlyEditAllowedChanged);
     connect(&_missionItem._frameFact,           &Fact::valueChanged, this, &SimpleMissionItem::_sendFriendlyEditAllowedChanged);
 
     // A command change triggers a number of other changes as well.
-    connect(&_missionItem._commandFact, &Fact::valueChanged, this, &SimpleMissionItem::setDefaultsForCommand);
+    connect(&_missionItem._commandFact, &Fact::valueChanged, this, &SimpleMissionItem::_setDefaultsForCommand);
     connect(&_missionItem._commandFact, &Fact::valueChanged, this, &SimpleMissionItem::commandNameChanged);
     connect(&_missionItem._commandFact, &Fact::valueChanged, this, &SimpleMissionItem::commandDescriptionChanged);
     connect(&_missionItem._commandFact, &Fact::valueChanged, this, &SimpleMissionItem::abbreviationChanged);
@@ -706,13 +708,16 @@ void SimpleMissionItem::_terrainAltChanged(void)
     }
 
     if (qIsNaN(terrainAltitude())) {
+        qDebug() << "1";
         // Set NaNs to signal we are waiting on terrain data
         _missionItem._param7Fact.setRawValue(qQNaN());
         _amslAltAboveTerrainFact.setRawValue(qQNaN());
     } else {
         double newAboveTerrain = terrainAltitude() + _altitudeFact.rawValue().toDouble();
         double oldAboveTerrain = _amslAltAboveTerrainFact.rawValue().toDouble();
+        qDebug() << "2" << newAboveTerrain << oldAboveTerrain;
         if (qIsNaN(oldAboveTerrain) || !qFuzzyCompare(newAboveTerrain, oldAboveTerrain)) {
+            qDebug() << "3";
             _missionItem._param7Fact.setRawValue(newAboveTerrain);
             _amslAltAboveTerrainFact.setRawValue(newAboveTerrain);
         }
@@ -724,14 +729,32 @@ bool SimpleMissionItem::readyForSave(void) const
     return !specifiesAltitude() || !qIsNaN(_missionItem._param7Fact.rawValue().toDouble());
 }
 
-void SimpleMissionItem::setDefaultsForCommand(void)
+void SimpleMissionItem::_setDefaultsForCommand(void)
 {
-    // We set these global defaults first, then if there are param defaults they will get reset
+    // First reset params 1-4 to 0, we leave 5-7 alone to preserve any previous location information on command change
+    _missionItem._param1Fact.setRawValue(0);
+    _missionItem._param2Fact.setRawValue(0);
+    _missionItem._param3Fact.setRawValue(0);
+    _missionItem._param4Fact.setRawValue(0);
+
+    if (!specifiesCoordinate() && !isStandaloneCoordinate()) {
+        // No need to carry across previous lat/lon
+        _missionItem._param5Fact.setRawValue(0);
+        _missionItem._param6Fact.setRawValue(0);
+    }
+
+    // Set global defaults first, then if there are param defaults they will get reset
     _altitudeMode = AltitudeRelative;
-    double defaultAlt = qgcApp()->toolbox()->settingsManager()->appSettings()->defaultMissionItemAltitude()->rawValue().toDouble();
-    _altitudeFact.setRawValue(defaultAlt);
-    _missionItem._param7Fact.setRawValue(defaultAlt);
+    emit altitudeModeChanged();
     _amslAltAboveTerrainFact.setRawValue(qQNaN());
+    if (specifiesCoordinate() || isStandaloneCoordinate() || specifiesAltitudeOnly()) {
+        double defaultAlt = qgcApp()->toolbox()->settingsManager()->appSettings()->defaultMissionItemAltitude()->rawValue().toDouble();
+        _altitudeFact.setRawValue(defaultAlt);
+        _missionItem._param7Fact.setRawValue(defaultAlt);
+    } else {
+        _altitudeFact.setRawValue(0);
+        _missionItem._param7Fact.setRawValue(0);
+    }
 
     MAV_CMD command = (MAV_CMD)this->command();
     const MissionCommandUIInfo* uiInfo = _commandTree->getUIInfo(_vehicle, command);
@@ -755,6 +778,7 @@ void SimpleMissionItem::setDefaultsForCommand(void)
 
     case MAV_CMD_NAV_LAND:
     case MAV_CMD_NAV_VTOL_LAND:
+        _altitudeFact.setRawValue(0);
         _missionItem.setParam7(0);
         break;
     default:
@@ -791,8 +815,10 @@ void SimpleMissionItem::setCommand(int command)
 
 void SimpleMissionItem::setCoordinate(const QGeoCoordinate& coordinate)
 {
-    if (_missionItem.coordinate() != coordinate) {
-        _missionItem.setCoordinate(coordinate);
+    // We only use lat/lon from coordinate. This keeps param7 and the altitude value which is kept to the side in sync.
+    if (_missionItem.param5() != coordinate.latitude() || _missionItem.param6() != coordinate.longitude()) {
+        _missionItem.setParam5(coordinate.latitude());
+        _missionItem.setParam6(coordinate.longitude());
     }
 }
 
@@ -918,7 +944,7 @@ void SimpleMissionItem::applyNewAltitude(double newAltitude)
             // Leave alone
             break;
         default:
-            _missionItem.setParam7(newAltitude);
+            _altitudeFact.setRawValue(newAltitude);
             break;
         }
     }
@@ -947,4 +973,29 @@ void SimpleMissionItem::setAltitudeMode(AltitudeMode altitudeMode)
         _altitudeMode = altitudeMode;
         emit altitudeModeChanged();
     }
+}
+
+double SimpleMissionItem::additionalTimeDelay(void) const
+{
+    switch (command()) {
+    case MAV_CMD_NAV_WAYPOINT:
+    case MAV_CMD_CONDITION_DELAY:
+    case MAV_CMD_NAV_DELAY:
+        return missionItem().param1();
+    default:
+        return 0;
+    }
+}
+
+void SimpleMissionItem::_possibleAdditionalTimeDelayChanged(void)
+{
+    switch (command()) {
+    case MAV_CMD_NAV_WAYPOINT:
+    case MAV_CMD_CONDITION_DELAY:
+    case MAV_CMD_NAV_DELAY:
+        emit additionalTimeDelayChanged();
+        break;
+    }
+
+    return;
 }

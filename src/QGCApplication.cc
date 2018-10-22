@@ -24,6 +24,7 @@
 #include <QStyleFactory>
 #include <QAction>
 #include <QStringListModel>
+#include <QRegularExpression>
 
 #ifdef QGC_ENABLE_BLUETOOTH
 #include <QBluetoothLocalDevice>
@@ -76,6 +77,7 @@
 #include "FollowMe.h"
 #include "MissionCommandTree.h"
 #include "QGCMapPolygon.h"
+#include "QGCMapCircle.h"
 #include "ParameterManager.h"
 #include "SettingsManager.h"
 #include "QGCCorePlugin.h"
@@ -84,6 +86,8 @@
 #include "VisualMissionItem.h"
 #include "EditPositionDialogController.h"
 #include "FactValueSliderListModel.h"
+#include "KMLFileHelper.h"
+#include "QGCFileDownload.h"
 
 #ifndef NO_SERIAL_LINK
 #include "SerialLink.h"
@@ -139,22 +143,31 @@ static QObject* qgroundcontrolQmlGlobalSingletonFactory(QQmlEngine*, QJSEngine*)
     return qmlGlobal;
 }
 
+static QObject* kmlFileHelperSingletonFactory(QQmlEngine*, QJSEngine*)
+{
+    return new KMLFileHelper;
+}
+
 QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 #ifdef __mobile__
-    : QGuiApplication       (argc, argv)
-    , _qmlAppEngine         (NULL)
+    : QGuiApplication           (argc, argv)
+    , _qmlAppEngine             (nullptr)
 #else
-    : QApplication          (argc, argv)
+    : QApplication              (argc, argv)
 #endif
-    , _runningUnitTests     (unitTesting)
-    , _logOutput            (false)
-    , _fakeMobile           (false)
-    , _settingsUpgraded     (false)
+    , _runningUnitTests         (unitTesting)
+    , _logOutput                (false)
+    , _fakeMobile               (false)
+    , _settingsUpgraded         (false)
+    , _majorVersion             (0)
+    , _minorVersion             (0)
+    , _buildVersion             (0)
+    , _currentVersionDownload   (nullptr)
 #ifdef QT_DEBUG
-    , _testHighDPI          (false)
+    , _testHighDPI              (false)
 #endif
-    , _toolbox              (NULL)
-    , _bluetoothAvailable   (false)
+    , _toolbox                  (nullptr)
+    , _bluetoothAvailable       (false)
 {
     _app = this;
 
@@ -315,6 +328,8 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 
     _toolbox = new QGCToolbox(this);
     _toolbox->setChildToolboxes();
+
+    _checkForNewVersion();
 }
 
 void QGCApplication::_shutdown(void)
@@ -361,6 +376,7 @@ void QGCApplication::_initCommon(void)
     qmlRegisterUncreatableType<ParameterManager>    ("QGroundControl.Vehicle",              1, 0, "ParameterManager",       "Reference only");
     qmlRegisterUncreatableType<QGCCameraManager>    ("QGroundControl.Vehicle",              1, 0, "QGCCameraManager",       "Reference only");
     qmlRegisterUncreatableType<QGCCameraControl>    ("QGroundControl.Vehicle",              1, 0, "QGCCameraControl",       "Reference only");
+    qmlRegisterUncreatableType<LinkInterface>       ("QGroundControl.Vehicle",              1, 0, "LinkInterface",          "Reference only");
     qmlRegisterUncreatableType<JoystickManager>     ("QGroundControl.JoystickManager",      1, 0, "JoystickManager",        "Reference only");
     qmlRegisterUncreatableType<Joystick>            ("QGroundControl.JoystickManager",      1, 0, "Joystick",               "Reference only");
     qmlRegisterUncreatableType<QGCPositionManager>  ("QGroundControl.QGCPositionManager",   1, 0, "QGCPositionManager",     "Reference only");
@@ -382,6 +398,7 @@ void QGCApplication::_initCommon(void)
     qmlRegisterType<LogDownloadController>          ("QGroundControl.Controllers", 1, 0, "LogDownloadController");
     qmlRegisterType<SyslinkComponentController>     ("QGroundControl.Controllers", 1, 0, "SyslinkComponentController");
     qmlRegisterType<EditPositionDialogController>   ("QGroundControl.Controllers", 1, 0, "EditPositionDialogController");
+    qmlRegisterType<QGCMapCircle>                   ("QGroundControl.FlightMap",   1, 0, "QGCMapCircle");
 #ifndef __mobile__
     qmlRegisterType<ViewWidgetController>           ("QGroundControl.Controllers", 1, 0, "ViewWidgetController");
     qmlRegisterType<CustomCommandWidgetController>  ("QGroundControl.Controllers", 1, 0, "CustomCommandWidgetController");
@@ -393,6 +410,7 @@ void QGCApplication::_initCommon(void)
     // Register Qml Singletons
     qmlRegisterSingletonType<QGroundControlQmlGlobal>   ("QGroundControl",                          1, 0, "QGroundControl",         qgroundcontrolQmlGlobalSingletonFactory);
     qmlRegisterSingletonType<ScreenToolsController>     ("QGroundControl.ScreenToolsController",    1, 0, "ScreenToolsController",  screenToolsControllerSingletonFactory);
+    qmlRegisterSingletonType<KMLFileHelper>             ("QGroundControl.KMLFileHelper",            1, 0, "KMLFileHelper",          kmlFileHelperSingletonFactory);
 }
 
 bool QGCApplication::_initForNormalAppBoot(void)
@@ -681,4 +699,69 @@ void QGCApplication::qmlAttemptWindowClose(void)
 bool QGCApplication::isInternetAvailable()
 {
     return getQGCMapEngine()->isInternetActive();
+}
+
+void QGCApplication::_checkForNewVersion(void)
+{
+#ifndef __mobile__
+    if (!_runningUnitTests) {
+        if (_parseVersionText(applicationVersion(), _majorVersion, _minorVersion, _buildVersion)) {
+            QString versionCheckFile = toolbox()->corePlugin()->stableVersionCheckFileUrl();
+            if (!versionCheckFile.isEmpty()) {
+                _currentVersionDownload = new QGCFileDownload(this);
+                connect(_currentVersionDownload, &QGCFileDownload::downloadFinished, this, &QGCApplication::_currentVersionDownloadFinished);
+                connect(_currentVersionDownload, &QGCFileDownload::error, this, &QGCApplication::_currentVersionDownloadError);
+                _currentVersionDownload->download(versionCheckFile);
+            }
+        }
+    }
+#endif
+}
+
+void QGCApplication::_currentVersionDownloadFinished(QString remoteFile, QString localFile)
+{
+    Q_UNUSED(remoteFile);
+
+#ifdef __mobile__
+    Q_UNUSED(localFile);
+#else
+    QFile versionFile(localFile);
+    if (versionFile.open(QIODevice::ReadOnly)) {
+        QTextStream textStream(&versionFile);
+        QString version = textStream.readLine();
+
+        qDebug() << version;
+
+        int majorVersion, minorVersion, buildVersion;
+        if (_parseVersionText(version, majorVersion, minorVersion, buildVersion)) {
+            if (_majorVersion < majorVersion ||
+                    (_majorVersion == majorVersion && _minorVersion < minorVersion) ||
+                    (_majorVersion == majorVersion && _minorVersion == minorVersion && _buildVersion < buildVersion)) {
+                QGCMessageBox::information(tr("New Version Available"), tr("There is a newer version of %1 available. You can download it from %2.").arg(applicationName()).arg(toolbox()->corePlugin()->stableDownloadLocation()));
+            }
+        }
+    }
+
+    _currentVersionDownload->deleteLater();
+#endif
+}
+
+void QGCApplication::_currentVersionDownloadError(QString errorMsg)
+{
+    Q_UNUSED(errorMsg);
+    _currentVersionDownload->deleteLater();
+}
+
+bool QGCApplication::_parseVersionText(const QString& versionString, int& majorVersion, int& minorVersion, int& buildVersion)
+{
+    QRegularExpression regExp("v(\\d+)\\.(\\d+)\\.(\\d+)");
+    QRegularExpressionMatch match = regExp.match(versionString);
+    if (match.hasMatch() && match.lastCapturedIndex() == 3) {
+        majorVersion = match.captured(1).toInt();
+        minorVersion = match.captured(2).toInt();
+        buildVersion = match.captured(3).toInt();
+        return true;
+    }
+
+    return false;
 }

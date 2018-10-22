@@ -50,9 +50,9 @@ public:
     virtual void requestCarpetHeights(const QGeoCoordinate& swCoord, const QGeoCoordinate& neCoord, bool statsOnly) = 0;
 
 signals:
-    void coordinateHeights(bool success, QList<double> heights);
-    void pathHeights(bool success, double latStep, double lonStep, const QList<double>& heights);
-    void carpetHeights(bool success, double minHeight, double maxHeight, const QList<QList<double>>& carpet);
+    void coordinateHeightsReceived(bool success, QList<double> heights);
+    void pathHeightsReceived(bool success, double latStep, double lonStep, const QList<double>& heights);
+    void carpetHeightsReceived(bool success, double minHeight, double maxHeight, const QList<QList<double>>& carpet);
 };
 
 /// AirMap online implementation of terrain queries
@@ -69,7 +69,8 @@ public:
 
 private slots:
     void _requestError              (QNetworkReply::NetworkError code);
-    void _requestFinished           ();
+    void _requestFinished           (void);
+    void _sslErrors                 (const QList<QSslError> &errors);
 
 private:
     void _sendQuery                 (const QString& path, const QUrlQuery& urlQuery);
@@ -135,12 +136,13 @@ private:
     typedef struct {
         TerrainOfflineAirMapQuery*  terrainQueryInterface;
         QueryMode                   queryMode;
+        double                      latStep, lonStep;
         QList<QGeoCoordinate>       coordinates;
     } QueuedRequestInfo_t;
 
-    void _tileFailed(void);
-    bool _getAltitudesForCoordinates(const QList<QGeoCoordinate>& coordinates, QList<double>& altitudes);
-    QString _getTileHash(const QGeoCoordinate& coordinate);     /// Method to create a unique string for each tile
+    void    _tileFailed                         (void);
+    bool    _getAltitudesForCoordinates         (const QList<QGeoCoordinate>& coordinates, QList<double>& altitudes, bool& error);
+    QString _getTileHash                        (const QGeoCoordinate& coordinate);
 
     QList<QueuedRequestInfo_t>  _requestQueue;
     State                       _state = State::Idle;
@@ -209,7 +211,7 @@ public:
     void _signalTerrainData(bool success, QList<double>& heights);
 
 signals:
-    void terrainData(bool success, QList<double> heights);
+    void terrainDataReceived(bool success, QList<double> heights);
 };
 
 class TerrainPathQuery : public QObject
@@ -232,7 +234,7 @@ public:
 
 signals:
     /// Signalled when terrain data comes back from server
-    void terrainData(bool success, const PathHeightInfo_t& pathHeightInfo);
+    void terrainDataReceived(bool success, const PathHeightInfo_t& pathHeightInfo);
 
 private slots:
     void _pathHeights(bool success, double latStep, double lonStep, const QList<double>& heights);
@@ -258,7 +260,7 @@ public:
 
 signals:
     /// Signalled when terrain data comes back from server
-    void terrainData(bool success, const QList<TerrainPathQuery::PathHeightInfo_t>& rgPathHeightInfo);
+    void terrainDataReceived(bool success, const QList<TerrainPathQuery::PathHeightInfo_t>& rgPathHeightInfo);
 
 private slots:
     void _terrainDataReceived(bool success, const TerrainPathQuery::PathHeightInfo_t& pathHeightInfo);
@@ -287,7 +289,7 @@ public:
 
 signals:
     /// Signalled when terrain data comes back from server
-    void terrainData(bool success, double minHeight, double maxHeight, const QList<QList<double>>& carpet);
+    void terrainDataReceived(bool success, double minHeight, double maxHeight, const QList<QList<double>>& carpet);
 
 private:
     TerrainAirMapQuery _terrainQuery;

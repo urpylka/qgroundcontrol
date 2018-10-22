@@ -37,7 +37,6 @@ public:
     Q_PROPERTY(int              cameraShots                 READ cameraShots                                        NOTIFY cameraShotsChanged)
     Q_PROPERTY(double           timeBetweenShots            READ timeBetweenShots                                   NOTIFY timeBetweenShotsChanged)
     Q_PROPERTY(double           coveredArea                 READ coveredArea                                        NOTIFY coveredAreaChanged)
-    Q_PROPERTY(double           cameraMinTriggerInterval    READ cameraMinTriggerInterval                           NOTIFY cameraMinTriggerIntervalChanged)
     Q_PROPERTY(bool             hoverAndCaptureAllowed      READ hoverAndCaptureAllowed                             CONSTANT)
     Q_PROPERTY(QVariantList     visualTransectPoints        READ visualTransectPoints                               NOTIFY visualTransectPointsChanged)
 
@@ -55,17 +54,23 @@ public:
     Fact* hoverAndCapture               (void) { return &_hoverAndCaptureFact; }
     Fact* refly90Degrees                (void) { return &_refly90DegreesFact; }
     Fact* terrainAdjustTolerance        (void) { return &_terrainAdjustToleranceFact; }
-    Fact* terrainAdjustMaxDescentRate   (void) { return &_terrainAdjustMaxClimbRateFact; }
-    Fact* terrainAdjustMaxClimbRate     (void) { return &_terrainAdjustMaxDescentRateFact; }
+    Fact* terrainAdjustMaxDescentRate   (void) { return &_terrainAdjustMaxDescentRateFact; }
+    Fact* terrainAdjustMaxClimbRate     (void) { return &_terrainAdjustMaxClimbRateFact; }
+
+    const Fact* hoverAndCapture         (void) const { return &_hoverAndCaptureFact; }
 
     int             cameraShots             (void) const { return _cameraShots; }
-    double          timeBetweenShots        (void);
     double          coveredArea             (void) const;
-    double          cameraMinTriggerInterval(void) const { return _cameraMinTriggerInterval; }
     bool            hoverAndCaptureAllowed  (void) const;
     bool            followTerrain           (void) const { return _followTerrain; }
 
+    virtual double  timeBetweenShots        (void) { return 0; } // Most be overridden. Implementation here is needed for unit testing.
+
     void setFollowTerrain(bool followTerrain);
+
+    double  triggerDistance         (void) const { return _cameraCalc.adjustedFootprintFrontal()->rawValue().toDouble(); }
+    bool    hoverAndCaptureEnabled  (void) const { return hoverAndCapture()->rawValue().toBool(); }
+    bool    triggerCamera           (void) const { return triggerDistance() != 0; }
 
     // Overrides from ComplexMissionItem
 
@@ -119,7 +124,6 @@ public:
 signals:
     void cameraShotsChanged             (void);
     void timeBetweenShotsChanged        (void);
-    void cameraMinTriggerIntervalChanged(double cameraMinTriggerInterval);
     void visualTransectPointsChanged    (void);
     void coveredAreaChanged             (void);
     void followTerrainChanged           (bool followTerrain);
@@ -143,7 +147,6 @@ protected:
     bool    _hasTurnaround                  (void) const;
     double  _turnaroundDistance             (void) const;
 
-    QString         _settingsGroup;
     int             _sequenceNumber;
     bool            _dirty;
     QGeoCoordinate  _coordinate;
@@ -151,10 +154,11 @@ protected:
     QGCMapPolygon   _surveyAreaPolygon;
 
     enum CoordType {
-        CoordTypeInterior,
-        CoordTypeInteriorTerrainAdded,
-        CoordTypeSurveyEdge,
-        CoordTypeTurnaround
+        CoordTypeInterior,              ///< Interior waypoint for flight path only
+        CoordTypeInteriorHoverTrigger,  ///< Interior waypoint for hover and capture trigger
+        CoordTypeInteriorTerrainAdded,  ///< Interior waypoint added for terrain
+        CoordTypeSurveyEdge,            ///< Waypoint at edge of survey polygon
+        CoordTypeTurnaround             ///< Waypoint outside of survey polygon for turnaround
     };
 
     typedef struct {
@@ -172,7 +176,6 @@ protected:
     double          _complexDistance;
     int             _cameraShots;
     double          _timeBetweenShots;
-    double          _cameraMinTriggerInterval;
     double          _cruiseSpeed;
     CameraCalc      _cameraCalc;
     bool            _followTerrain;

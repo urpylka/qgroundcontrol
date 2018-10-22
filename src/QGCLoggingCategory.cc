@@ -16,13 +16,14 @@
 #include <QSettings>
 
 // Add Global logging categories (not class specific) here using QGC_LOGGING_CATEGORY
-QGC_LOGGING_CATEGORY(FirmwareUpgradeLog,        "FirmwareUpgradeLog")
-QGC_LOGGING_CATEGORY(FirmwareUpgradeVerboseLog, "FirmwareUpgradeVerboseLog")
-QGC_LOGGING_CATEGORY(MissionCommandsLog,        "MissionCommandsLog")
-QGC_LOGGING_CATEGORY(MissionItemLog,            "MissionItemLog")
-QGC_LOGGING_CATEGORY(ParameterManagerLog,       "ParameterManagerLog")
-QGC_LOGGING_CATEGORY(GeotaggingLog,             "GeotaggingLog")
-QGC_LOGGING_CATEGORY(RTKGPSLog,                 "RTKGPSLog")
+QGC_LOGGING_CATEGORY(FirmwareUpgradeLog,            "FirmwareUpgradeLog")
+QGC_LOGGING_CATEGORY(FirmwareUpgradeVerboseLog,     "FirmwareUpgradeVerboseLog")
+QGC_LOGGING_CATEGORY(MissionCommandsLog,            "MissionCommandsLog")
+QGC_LOGGING_CATEGORY(MissionItemLog,                "MissionItemLog")
+QGC_LOGGING_CATEGORY(ParameterManagerLog,           "ParameterManagerLog")
+QGC_LOGGING_CATEGORY(GeotaggingLog,                 "GeotaggingLog")
+QGC_LOGGING_CATEGORY(RTKGPSLog,                     "RTKGPSLog")
+QGC_LOGGING_CATEGORY(GuidedActionsControllerLog,    "GuidedActionsControllerLog")
 
 QGCLoggingCategoryRegister* _instance = NULL;
 const char* QGCLoggingCategoryRegister::_filterRulesSettingsGroup = "LoggingFilters";
@@ -66,8 +67,6 @@ void QGCLoggingCategoryRegister::setFilterRulesFromSettings(const QString& comma
     }
     QString filterRules;
 
-    // Turn off bogus ssl warning
-    filterRules += "qt.network.ssl.warning=false\n";
     filterRules += "*Log.debug=false\n";
 
     // Set up filters defined in settings

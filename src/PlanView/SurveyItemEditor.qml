@@ -24,9 +24,10 @@ Rectangle {
     //property real   availableWidth    ///< Width for control
     //property var    missionItem       ///< Mission Item for editor
 
-    property real   _margin:        ScreenTools.defaultFontPixelWidth / 2
-    property real   _fieldWidth:    ScreenTools.defaultFontPixelWidth * 10.5
-    property var    _vehicle:       QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
+    property real   _margin:                    ScreenTools.defaultFontPixelWidth / 2
+    property real   _fieldWidth:                ScreenTools.defaultFontPixelWidth * 10.5
+    property var    _vehicle:                   QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
+    property real   _cameraMinTriggerInterval:  missionItem.cameraCalc.minTriggerInterval.rawValue
 
     function polygonCaptureStarted() {
         missionItem.clearPolygon()
@@ -58,10 +59,10 @@ Rectangle {
         QGCLabel {
             anchors.left:   parent.left
             anchors.right:  parent.right
-            text:           qsTr("WARNING: Photo interval is below minimum interval (%1 secs) supported by camera.").arg(missionItem.cameraMinTriggerInterval.toFixed(1))
+            text:           qsTr("WARNING: Photo interval is below minimum interval (%1 secs) supported by camera.").arg(_cameraMinTriggerInterval.toFixed(1))
             wrapMode:       Text.WordWrap
             color:          qgcPal.warningText
-            visible:        missionItem.cameraShots > 0 && missionItem.cameraMinTriggerInterval !== 0 && missionItem.cameraMinTriggerInterval > missionItem.timeBetweenShots
+            visible:        missionItem.cameraShots > 0 && _cameraMinTriggerInterval !== 0 && _cameraMinTriggerInterval > missionItem.timeBetweenShots
         }
 
         CameraCalc {
@@ -73,37 +74,49 @@ Rectangle {
         }
 
         SectionHeader {
-            id:     corridorHeader
+            id:     transectsHeader
             text:   qsTr("Transects")
         }
 
         GridLayout {
+            id:             transectsGrid
             anchors.left:   parent.left
             anchors.right:  parent.right
             columnSpacing:  _margin
             rowSpacing:     _margin
             columns:        2
-            visible:        corridorHeader.checked
+            visible:        transectsHeader.checked
 
             QGCLabel { text: qsTr("Angle") }
             FactTextField {
                 fact:                   missionItem.gridAngle
                 Layout.fillWidth:       true
+                onUpdated:              angleSlider.value = missionItem.gridAngle.value
+            }
+            QGCSlider {
+                id:                     angleSlider
+                minimumValue:           0
+                maximumValue:           359
+                stepSize:               1
+                tickmarksEnabled:       false
+                Layout.fillWidth:       true
+                Layout.columnSpan:      2
+                Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 1.5
+                onValueChanged:         missionItem.gridAngle.value = value
+                Component.onCompleted:  value = missionItem.gridAngle.value
+                updateValueWhileDragging: true
             }
 
             QGCLabel { text: qsTr("Turnaround dist") }
             FactTextField {
-                fact:                   missionItem.turnAroundDistance
-                Layout.fillWidth:       true
+                fact:               missionItem.turnAroundDistance
+                Layout.fillWidth:   true
             }
 
-            QGCLabel {
-                text: qsTr("Entry")
-            }
-            FactComboBox {
-                fact:                   missionItem.gridEntryLocation
-                indexModel:             false
-                Layout.fillWidth:       true
+            QGCButton {
+                Layout.columnSpan:  2
+                text:               qsTr("Rotate Entry Point")
+                onClicked:          missionItem.rotateEntryPoint();
             }
 
             FactCheckBox {
@@ -114,31 +127,39 @@ Rectangle {
                 Layout.columnSpan:  2
                 onClicked: {
                     if (checked) {
-                        missionItem.cameraTriggerInTurnaround.rawValue = false
+                        missionItem.cameraTriggerInTurnAround.rawValue = false
                     }
                 }
             }
 
             FactCheckBox {
-                text:               qsTr("Refly at 90 degree offset")
+                text:               qsTr("Refly at 90 deg offset")
                 fact:               missionItem.refly90Degrees
                 enabled:            !missionItem.followTerrain
                 Layout.columnSpan:  2
             }
 
             FactCheckBox {
-                text:               qsTr("Take images in turnarounds")
+                text:               qsTr("Images in turnarounds")
                 fact:               missionItem.cameraTriggerInTurnAround
                 enabled:            missionItem.hoverAndCaptureAllowed ? !missionItem.hoverAndCapture.rawValue : true
                 Layout.columnSpan:  2
             }
 
+            FactCheckBox {
+                text:               qsTr("Fly alternate transects")
+                fact:               missionItem.flyAlternateTransects
+                visible:            _vehicle.fixedWing || _vehicle.vtol
+                Layout.columnSpan:  2
+            }
+
             QGCCheckBox {
                 id:                 relAlt
-                anchors.left:       parent.left
+                Layout.alignment:   Qt.AlignLeft
                 text:               qsTr("Relative altitude")
                 checked:            missionItem.cameraCalc.distanceToSurfaceRelative
                 enabled:            missionItem.cameraCalc.isManualCamera && !missionItem.followTerrain
+                visible:            QGroundControl.corePlugin.options.showMissionAbsoluteAltitude || (!missionItem.cameraCalc.distanceToSurfaceRelative && !missionItem.followTerrain)
                 Layout.columnSpan:  2
                 onClicked:          missionItem.cameraCalc.distanceToSurfaceRelative = checked
 
@@ -169,12 +190,11 @@ Rectangle {
             }
 
             GridLayout {
-                anchors.left:   parent.left
-                anchors.right:  parent.right
-                columnSpacing:  _margin
-                rowSpacing:     _margin
-                columns:        2
-                visible:        followsTerrainCheckBox.checked
+                Layout.fillWidth:   true
+                columnSpacing:      _margin
+                rowSpacing:         _margin
+                columns:            2
+                visible:            followsTerrainCheckBox.checked
 
                 QGCLabel { text: qsTr("Tolerance") }
                 FactTextField {
