@@ -135,6 +135,60 @@ Rectangle {
                 onClicked:          toolBar.showAnalyzeView()
             }
 
+            QGCButton {
+                text:                       qsTr("Trigger Camera")
+                visible:                    !_isCamera
+                onClicked:                  _activeVehicle.triggerCamera()
+                enabled:                    _activeVehicle
+                anchors.verticalCenter:     parent.verticalCenter
+            }
+
+            QGCButton {
+                text:                   qsTr("    Start video ")
+                id:                     videoButton
+                visible:                !_isCamera
+                enabled:                    _activeVehicle
+                anchors.verticalCenter:     parent.verticalCenter
+                property var startTime: Date()
+                onClicked:
+                {
+                    if(!timer.running){
+                        startTime = new Date()
+                        _activeVehicle.startVideoCapture()
+                        timer.start()
+                        videoRect.radius = 0
+                    } else {
+                        startTime = 0
+                        _activeVehicle.stopVideoCapture()
+                        timer.stop()
+                        videoButton.text = qsTr("    Start video ")
+                        videoRect.radius = videoRect.width*0.5
+                    }
+                }
+                Timer {
+                    id: timer
+                    interval: 1000; running: false; repeat: true
+                    onTriggered: {
+                        var mSecsFromStart = new Date() - videoButton.startTime
+                        var secsFromStart = Math.floor(mSecsFromStart/1000)
+                        var mins = Math.floor(secsFromStart/60)
+                        var secs = secsFromStart - mins*60
+                        videoButton.text = "     " + mins + ":" + (secs < 10? "0" + secs: secs)
+                    }
+                }
+                Rectangle {
+                    id: videoRect
+                    width: 10
+                    height: 10
+                    x: 5
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: "red"
+                    border.color: "red"
+                    border.width: 2
+                    radius: width*0.5
+                }
+            }
+
             Rectangle {
                 anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
                 anchors.top:        parent.top

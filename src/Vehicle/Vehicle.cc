@@ -3244,6 +3244,28 @@ void Vehicle::triggerCamera(void)
                    1.0);                            // test shot flag
 }
 
+void Vehicle::startVideoCapture(void)
+{
+    sendMavCommand(_defaultComponentId,
+                   MAV_CMD_VIDEO_START_CAPTURE,
+                   true,                            // show errors
+                   0.0, 0.0, 0.0, 0.0,              // param 1-4 unused
+                   0.0,                             // trigger camera
+                   0.0,                             // param 6 unused
+                   0.0);                            // test shot flag
+}
+
+void Vehicle::stopVideoCapture(void)
+{
+    sendMavCommand(_defaultComponentId,
+                   MAV_CMD_VIDEO_STOP_CAPTURE,
+                   true,                            // show errors
+                   0.0, 0.0, 0.0, 0.0,              // param 1-4 unused
+                   0.0,                             // trigger camera
+                   0.0,                             // param 6 unused
+                   0.0);                            // test shot flag
+}
+
 void Vehicle::setVtolInFwdFlight(bool vtolInFwdFlight)
 {
     if (_vtolInFwdFlight != vtolInFwdFlight) {
