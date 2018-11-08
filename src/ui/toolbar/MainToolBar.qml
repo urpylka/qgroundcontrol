@@ -135,12 +135,17 @@ Rectangle {
                 onClicked:          toolBar.showAnalyzeView()
             }
 
-            QGCButton {
-                text:                       qsTr("Trigger Camera")
-                visible:                    !_isCamera
+            QGCToolBarButton {
+                //text:                       qsTr("Trigger Camera")
+                id:                         photoButton
+                anchors.top:                parent.top
+                anchors.bottom:             parent.bottom
+                exclusiveGroup:             mainActionGroup
+                source:                     "/res/camera.svg"
+//                visible:                    !_isCamera
                 onClicked:                  _activeVehicle.triggerCamera()
-                enabled:                    _activeVehicle
-                anchors.verticalCenter:     parent.verticalCenter
+//                enabled:                    _activeVehicle
+//                anchors.verticalCenter:     parent.verticalCenter
             }
 
             QGCButton {
