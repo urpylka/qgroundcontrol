@@ -52,7 +52,7 @@ MapQuickItem {
             transform: Rotation {
                 origin.x:       vehicleIcon.width  / 2
                 origin.y:       vehicleIcon.height / 2
-                angle:          isNaN(heading) ? 0 : heading
+                angle:          isNaN(heading) || vehicle.chargingStation ? 0 : heading
             }
         }
 
