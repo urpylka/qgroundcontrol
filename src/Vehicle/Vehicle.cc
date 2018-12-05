@@ -3266,6 +3266,66 @@ void Vehicle::stopVideoCapture(void)
                    0.0);                            // test shot flag
 }
 
+void Vehicle::setCameraProperty(QString propertyName, float value)
+{
+    if (propertyName=="pictureMode")
+    {
+        sendMavCommand(_defaultComponentId,
+                       MAV_CMD_DO_CONTROL_VIDEO,
+                       true,                            // show errors
+                       100.0,                           // camera id
+                       value,                           // mode for HDMI
+                       0.0,
+                       value,                           // mode for recording do disk
+                       0.0,
+                       0.0,
+                       0.0);
+
+    }
+    if (propertyName=="colorPalette")
+    {
+        sendMavCommand(_defaultComponentId,
+                       MAV_CMD_DO_DIGICAM_CONFIGURE,
+                       true,                            // show errors
+                       0.0,
+                       value,                           // color palette
+                       0.0,
+                       0.0,
+                       _flirduoRotateImage,             // rotate image 0 or 180 deg
+                       _flirduoMSXEnabled,              // enable-disable MSX
+                       _flirduoMSXStrength);            // MSX strength
+        _flirduoColorPalette = value;
+    }
+    if (propertyName=="enableMSX")
+    {
+        sendMavCommand(_defaultComponentId,
+                       MAV_CMD_DO_DIGICAM_CONFIGURE,
+                       true,                            // show errors
+                       0.0,
+                       _flirduoColorPalette,            // color palette
+                       0.0,
+                       0.0,
+                       _flirduoRotateImage,             // rotate image 0 or 180 deg
+                       value,                           // enable-disable MSX
+                       _flirduoMSXStrength);            // MSX strength
+        _flirduoMSXEnabled = value;
+    }
+    if (propertyName=="strengthMSX")
+    {
+        sendMavCommand(_defaultComponentId,
+                       MAV_CMD_DO_DIGICAM_CONFIGURE,
+                       true,                            // show errors
+                       0.0,
+                       _flirduoColorPalette,            // color palette
+                       0.0,
+                       0.0,
+                       _flirduoRotateImage,             // rotate image 0 or 180 deg
+                       _flirduoMSXEnabled,              // enable-disable MSX
+                       value);                          // MSX strength
+        _flirduoMSXStrength = value;
+    }
+}
+
 void Vehicle::setVtolInFwdFlight(bool vtolInFwdFlight)
 {
     if (_vtolInFwdFlight != vtolInFwdFlight) {

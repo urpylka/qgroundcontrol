@@ -55,11 +55,98 @@ Column {
     //-- Dumb camera trigger if no actual camera interface exists
     QGCButton {
         anchors.horizontalCenter:   parent.horizontalCenter
-        text:                       qsTr("Trigger Camera")
+        text:                       qsTr("Take photo")
         visible:                    !_isCamera
         onClicked:                  _activeVehicle.triggerCamera()
         enabled:                    _activeVehicle
     }
+
+    Row{
+        Label {
+            text: "Picture mode: "
+            color: "white"
+        }
+
+        ComboBox {
+            currentIndex: -1
+            model: ListModel {
+                id: cbPictureMode
+                ListElement { text: "IR"; value: 0.0 }
+                ListElement { text: "VIS"; value: 1.0 }
+                ListElement { text: "PIP"; value: 2.0 }
+            }
+            width: 80
+            onCurrentIndexChanged: {
+                console.debug(cbPictureMode.get(currentIndex).text + ", " + cbPictureMode.get(currentIndex).value)
+                _activeVehicle.setCameraProperty("pictureMode", cbPictureMode.get(currentIndex).value)
+            }
+        }
+    }
+
+    Row{
+        Label {
+            text: "Color palette: "
+            color: "white"
+        }
+
+        ComboBox {
+            currentIndex: -1
+            model: ListModel {
+                id: cbColorPalette
+                ListElement { text: "Hot metal"; value: 0 }
+                ListElement { text: "White hot"; value: 1 }
+                ListElement { text: "Rainbow"; value: 2 }
+            }
+            width: 80
+            onCurrentIndexChanged: {
+                console.debug(cbColorPalette.get(currentIndex).text + ", " + cbColorPalette.get(currentIndex).value)
+                _activeVehicle.setCameraProperty("colorPalette", cbColorPalette.get(currentIndex).value)
+            }
+        }
+    }
+
+    Row {
+        Label {
+            text: "Enable MSX: "
+            color: "white"
+        }
+
+        CheckBox{
+            id: enableMSX
+            onClicked: {
+                if (checkedState == Qt.Checked)
+                {
+                    console.debug("enableMSX, 1")
+                    _activeVehicle.setCameraProperty("enableMSX", 1)
+                }
+                else
+                {
+                    console.debug("enableMSX, 0")
+                    _activeVehicle.setCameraProperty("enableMSX", 0)
+                }
+            }
+        }
+    }
+
+    Row{
+        visible: enableMSX.checked
+        Label {
+            text: "MSX Strngth: "
+            color: "white"
+        }
+
+        Slider {
+            value: 50
+            stepSize: 1
+            maximumValue: 100
+            width: 80
+            onValueChanged: {
+                console.debug("MSX Strngth: " + value)
+                _activeVehicle.setCameraProperty("strengthMSX", value)
+            }
+        }
+    }
+
     Item { width: 1; height: ScreenTools.defaultFontPixelHeight; visible: _isCamera; }
     //-- Actual controller
     QGCLabel {

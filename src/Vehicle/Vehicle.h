@@ -612,6 +612,7 @@ public:
     Q_INVOKABLE void triggerCamera(void);
     Q_INVOKABLE void startVideoCapture(void);
     Q_INVOKABLE void stopVideoCapture(void);
+    Q_INVOKABLE void setCameraProperty(QString propertyName, float value);
     Q_INVOKABLE void sendPlan(QString planFile);
 
 #if 0
@@ -1123,6 +1124,10 @@ private:
     int     _defaultComponentId;
     bool    _active;
     bool    _offlineEditingVehicle; ///< This Vehicle is a "disconnected" vehicle for ui use while offline editing
+    float   _flirduoMSXEnabled = 1;
+    float   _flirduoMSXStrength = 50;
+    float   _flirduoColorPalette = 0;
+    float   _flirduoRotateImage = 0;
 
     MAV_AUTOPILOT       _firmwareType;
     MAV_TYPE            _vehicleType;
