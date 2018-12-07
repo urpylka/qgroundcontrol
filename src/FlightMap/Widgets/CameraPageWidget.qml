@@ -62,9 +62,8 @@ Column {
     }
 
     Row{
-        Label {
-            text: "Picture mode: "
-            color: "white"
+        QGCLabel {
+            text: qsTr("Picture mode: ")
         }
 
         ComboBox {
@@ -75,7 +74,7 @@ Column {
                 ListElement { text: "VIS"; value: 1.0 }
                 ListElement { text: "PIP"; value: 2.0 }
             }
-            width: 80
+            width: parent.width/2
             onCurrentIndexChanged: {
                 console.debug(cbPictureMode.get(currentIndex).text + ", " + cbPictureMode.get(currentIndex).value)
                 _activeVehicle.setCameraProperty("pictureMode", cbPictureMode.get(currentIndex).value)
@@ -84,9 +83,8 @@ Column {
     }
 
     Row{
-        Label {
+        QGCLabel {
             text: "Color palette: "
-            color: "white"
         }
 
         ComboBox {
@@ -97,7 +95,7 @@ Column {
                 ListElement { text: "White hot"; value: 1 }
                 ListElement { text: "Rainbow"; value: 2 }
             }
-            width: 80
+            width: parent.width/2
             onCurrentIndexChanged: {
                 console.debug(cbColorPalette.get(currentIndex).text + ", " + cbColorPalette.get(currentIndex).value)
                 _activeVehicle.setCameraProperty("colorPalette", cbColorPalette.get(currentIndex).value)
@@ -106,9 +104,8 @@ Column {
     }
 
     Row {
-        Label {
+        QGCLabel {
             text: "Enable MSX: "
-            color: "white"
         }
 
         CheckBox{
@@ -130,16 +127,15 @@ Column {
 
     Row{
         visible: enableMSX.checked
-        Label {
+        QGCLabel {
             text: "MSX Strngth: "
-            color: "white"
         }
 
         Slider {
             value: 50
             stepSize: 1
             maximumValue: 100
-            width: 80
+            width: parent.width/2
             onValueChanged: {
                 console.debug("MSX Strngth: " + value)
                 _activeVehicle.setCameraProperty("strengthMSX", value)
