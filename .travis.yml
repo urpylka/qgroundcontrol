@@ -251,6 +251,7 @@ deploy:
       - ${SHADOW_BUILD_DIR}/release/package/qgroundcontrol.*
       - ${SHADOW_BUILD_DIR}/release/package/QGroundControl.*
     skip_cleanup: true
+    draft: true
     on:
       tags: true
 #      condition: $CONFIG = installer
