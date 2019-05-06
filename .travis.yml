@@ -7,9 +7,6 @@ env:
     - JOBS=4
     - QT_FATAL_WARNINGS=1
     - SHADOW_BUILD_DIR=/tmp/shadow_build_dir
-    # ANDROID_STOREPASS
-    # disabled for our builds -sfalexrog, 03.04.2019
-    # - secure: RGovyUnMw3fp/bHZi058JvANT1rYmNqrsuSYew0cIgirO6YbMHr/rsjwCm1FTYpBl8s1zgr+u2b8ftYnfnCz2YT+Aip4NWrVYpVU0FEmfytGILrnUS0pjlt8m7fU9AKR1ElOSll7yw7e1kftynN39Q321etvwbLZcXon6zz0suE=
 
 matrix:
     fast_finish: true
@@ -147,6 +144,11 @@ before_script:
         ./tools/update_android_version.sh;
     fi
 
+  # decrypt keystore for android builds
+  - if [[ "${SPEC}" = "android-g++" && "${CONFIG}" = "installer" ]]; then
+        openssl enc -d -aes-256-cbc -in ${TRAVIS_BUILD_DIR}/android/coex_qgc.jks.enc -out ${TRAVIS_BUILD_DIR}/android/coex_qgc.jks -k ${ANDROID_STOREKEY};
+    fi
+
 script:
   # run qmake
   - mkdir ${SHADOW_BUILD_DIR} && cd ${SHADOW_BUILD_DIR}
@@ -183,12 +185,14 @@ after_success:
     else
         GOOGLE_PLAY_PKG=none;
     fi
-  - if [[ "${SPEC}" = "android-g++" && "${TRAVIS_PULL_REQUEST}" = "false" && "${GOOGLE_PLAY_PKG}" != "none" ]]; then
-        pip install --user --upgrade oauth2client &&
-        pip install --user google-api-python-client pyopenssl ndg-httpsclient pyasn1 &&
-        openssl aes-256-cbc -K $encrypted_25db6eb7c3fd_key -iv $encrypted_25db6eb7c3fd_iv -in android/Google_Play_Android_Developer-4432a3c4f5d1.json.enc -out android/Google_Play_Android_Developer-4432a3c4f5d1.json -d &&
-        ./tools/google_play_upload.py production ${GOOGLE_PLAY_PKG} ${SHADOW_BUILD_DIR}/release/package/QGroundControl.apk;
-    fi
+  # Do not deploy to Play Store
+  #  --sfalexrog, 06.05.2019
+  #- if [[ "${SPEC}" = "android-g++" && "${TRAVIS_PULL_REQUEST}" = "false" && "${GOOGLE_PLAY_PKG}" != "none" ]]; then
+  #      pip install --user --upgrade oauth2client &&
+  #      pip install --user google-api-python-client pyopenssl ndg-httpsclient pyasn1 &&
+  #      openssl aes-256-cbc -K $encrypted_25db6eb7c3fd_key -iv $encrypted_25db6eb7c3fd_iv -in android/Google_Play_Android_Developer-4432a3c4f5d1.json.enc -out android/Google_Play_Android_Developer-4432a3c4f5d1.json -d &&
+  #      ./tools/google_play_upload.py production ${GOOGLE_PLAY_PKG} ${SHADOW_BUILD_DIR}/release/package/QGroundControl.apk;
+  #  fi
 
 before_deploy:
   # create linux appimage
