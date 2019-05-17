@@ -106,7 +106,7 @@ deploy:
 # deploy tagged releases to Github releases
   - provider: GitHub
     auth_token:
-      secure: BUZTVw2hY0oBxjA+ziz6e7SoMoMJ9c2GIiEBcGKRWK/QK/FOWoFOcMOo2TBTTk58
+      secure: gBGC7x9zVDN+MLnKNFDJtBuNd5PGTjd20fScDEm0TORuBWzH8gdBU/cbYzpQBTQO
     artifact: qgcinstaller
     draft: true
     prerelease: true
