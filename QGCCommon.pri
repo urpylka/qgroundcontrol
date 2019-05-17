@@ -133,8 +133,8 @@ exists ($$PWD/.git) {
         message(QGroundControl version $${MAC_VERSION} build $${MAC_BUILD} describe $${GIT_VERSION})
     } else : WindowsBuild {
         # FIXME: Get proper version number from our branch/tag that won't contain strings
-        VERSION  =  3.4.9
-        message(QGroundControl $${GIT_VERSION})
+        VERSION  =  $$section(VERSION, ".", 0, 1)
+        message(QGroundControl version $${VERSION} git $${GIT_VERSION})
     } else {
         message(QGroundControl $${GIT_VERSION})
     }
