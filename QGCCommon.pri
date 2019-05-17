@@ -121,7 +121,7 @@ exists ($$PWD/.git) {
         GIT_VERSION = $${GIT_DESCRIBE}
     } else {
         # development version "Development branch:sha date"
-        GIT_VERSION = "Development $${GIT_BRANCH}:$${GIT_HASH} $${GIT_TIME}"
+        GIT_VERSION = "Development $${GIT_BRANCH}:$${GIT_HASH} $${GIT_TIME} ($${GIT_DESCRIBE})"
     }
 
     VERSION      = $$replace(GIT_DESCRIBE, "v", "")
@@ -131,6 +131,10 @@ exists ($$PWD/.git) {
         MAC_VERSION  = $$section(VERSION, ".", 0, 2)
         MAC_BUILD    = $$section(VERSION, ".", 3, 3)
         message(QGroundControl version $${MAC_VERSION} build $${MAC_BUILD} describe $${GIT_VERSION})
+    } else : WindowsBuild {
+        # FIXME: Get proper version number from our branch/tag that won't contain strings
+        VERSION  =  $$section(VERSION, ".", 0, 1)
+        message(QGroundControl version $${VERSION} git $${GIT_VERSION})
     } else {
         message(QGroundControl $${GIT_VERSION})
     }
