@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/qml"/>
+    <qresource prefix="/json"/>
+    <qresource prefix="/AutoPilotPlugins/PX4"/>
+    <qresource prefix="/FirmwarePlugin/ChargingStation">
+        <file>ChargingStationParameterFactMetaData.xml</file>
+    </qresource>
+</RCC>

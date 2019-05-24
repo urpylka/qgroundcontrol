@@ -21,6 +21,11 @@ public:
     bool setFlightMode(const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode) override;
     QString flightMode(uint8_t base_mode, uint32_t custom_mode) const override;
     const QVariantList& toolBarIndicators(const Vehicle* vehicle) override;
+    void addMetaDataToFact(QObject* parameterMetaData, Fact* fact, MAV_TYPE vehicleType) override;
+    FactMetaData* getMetaDataForFact(QObject* parameterMetaData, const QString& name, MAV_TYPE vehicleType) override;
+    QString internalParameterMetaDataFile(Vehicle* vehicle) override { Q_UNUSED(vehicle); return QString(":/FirmwarePlugin/ChargingStation/ChargingStationParameterFactMetaData.xml"); }
+    void getParameterMetaDataVersionInfo(const QString& metaDataFile, int& majorVersion, int& minorVersion) override;
+    QObject* loadParameterMetaData(const QString& metaDataFile) final;
 
 private:
     QVariantList _toolBarIndicatorList;

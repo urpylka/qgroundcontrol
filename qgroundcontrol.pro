@@ -1140,3 +1140,6 @@ contains (CONFIG, QGC_DISABLE_BUILD_SETUP) {
 #
 
 include(QGCInstaller.pri)
+
+RESOURCES += \
+    src/FirmwarePlugin/ChargingStation/ChargingStationResources.qrc

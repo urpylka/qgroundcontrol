@@ -1,3 +1,5 @@
+#include "PX4ParameterMetaData.h"
+
 #include "ChargingStationFirmwarePlugin.h"
 
 QString ChargingStationFirmwarePlugin::vehicleImageOpaque(const Vehicle* vehicle) const
@@ -74,4 +76,42 @@ const QVariantList& ChargingStationFirmwarePlugin::toolBarIndicators(const Vehic
         _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/GPSRTKIndicator.qml")));
     }
     return _toolBarIndicatorList;
+}
+
+FactMetaData* ChargingStationFirmwarePlugin::getMetaDataForFact(QObject* parameterMetaData, const QString& name, MAV_TYPE vehicleType)
+{
+    PX4ParameterMetaData* px4MetaData = qobject_cast<PX4ParameterMetaData*>(parameterMetaData);
+
+    if (px4MetaData) {
+        return px4MetaData->getMetaDataForFact(name, vehicleType);
+    } else {
+        qWarning() << "Internal error: pointer passed to PX4FirmwarePlugin::getMetaDataForFact not PX4ParameterMetaData";
+    }
+
+    return NULL;
+}
+
+void ChargingStationFirmwarePlugin::addMetaDataToFact(QObject* parameterMetaData, Fact* fact, MAV_TYPE vehicleType)
+{
+    PX4ParameterMetaData* px4MetaData = qobject_cast<PX4ParameterMetaData*>(parameterMetaData);
+
+    if (px4MetaData) {
+        px4MetaData->addMetaDataToFact(fact, vehicleType);
+    } else {
+        qWarning() << "Internal error: pointer passed to PX4FirmwarePlugin::addMetaDataToFact not PX4ParameterMetaData";
+    }
+}
+
+void ChargingStationFirmwarePlugin::getParameterMetaDataVersionInfo(const QString& metaDataFile, int& majorVersion, int& minorVersion)
+{
+    return PX4ParameterMetaData::getParameterMetaDataVersionInfo(metaDataFile, majorVersion, minorVersion);
+}
+
+QObject* ChargingStationFirmwarePlugin::loadParameterMetaData(const QString& metaDataFile)
+{
+    PX4ParameterMetaData* metaData = new PX4ParameterMetaData;
+    if (!metaDataFile.isEmpty()) {
+        metaData->loadParameterFactMetaDataFile(metaDataFile);
+    }
+    return metaData;
 }

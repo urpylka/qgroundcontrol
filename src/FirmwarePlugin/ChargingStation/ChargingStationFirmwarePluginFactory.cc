@@ -21,7 +21,8 @@ FirmwarePlugin* ChargingStationFirmwarePluginFactory::firmwarePluginForAutopilot
 {
     Q_UNUSED(autopilotType);
 
-    if (vehicleType == MAV_TYPE_CHARGING_STATION) {
+    // TODO: MAV_TYPE_QUADROTOR type is set by ParameterManager, it's not okay
+    if ((vehicleType == MAV_TYPE_CHARGING_STATION) || (vehicleType == MAV_TYPE_QUADROTOR)) {
         if (!_pluginInstance) {
             _pluginInstance = new ChargingStationFirmwarePlugin;
         }
