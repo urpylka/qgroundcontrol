@@ -528,6 +528,8 @@ QString Vehicle::firmwareTypeString(void) const
         return QStringLiteral("PX4 Pro");
     } else if (apmFirmware()) {
         return QStringLiteral("ArduPilot");
+    } else if (chargingStation()) {
+        return QStringLiteral("Charging Station");
     } else {
         return tr("MAVLink Generic");
     }
