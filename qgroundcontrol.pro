@@ -167,6 +167,18 @@ contains (CONFIG, QGC_DISABLE_PX4_PLUGIN_FACTORY) {
     CONFIG += PX4FirmwarePluginFactory
 }
 
+contains (CONFIG, QGC_DISABLE_CHARGING_STATION_PLUGIN) {
+    message("Disable Charging Station Plugin")
+} else {
+    CONFIG += ChargingStationFirmwarePlugin
+}
+
+contains (CONFIG, QGC_DISABLE_CHARGING_STATION_PLUGIN_FACTORY) {
+    message("Disable Charging Station Plugin Factory")
+} else {
+    CONFIG += ChargingStationFirmwarePluginFactory
+}
+
 # Bluetooth
 contains (DEFINES, QGC_DISABLE_BLUETOOTH) {
     message("Skipping support for Bluetooth (manual override from command line)")
@@ -1053,11 +1065,19 @@ PX4FirmwarePluginFactory {
 
 # Charging station plugin
 
-HEADERS += src/FirmwarePlugin/ChargingStation/ChargingStationFirmwarePlugin.h
-SOURCES += src/FirmwarePlugin/ChargingStation/ChargingStationFirmwarePlugin.cc
+ChargingStationFirmwarePlugin {
+    RESOURCES *= src/FirmwarePlugin/ChargingStation/ChargingStationResources.qrc
 
-HEADERS += src/FirmwarePlugin/ChargingStation/ChargingStationFirmwarePluginFactory.h
-SOURCES += src/FirmwarePlugin/ChargingStation/ChargingStationFirmwarePluginFactory.cc
+    HEADERS += src/FirmwarePlugin/ChargingStation/ChargingStationFirmwarePlugin.h
+
+    SOURCES += src/FirmwarePlugin/ChargingStation/ChargingStationFirmwarePlugin.cc
+}
+
+ChargingStationFirmwarePluginFactory {
+    HEADERS += src/FirmwarePlugin/ChargingStation/ChargingStationFirmwarePluginFactory.h
+
+    SOURCES += src/FirmwarePlugin/ChargingStation/ChargingStationFirmwarePluginFactory.cc
+}
 
 # Fact System code
 
@@ -1140,6 +1160,3 @@ contains (CONFIG, QGC_DISABLE_BUILD_SETUP) {
 #
 
 include(QGCInstaller.pri)
-
-RESOURCES += \
-    src/FirmwarePlugin/ChargingStation/ChargingStationResources.qrc
