@@ -61,6 +61,15 @@ Rectangle {
         }
     }
 
+    function showMetaDataUpdatePanel()
+    {
+        if (_fullParameterVehicleAvailable) {
+            panelLoader.setSource("MetaDataUpdate.qml")
+        } else {
+            panelLoader.setSourceComponent(disconnectedVehicleMetaDataUpdateComponent)
+        }
+    }
+
     function showJoystickPanel()
     {
         panelLoader.setSource("JoystickConfig.qml")
@@ -157,6 +166,27 @@ Rectangle {
     }
 
     Component {
+        id: disconnectedVehicleMetaDataUpdateComponent
+
+        Rectangle {
+            color: qgcPal.windowShade
+
+            QGCLabel {
+                anchors.margins:        _defaultTextWidth * 2
+                anchors.fill:           parent
+                verticalAlignment:      Text.AlignVCenter
+                horizontalAlignment:    Text.AlignHCenter
+                wrapMode:               Text.WordWrap
+                font.pointSize:         ScreenTools.largeFontPointSize
+                text:                   qsTr("Vehicle metadata update will be able after connecting your vehicle.") +
+                                        (ScreenTools.isMobile ? "" : " Click Firmware on the left to upgrade your vehicle.")
+
+                onLinkActivated: Qt.openUrlExternally(link)
+            }
+        }
+    }
+
+    Component {
         id: missingParametersVehicleSummaryComponent
 
         Rectangle {
@@ -241,6 +271,18 @@ Rectangle {
                 Layout.fillWidth:   true
 
                 onClicked: showSummaryPanel()
+            }
+
+            SubMenuButton {
+                id:                 metaDataUpdateButton
+                imageResource:      "/qmlimages/LogDownloadIcon"
+                setupIndicator:     false
+                exclusiveGroup:     setupButtonGroup
+                visible:            _corePlugin.options.showFirmwareUpgrade
+                text:               qsTr("Metadata")
+                Layout.fillWidth:   true
+
+                onClicked: showMetaDataUpdatePanel()
             }
 
             SubMenuButton {

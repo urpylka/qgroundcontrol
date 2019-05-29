@@ -1318,6 +1318,35 @@ void ParameterManager::cacheMetaDataFile(const QString& metaDataFile, MAV_AUTOPI
     }
 }
 
+const QString ParameterManager::updateMetaDataFile(const QString& metaDataFile)
+{
+    if (!_vehicle)
+        return tr("No active vehicle for the parameters manager!");
+
+    MAV_AUTOPILOT firmwareType = _vehicle->firmwareType();
+    FirmwarePlugin* plugin = qgcApp()->toolbox()->firmwarePluginManager()->firmwarePluginForAutopilot(firmwareType, MAV_TYPE_QUADROTOR);
+
+    int newMajorVersion = -1;
+    int newMinorVersion = -1;
+    plugin->getParameterMetaDataVersionInfo(metaDataFile, newMajorVersion, newMinorVersion);
+    qCDebug(ParameterManagerLog) << "ParameterManager::cacheMetaDataFile file:firmware:major;minor" << metaDataFile << firmwareType << newMajorVersion << newMinorVersion;
+
+    if ((newMajorVersion < 0) || (newMinorVersion < 0))
+        return tr("Invalid metadata file!");
+
+    // Find the cache hit closest to this new file
+    int cacheMajorVersion, cacheMinorVersion;
+    QString cacheHit = ParameterManager::parameterMetaDataFile(NULL, firmwareType, newMajorVersion, cacheMajorVersion, cacheMinorVersion);
+    qCDebug(ParameterManagerLog) << "ParameterManager::cacheMetaDataFile cacheHit file:firmware:major;minor" << cacheHit << cacheMajorVersion << cacheMinorVersion;
+
+    if ((newMajorVersion == cacheMajorVersion) && (newMinorVersion <= cacheMinorVersion))
+        return tr("New metadata version is older than a cached version!");
+
+    ParameterManager::cacheMetaDataFile(metaDataFile, firmwareType);
+
+    return QString();
+}
+
 /// Remap a parameter from one firmware version to another
 QString ParameterManager::_remapParamNameToVersion(const QString& paramName)
 {
