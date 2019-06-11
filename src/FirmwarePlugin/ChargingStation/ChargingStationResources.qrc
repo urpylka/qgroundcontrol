@@ -1,7 +1,9 @@
 <RCC>
-    <qresource prefix="/qml"/>
+    <qresource prefix="/qml">
+        <file alias="RTKGPSComponent.qml">../../AutoPilotPlugins/Generic/RTKGPSComponent.qml</file>
+    </qresource>
     <qresource prefix="/json"/>
-    <qresource prefix="/AutoPilotPlugins/PX4"/>
+    <qresource prefix="/AutoPilotPlugins/Generic"/>
     <qresource prefix="/FirmwarePlugin/ChargingStation">
         <file>ChargingStationParameterFactMetaData.xml</file>
     </qresource>

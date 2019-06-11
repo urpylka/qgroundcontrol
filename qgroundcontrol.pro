@@ -1068,9 +1068,17 @@ PX4FirmwarePluginFactory {
 ChargingStationFirmwarePlugin {
     RESOURCES *= src/FirmwarePlugin/ChargingStation/ChargingStationResources.qrc
 
-    HEADERS += src/FirmwarePlugin/ChargingStation/ChargingStationFirmwarePlugin.h
+    INCLUDEPATH += \
+        src/AutoPilotPlugins/Generic \
+        src/FirmwarePlugin/ChargingStation
 
-    SOURCES += src/FirmwarePlugin/ChargingStation/ChargingStationFirmwarePlugin.cc
+    HEADERS += \
+        src/FirmwarePlugin/ChargingStation/ChargingStationFirmwarePlugin.h \
+        src/AutoPilotPlugins/Generic/RTKGPSComponent.h
+
+    SOURCES += \
+        src/FirmwarePlugin/ChargingStation/ChargingStationFirmwarePlugin.cc \
+        src/AutoPilotPlugins/Generic/RTKGPSComponent.cc \
 }
 
 ChargingStationFirmwarePluginFactory {
