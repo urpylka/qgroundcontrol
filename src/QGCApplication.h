@@ -33,6 +33,7 @@
 #include "AudioOutput.h"
 #include "UASMessageHandler.h"
 #include "FactSystem.h"
+#include "GPSRTKFactGroup.h"
 
 #ifdef QGC_RTLAB_ENABLED
 #include "OpalLink.h"
@@ -86,10 +87,6 @@ public:
     /// @return true: Fake ui into showing mobile interface
     bool fakeMobile(void) { return _fakeMobile; }
 
-#ifdef QT_DEBUG
-    bool testHighDPI(void) { return _testHighDPI; }
-#endif
-
     // Still working on getting rid of this and using dependency injection instead for everything
     QGCToolbox* toolbox(void) { return _toolbox; }
 
@@ -98,6 +95,11 @@ public:
 
     /// Is Internet available?
     bool isInternetAvailable();
+
+    FactGroup* gpsRtkFactGroup(void)  { return _gpsRtkFactGroup; }
+
+    static QString cachedParameterMetaDataFile(void);
+    static QString cachedAirframeMetaDataFile(void);
 
 public slots:
     /// You can connect to this slot to show an information message box from a different thread.
@@ -156,6 +158,10 @@ private slots:
     void _currentVersionDownloadFinished(QString remoteFile, QString localFile);
     void _currentVersionDownloadError(QString errorMsg);
     bool _parseVersionText(const QString& versionString, int& majorVersion, int& minorVersion, int& buildVersion);
+    void _onGPSConnect();
+    void _onGPSDisconnect();
+    void _gpsSurveyInStatus(float duration, float accuracyMM,  double latitude, double longitude, float altitude, bool valid, bool active);
+    void _gpsNumSatellites(int numSatellites);
 
 private:
     QObject* _rootQmlObject(void);
@@ -179,12 +185,11 @@ private:
     int                 _minorVersion;
     int                 _buildVersion;
     QGCFileDownload*    _currentVersionDownload;
-
-#ifdef QT_DEBUG
-    bool _testHighDPI;  ///< true: double fonts sizes for simulating high dpi devices
-#endif
+    GPSRTKFactGroup*    _gpsRtkFactGroup;
 
     QGCToolbox* _toolbox;
+
+    QTranslator _QGCTranslator;
 
     bool _bluetoothAvailable;
 
