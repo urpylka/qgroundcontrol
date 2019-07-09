@@ -26,6 +26,7 @@ public:
     QString internalParameterMetaDataFile(Vehicle* vehicle) override { Q_UNUSED(vehicle); return QString(":/FirmwarePlugin/ChargingStation/ChargingStationParameterFactMetaData.xml"); }
     void getParameterMetaDataVersionInfo(const QString& metaDataFile, int& majorVersion, int& minorVersion) override;
     QObject* loadParameterMetaData(const QString& metaDataFile) final;
+    QString getVersionParam(void) override { return QString("SYS_PARAM_VER"); }
 
 private:
     QVariantList _toolBarIndicatorList;
