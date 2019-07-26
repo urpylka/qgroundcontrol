@@ -27,6 +27,8 @@ public:
     void getParameterMetaDataVersionInfo(const QString& metaDataFile, int& majorVersion, int& minorVersion) override;
     QObject* loadParameterMetaData(const QString& metaDataFile) final;
     QString getVersionParam(void) override { return QString("SYS_PARAM_VER"); }
+    QString brandImageIndoor(const Vehicle* vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/ChargingStation/BrandImage"); }
+    QString brandImageOutdoor(const Vehicle* vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/ChargingStation/BrandImage"); }
 
 private:
     QVariantList _toolBarIndicatorList;
