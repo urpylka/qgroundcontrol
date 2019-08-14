@@ -3268,61 +3268,37 @@ void Vehicle::stopVideoCapture(void)
 
 void Vehicle::setCameraProperty(QString propertyName, float value)
 {
-    if (propertyName=="pictureMode")
+    float propertyId = -1;
+
+    if (propertyName=="showThermalFrame")
+        propertyId = 1;
+    else if (propertyName=="showVisualFrame")
+        propertyId = 2;
+    else if (propertyName=="applySobel")
+        propertyId = 3;
+    else if (propertyName=="applyCanny")
+        propertyId = 4;
+    else if (propertyName=="applyColormap")
+        propertyId = 5;
+    else if (propertyName=="colormap")
+        propertyId = 6;
+    else if (propertyName=="showFPS")
+        propertyId = 7;
+    else if (propertyName=="showTemperature")
+        propertyId = 8;
+
+    if (propertyId > -1)
     {
         sendMavCommand(_defaultComponentId,
-                       MAV_CMD_DO_CONTROL_VIDEO,
+                       MAV_CMD_DO_DIGICAM_CONFIGURE,
                        true,                            // show errors
-                       100.0,                           // camera id
-                       value,                           // mode for HDMI
+                       0.0,                             // camera id
+                       propertyId,                      // property ID
+                       value,                           // value of it
                        0.0,
-                       value,                           // mode for recording do disk
                        0.0,
                        0.0,
                        0.0);
-
-    }
-    if (propertyName=="colorPalette")
-    {
-        sendMavCommand(_defaultComponentId,
-                       MAV_CMD_DO_DIGICAM_CONFIGURE,
-                       true,                            // show errors
-                       0.0,
-                       value,                           // color palette
-                       0.0,
-                       0.0,
-                       _flirduoRotateImage,             // rotate image 0 or 180 deg
-                       _flirduoMSXEnabled,              // enable-disable MSX
-                       _flirduoMSXStrength);            // MSX strength
-        _flirduoColorPalette = value;
-    }
-    if (propertyName=="enableMSX")
-    {
-        sendMavCommand(_defaultComponentId,
-                       MAV_CMD_DO_DIGICAM_CONFIGURE,
-                       true,                            // show errors
-                       0.0,
-                       _flirduoColorPalette,            // color palette
-                       0.0,
-                       0.0,
-                       _flirduoRotateImage,             // rotate image 0 or 180 deg
-                       value,                           // enable-disable MSX
-                       _flirduoMSXStrength);            // MSX strength
-        _flirduoMSXEnabled = value;
-    }
-    if (propertyName=="strengthMSX")
-    {
-        sendMavCommand(_defaultComponentId,
-                       MAV_CMD_DO_DIGICAM_CONFIGURE,
-                       true,                            // show errors
-                       0.0,
-                       _flirduoColorPalette,            // color palette
-                       0.0,
-                       0.0,
-                       _flirduoRotateImage,             // rotate image 0 or 180 deg
-                       _flirduoMSXEnabled,              // enable-disable MSX
-                       value);                          // MSX strength
-        _flirduoMSXStrength = value;
     }
 }
 

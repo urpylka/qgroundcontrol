@@ -61,87 +61,251 @@ Column {
         enabled:                    _activeVehicle
     }
 
-    Row{
+    Row {
         QGCLabel {
-            text: qsTr("Picture mode: ")
+            text: "Thermal frame: "
         }
 
-        ComboBox {
-            currentIndex: -1
-            model: ListModel {
-                id: cbPictureMode
-                ListElement { text: "IR"; value: 0.0 }
-                ListElement { text: "VIS"; value: 1.0 }
-                ListElement { text: "PIP"; value: 2.0 }
-            }
-            width: parent.width/2
-            onCurrentIndexChanged: {
-                console.debug(cbPictureMode.get(currentIndex).text + ", " + cbPictureMode.get(currentIndex).value)
-                _activeVehicle.setCameraProperty("pictureMode", cbPictureMode.get(currentIndex).value)
-            }
-        }
-    }
-
-    Row{
-        QGCLabel {
-            text: "Color palette: "
-        }
-
-        ComboBox {
-            currentIndex: -1
-            model: ListModel {
-                id: cbColorPalette
-                ListElement { text: "Hot metal"; value: 0 }
-                ListElement { text: "White hot"; value: 1 }
-                ListElement { text: "Rainbow"; value: 2 }
-            }
-            width: parent.width/2
-            onCurrentIndexChanged: {
-                console.debug(cbColorPalette.get(currentIndex).text + ", " + cbColorPalette.get(currentIndex).value)
-                _activeVehicle.setCameraProperty("colorPalette", cbColorPalette.get(currentIndex).value)
+        CheckBox{
+            id: showThermalFrame
+            onClicked: {
+                if (checkedState == Qt.Checked)
+                {
+                    console.debug("Thermal frame, 1")
+                    _activeVehicle.setCameraProperty("showThermalFrame", 1)
+                }
+                else
+                {
+                    console.debug("Thermal frame, 0")
+                    _activeVehicle.setCameraProperty("showThermalFrame", 0)
+                }
             }
         }
     }
 
     Row {
         QGCLabel {
-            text: "Enable MSX: "
+            text: "Visual frame: "
         }
 
         CheckBox{
-            id: enableMSX
+            id: showVisualFrame
             onClicked: {
                 if (checkedState == Qt.Checked)
                 {
-                    console.debug("enableMSX, 1")
-                    _activeVehicle.setCameraProperty("enableMSX", 1)
+                    console.debug("Visual frame, 1")
+                    _activeVehicle.setCameraProperty("showVisualFrame", 1)
                 }
                 else
                 {
-                    console.debug("enableMSX, 0")
-                    _activeVehicle.setCameraProperty("enableMSX", 0)
+                    console.debug("Visual frame, 0")
+                    _activeVehicle.setCameraProperty("showVisualFrame", 0)
+                }
+            }
+        }
+    }
+
+    Row {
+        QGCLabel {
+            text: "Apply Sobel ED: "
+        }
+
+        CheckBox{
+            id: applySobel
+            onClicked: {
+                if (checkedState == Qt.Checked)
+                {
+                    console.debug("Apply sobel, 1")
+                    _activeVehicle.setCameraProperty("applySobel", 1)
+                }
+                else
+                {
+                    console.debug("Apply sobel, 0")
+                    _activeVehicle.setCameraProperty("applySobel", 0)
+                }
+            }
+        }
+    }
+
+    Row {
+        QGCLabel {
+            text: "Apply Canny ED: "
+        }
+
+        CheckBox{
+            id: applyCanny
+            onClicked: {
+                if (checkedState == Qt.Checked)
+                {
+                    console.debug("Apply Canny, 1")
+                    _activeVehicle.setCameraProperty("applyCanny", 1)
+                }
+                else
+                {
+                    console.debug("Apply Canny, 0")
+                    _activeVehicle.setCameraProperty("applyCanny", 0)
+                }
+            }
+        }
+    }
+
+    Row {
+        QGCLabel {
+            text: "Apply colormap: "
+        }
+
+        CheckBox{
+            id: applyColormap
+            onClicked: {
+                if (checkedState == Qt.Checked)
+                {
+                    console.debug("Apply Colormap, 1")
+                    _activeVehicle.setCameraProperty("applyColormap", 1)
+                }
+                else
+                {
+                    console.debug("Apply Colormap, 0")
+                    _activeVehicle.setCameraProperty("applyColormap", 0)
                 }
             }
         }
     }
 
     Row{
-        visible: enableMSX.checked
+        visible: applyColormap.checked
         QGCLabel {
-            text: "MSX Strngth: "
+            text: qsTr("Colormap: ")
         }
 
-        Slider {
-            value: 50
-            stepSize: 1
-            maximumValue: 100
+        ComboBox {
+            currentIndex: -1
+            model: ListModel {
+                id: cbColormap
+                ListElement { text: "AUTUMN"; value: 0.0 }
+                ListElement { text: "BONE"; value: 1.0 }
+                ListElement { text: "JET"; value: 2.0 }
+                ListElement { text: "WINTER"; value: 3.0 }
+                ListElement { text: "RAINBOW"; value: 4.0 }
+                ListElement { text: "OCEAN"; value: 5.0 }
+                ListElement { text: "SUMMER"; value: 6.0 }
+                ListElement { text: "SPRING"; value: 7.0 }
+                ListElement { text: "COOL"; value: 8.0 }
+                ListElement { text: "HSV"; value: 9.0 }
+                ListElement { text: "PINK"; value: 10.0 }
+                ListElement { text: "HOT"; value: 11.0 }
+            }
             width: parent.width/2
-            onValueChanged: {
-                console.debug("MSX Strngth: " + value)
-                _activeVehicle.setCameraProperty("strengthMSX", value)
+            onCurrentIndexChanged: {
+                console.debug(cbColormap.get(currentIndex).text + ", " + cbColormap.get(currentIndex).value)
+                _activeVehicle.setCameraProperty("colormap", cbColormap.get(currentIndex).value)
             }
         }
     }
+
+    Row {
+        QGCLabel {
+            text: "Show FPS: "
+        }
+
+        CheckBox{
+            id: showFPS
+            onClicked: {
+                if (checkedState == Qt.Checked)
+                {
+                    console.debug("show FPS, 1")
+                    _activeVehicle.setCameraProperty("showFPS", 1)
+                }
+                else
+                {
+                    console.debug("show FPS, 0")
+                    _activeVehicle.setCameraProperty("showFPS", 0)
+                }
+            }
+        }
+    }
+
+    Row {
+        QGCLabel {
+            text: "Show temperature: "
+        }
+
+        CheckBox{
+            id: showTemperature
+            onClicked: {
+                if (checkedState == Qt.Checked)
+                {
+                    console.debug("show Temperature, 1")
+                    _activeVehicle.setCameraProperty("showTemperature", 1)
+                }
+                else
+                {
+                    console.debug("show Temperature, 0")
+                    _activeVehicle.setCameraProperty("showTemperature", 0)
+                }
+            }
+        }
+    }
+
+//    Row{
+//        QGCLabel {
+//            text: "Color palette: "
+//        }
+
+//        ComboBox {
+//            currentIndex: -1
+//            model: ListModel {
+//                id: cbColorPalette
+//                ListElement { text: "Hot metal"; value: 0 }
+//                ListElement { text: "White hot"; value: 1 }
+//                ListElement { text: "Rainbow"; value: 2 }
+//            }
+//            width: parent.width/2
+//            onCurrentIndexChanged: {
+//                console.debug(cbColorPalette.get(currentIndex).text + ", " + cbColorPalette.get(currentIndex).value)
+//                _activeVehicle.setCameraProperty("colorPalette", cbColorPalette.get(currentIndex).value)
+//            }
+//        }
+//    }
+
+//    Row {
+//        QGCLabel {
+//            text: "Enable MSX: "
+//        }
+
+//        CheckBox{
+//            id: enableMSX
+//            onClicked: {
+//                if (checkedState == Qt.Checked)
+//                {
+//                    console.debug("enableMSX, 1")
+//                    _activeVehicle.setCameraProperty("enableMSX", 1)
+//                }
+//                else
+//                {
+//                    console.debug("enableMSX, 0")
+//                    _activeVehicle.setCameraProperty("enableMSX", 0)
+//                }
+//            }
+//        }
+//    }
+
+//    Row{
+//        visible: enableMSX.checked
+//        QGCLabel {
+//            text: "MSX Strngth: "
+//        }
+
+//        Slider {
+//            value: 50
+//            stepSize: 1
+//            maximumValue: 100
+//            width: parent.width/2
+//            onValueChanged: {
+//                console.debug("MSX Strngth: " + value)
+//                _activeVehicle.setCameraProperty("strengthMSX", value)
+//            }
+//        }
+//    }
 
     Item { width: 1; height: ScreenTools.defaultFontPixelHeight; visible: _isCamera; }
     //-- Actual controller
