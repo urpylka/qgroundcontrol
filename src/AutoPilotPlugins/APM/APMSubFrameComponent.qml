@@ -24,10 +24,9 @@ SetupPage {
     id:                 subFramePage
     pageComponent:      subFramePageComponent
 
-    property var  _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
-    property bool _oldFW:   !(_activeVehicle.firmwareMajorVersion > 3 || _activeVehicle.firmwareMinorVersion > 5 || _activeVehicle.firmwarePatchVersion >= 2)
+    property bool _oldFW:   activeVehicle.versionCompare(3 ,5 ,2) < 0
 
-    APMAirframeComponentController { id: controller; factPanel: subFramePage.viewPanel }
+    APMAirframeComponentController { id: controller; }
 
     Component {
         id: subFramePageComponent
@@ -104,6 +103,12 @@ SetupPage {
                     resource: "qrc:///qmlimages/Frames/SimpleROV-4.png"
                     paramValue: 5
                 }
+
+                ListElement {
+                    name: "SimpleROV-5"
+                    resource: "qrc:///qmlimages/Frames/SimpleROV-5.png"
+                    paramValue: 6
+                }
             }
 
             Item {
@@ -115,7 +120,7 @@ SetupPage {
                     id: defaultsButton
                     anchors.left: parent.left
                     text:       qsTr("Load Vehicle Default Parameters")
-                    onClicked:  showDialog(selectParamFileDialogComponent, qsTr("Load Vehicle Default Parameters"), qgcView.showDialogDefaultWidth, StandardButton.Close)
+                    onClicked:  mainWindow.showComponentDialog(selectParamFileDialogComponent, qsTr("Load Vehicle Default Parameters"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
                 }
             }
 
@@ -198,8 +203,17 @@ SetupPage {
                     property var file:   _oldFW ? "Sub/bluerov2-3_5.params" : "Sub/bluerov2-3_5_2.params"
 
                     onClicked : {
-                        console.log(_oldFW)
-                        console.log(_activeVehicle.firmwarePatchVersion)
+                        controller.loadParameters(file)
+                        hideDialog()
+                    }
+                }
+
+                QGCButton {
+                    width:  parent.width
+                    text:   "Blue Robotics BlueROV2 Heavy"
+                    property var file:  "Sub/bluerov2-heavy-3_5_2.params"
+
+                    onClicked : {
                         controller.loadParameters(file)
                         hideDialog()
                     }

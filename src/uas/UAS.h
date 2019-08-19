@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *   (c) 2009-2018 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -11,8 +11,7 @@
 // UASInterface, UAS.h/cc are deprecated. All new functionality should go into Vehicle.h/cc
 //
 
-#ifndef _UAS_H_
-#define _UAS_H_
+#pragma once
 
 #include "UASInterface.h"
 #include <MAVLinkProtocol.h>
@@ -24,7 +23,6 @@
 #ifndef __mobile__
 #include "FileManager.h"
 #include "QGCHilLink.h"
-#include "QGCFlightGearLink.h"
 #include "QGCJSBSimLink.h"
 #include "QGCXPlaneLink.h"
 #endif
@@ -220,7 +218,6 @@ public slots:
 
     /** @brief Enable / disable HIL */
 #ifndef __mobile__
-    void enableHilFlightGear(bool enable, QString options, bool sensorHil, QObject * configuration);
     void enableHilJSBSim(bool enable, QString options);
     void enableHilXPlane(bool enable);
 
@@ -323,12 +320,8 @@ protected:
     quint64 lastSendTimeOpticalFlow; ///< Last HIL Optical Flow message sent
 
 private:
-    void _say(const QString& text, int severity = 6);
-
-private:
     Vehicle*                _vehicle;
     FirmwarePluginManager*  _firmwarePluginManager;
 };
 
 
-#endif // _UAS_H_

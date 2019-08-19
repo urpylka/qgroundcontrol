@@ -30,7 +30,7 @@ Q_DECLARE_LOGGING_CATEGORY(ParameterManagerDebugCacheFailureLog)
 class ParameterManager : public QObject
 {
     Q_OBJECT
-    
+
 public:
     /// @param uas Uas which this set of facts is associated with
     ParameterManager    (Vehicle* vehicle);
@@ -49,37 +49,40 @@ public:
 
     /// @return Location of parameter cache file
     static QString parameterCacheFile(int vehicleId, int componentId);
-    
+
+    QList<int> componentIds(void);
+
     /// Re-request the full set of parameters from the autopilot
     void refreshAllParameters(uint8_t componentID = MAV_COMP_ID_ALL);
 
     /// Request a refresh on the specific parameter
     void refreshParameter(int componentId, const QString& name);
-    
+
     /// Request a refresh on all parameters that begin with the specified prefix
     void refreshParametersPrefix(int componentId, const QString& namePrefix);
-    
-    void resetAllParametersToDefaults(void);
+
+    void resetAllParametersToDefaults();
+    void resetAllToVehicleConfiguration();
 
     /// Returns true if the specifed parameter exists
     ///     @param componentId Component id or FactSystem::defaultComponentId
     ///     @param name Parameter name
     bool parameterExists(int componentId, const QString& name);
 
-	/// Returns all parameter names
-	QStringList parameterNames(int componentId);
-    
+    /// Returns all parameter names
+    QStringList parameterNames(int componentId);
+
     /// Returns the specified Parameter. Returns a default empty fact is parameter does not exists. Also will pop
     /// a missing parameter error to user if parameter does not exist.
     ///     @param componentId Component id or FactSystem::defaultComponentId
     ///     @param name Parameter name
     Fact* getParameter(int componentId, const QString& name);
-    
-    const QMap<QString, QMap<QString, QStringList> >& getCategoryMap(void);
-    
+
+    const QMap<QString, QMap<QString, QStringList> >& getDefaultComponentCategoryMap(void);
+
     /// Returns error messages from loading
     QString readParametersFromStream(QTextStream& stream);
-    
+
     void writeParametersToStream(QTextStream &stream);
 
     /// Returns the version number for the parameter set, -1 if not known
@@ -114,11 +117,11 @@ signals:
     void parametersReadyChanged(bool parametersReady);
     void missingParametersChanged(bool missingParameters);
     void loadProgressChanged(float value);
-    
+
 protected:
     Vehicle*            _vehicle;
     MAVLinkProtocol*    _mavlink;
-    
+
     void _parameterUpdate(int vehicleId, int componentId, QString parameterName, int parameterCount, int parameterId, int mavType, QVariant value);
     void _valueUpdated(const QVariant& value);
     void _waitingParamTimeout(void);
@@ -126,21 +129,23 @@ protected:
     void _initialRequestTimeout(void);
 
 private:
-    static QVariant _stringToTypedVariant(const QString& string, FactMetaData::ValueType_t type, bool failOk = false);
-    int _actualComponentId(int componentId);
-    void _setupCategoryMap(void);
-    void _readParameterRaw(int componentId, const QString& paramName, int paramIndex);
-    void _writeParameterRaw(int componentId, const QString& paramName, const QVariant& value);
-    void _writeLocalParamCache(int vehicleId, int componentId);
-    void _tryCacheHashLoad(int vehicleId, int componentId, QVariant hash_value);
-    void _loadMetaData(void);
-    void _clearMetaData(void);
-    void _addMetaDataToDefaultComponent(void);
+    static QVariant         _stringToTypedVariant(const QString& string, FactMetaData::ValueType_t type, bool failOk = false);
+    static FirmwarePlugin*  _anyVehicleTypeFirmwarePlugin(MAV_AUTOPILOT firmwareType);
+
+    int     _actualComponentId(int componentId);
+    void    _setupDefaultComponentCategoryMap(void);
+    void    _readParameterRaw(int componentId, const QString& paramName, int paramIndex);
+    void    _writeParameterRaw(int componentId, const QString& paramName, const QVariant& value);
+    void    _writeLocalParamCache(int vehicleId, int componentId);
+    void    _tryCacheHashLoad(int vehicleId, int componentId, QVariant hash_value);
+    void    _loadMetaData(void);
+    void    _clearMetaData(void);
+    void    _addMetaDataToDefaultComponent(void);
     QString _remapParamNameToVersion(const QString& paramName);
-    void _loadOfflineEditingParams(void);
-    QString _logVehiclePrefix(int componentId = -1);
-    void _setLoadProgress(double loadProgress);
-    bool _fillIndexBatchQueue(bool waitingParamTimeout);
+    void    _loadOfflineEditingParams(void);
+    QString _logVehiclePrefix(int componentId);
+    void    _setLoadProgress(double loadProgress);
+    bool    _fillIndexBatchQueue(bool waitingParamTimeout);
 
     MAV_PARAM_TYPE _factTypeToMavType(FactMetaData::ValueType_t factType);
     FactMetaData::ValueType_t _mavTypeToFactType(MAV_PARAM_TYPE mavType);
@@ -151,8 +156,8 @@ private:
     QMap<int, QVariantMap>            _mapParameterName2Variant;
 
     // Category map of default component parameters
-    QMap<QString /* category */, QMap<QString /* group */, QStringList /* parameter names */> > _categoryMap;
-    
+    QMap<QString /* category */, QMap<QString /* group */, QStringList /* parameter names */> > _defaultComponentCategoryMap;
+
     double      _loadProgress;                  ///< Parameter load progess, [0.0,1.0]
     bool        _parametersReady;               ///< true: parameter load complete
     bool        _missingParameters;             ///< true: parameter missing from initial load
@@ -193,13 +198,13 @@ private:
     QMap<int, QList<int> >          _failedReadParamIndexMap;   ///< Key: Component id, Value: failed parameter index
 
     int _totalParamCount;   ///< Number of parameters across all components
-    
+
     QTimer _initialRequestTimeoutTimer;
     QTimer _waitingParamTimeoutTimer;
-    
+
     QMutex _dataMutex;
-    
-    static Fact _defaultFact;   ///< Used to return default fact, when parameter not found
+
+    Fact _defaultFact;   ///< Used to return default fact, when parameter not found
 
     static const char* _cachedMetaDataFilePrefix;
     static const char* _jsonParametersKey;

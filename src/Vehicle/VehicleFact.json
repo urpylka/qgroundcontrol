@@ -64,14 +64,14 @@
 },
 {
     "name":             "altitudeRelative",
-    "shortDescription": "Altitude-rel",
+    "shortDescription": "Alt (Rel)",
     "type":             "double",
     "decimalPlaces":    1,
     "units":            "m"
 },
 {
     "name":             "altitudeAMSL",
-    "shortDescription": "Altitude",
+    "shortDescription": "Alt (AMSL)",
     "type":             "double",
     "decimalPlaces":    1,
     "units":            "m"
@@ -91,6 +91,20 @@
     "units":            "m"
 },
 {
+    "name":             "headingToHome",
+    "shortDescription": "Heading to Home",
+    "type":             "double",
+    "decimalPlaces":    0,
+    "units":            "deg"
+},
+{
+    "name":             "distanceToGCS",
+    "shortDescription": "Distance to GCS",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "m"
+},
+{
     "name":             "flightTime",
     "shortDescription": "Flight Time",
     "type":             "elapsedSeconds",
@@ -100,5 +114,11 @@
     "name":             "hobbs",
     "shortDescription": "Hobbs Meter",
     "type":             "string"
+},
+{
+    "name":             "throttlePct",
+    "shortDescription": "Throttle %",
+    "type":             "uint16",
+    "units":            "%"
 }
 ]

@@ -46,27 +46,41 @@ Item {
     property real mediumFontPointSize:      10
     property real largeFontPointSize:       10
 
-    property real availableHeight:          0
     property real toolbarHeight:            0
 
     readonly property real smallFontPointRatio:      0.75
     readonly property real mediumFontPointRatio:     1.25
     readonly property real largeFontPointRatio:      1.5
 
-    property real realPixelDensity:  QGroundControl.corePlugin.options.devicePixelDensity != 0 ? QGroundControl.corePlugin.options.devicePixelDensity : Screen.pixelDensity
-    property real realPixelRatio:    isiOS ? 1 : (QGroundControl.corePlugin.options.devicePixelRatio   != 0 ? QGroundControl.corePlugin.options.devicePixelRatio   : Screen.devicePixelRatio)
+    property real realPixelDensity: {
+        //-- If a plugin defines it, just use what it tells us
+        if(QGroundControl.corePlugin.options.devicePixelDensity != 0) {
+            return QGroundControl.corePlugin.options.devicePixelDensity
+        }
+        //-- Android is rather unreliable
+        if(isAndroid) {
+            // Lets assume it's unlikely you have a tablet over 300mm wide
+            if((Screen.width / Screen.pixelDensity) > 300) {
+                return Screen.pixelDensity * 2
+            }
+        }
+        //-- Let's use what the system tells us
+        return Screen.pixelDensity
+    }
 
-    property bool isAndroid:        ScreenToolsController.isAndroid
-    property bool isiOS:            ScreenToolsController.isiOS
-    property bool isMobile:         ScreenToolsController.isMobile
-    property bool isWindows:        ScreenToolsController.isWindows
-    property bool isDebug:          ScreenToolsController.isDebug
-    property bool isTinyScreen:     (Screen.width / realPixelDensity) < 120 // 120mm
-    property bool isShortScreen:    ScreenToolsController.isMobile && ((Screen.height / Screen.width) < 0.6) // Nexus 7 for example
-    property bool isHugeScreen:     Screen.width >= 1920*2
+    property bool isAndroid:                        ScreenToolsController.isAndroid
+    property bool isiOS:                            ScreenToolsController.isiOS
+    property bool isMobile:                         ScreenToolsController.isMobile
+    property bool isWindows:                        ScreenToolsController.isWindows
+    property bool isDebug:                          ScreenToolsController.isDebug
+    property bool isMac:                            ScreenToolsController.isMacOS
+    property bool isTinyScreen:                     (Screen.width / realPixelDensity) < 120 // 120mm
+    property bool isShortScreen:                    ScreenToolsController.isMobile && ((Screen.height / Screen.width) < 0.6) // Nexus 7 for example
+    property bool isHugeScreen:                     (Screen.width / realPixelDensity) >= (23.5 * 25.4) // 27" monitor
+    property bool isSerialAvailable:                ScreenToolsController.isSerialAvailable
 
-    readonly property real minTouchMillimeters: 10      ///< Minimum touch size in millimeters
-    property real minTouchPixels:               0       ///< Minimum touch size in pixels
+    readonly property real minTouchMillimeters:     10      ///< Minimum touch size in millimeters
+    property real minTouchPixels:                   0       ///< Minimum touch size in pixels
 
     // The implicit heights/widths for our custom control set
     property real implicitButtonWidth:              Math.round(defaultFontPixelWidth *  (isMobile ? 7.0 : 5.0))
@@ -77,11 +91,12 @@ Item {
     property real implicitComboBoxHeight:           Math.round(defaultFontPixelHeight * (isMobile ? 2.0 : 1.6))
     property real implicitComboBoxWidth:            Math.round(defaultFontPixelWidth *  (isMobile ? 7.0 : 5.0))
     property real implicitSliderHeight:             isMobile ? Math.max(defaultFontPixelHeight, minTouchPixels) : defaultFontPixelHeight
-    property real checkBoxIndicatorSize:            Math.round(defaultFontPixelHeight * (isMobile ? 1.5 : 1.0))
+    // It's not possible to centralize an even number of pixels, checkBoxIndicatorSize should be an odd number to allow centralization
+    property real checkBoxIndicatorSize:            2 * Math.floor(defaultFontPixelHeight * (isMobile ? 1.5 : 1.0) / 2) + 1
     property real radioButtonIndicatorSize:         checkBoxIndicatorSize
 
-    readonly property string normalFontFamily:      "opensans"
-    readonly property string demiboldFontFamily:    "opensans-demibold"
+    readonly property string normalFontFamily:      ScreenToolsController.normalFontFamily
+    readonly property string demiboldFontFamily:    ScreenToolsController.boldFontFamily
     readonly property string fixedFontFamily:       ScreenToolsController.fixedFontFamily
     /* This mostly works but for some reason, reflowWidths() in SetupView doesn't change size.
        I've disabled (in release builds) until I figure out why. Changes require a restart for now.
@@ -95,10 +110,6 @@ Item {
     }
 
     onRealPixelDensityChanged: {
-        _setBasePointSize(defaultFontPointSize)
-    }
-
-    onRealPixelRatioChanged: {
         _setBasePointSize(defaultFontPointSize)
     }
 
@@ -125,7 +136,7 @@ Item {
         smallFontPointSize      = defaultFontPointSize  * _screenTools.smallFontPointRatio
         mediumFontPointSize     = defaultFontPointSize  * _screenTools.mediumFontPointRatio
         largeFontPointSize      = defaultFontPointSize  * _screenTools.largeFontPointRatio
-        minTouchPixels          = Math.round(minTouchMillimeters * realPixelDensity * realPixelRatio)
+        minTouchPixels          = Math.round(minTouchMillimeters * realPixelDensity)
         if (minTouchPixels / Screen.height > 0.15) {
             // If using physical sizing takes up too much of the vertical real estate fall back to font based sizing
             minTouchPixels      = defaultFontPixelHeight * 3
@@ -170,7 +181,9 @@ Item {
                 } else {
                     baseSize = _defaultFont.font.pointSize;
                 }
+                _appFontPointSizeFact._setIgnoreQGCRebootRequired(true)
                 _appFontPointSizeFact.value = baseSize
+                _appFontPointSizeFact._setIgnoreQGCRebootRequired(false)
                 //-- Release build doesn't get signal
                 if(!ScreenToolsController.isDebug)
                     _screenTools._setBasePointSize(baseSize);

@@ -10,6 +10,15 @@ int JoystickAndroid::ACTION_DOWN;
 int JoystickAndroid::ACTION_UP;
 QMutex JoystickAndroid::m_mutex;
 
+static void clear_jni_exception()
+{
+    QAndroidJniEnvironment jniEnv;
+    if (jniEnv->ExceptionCheck()) {
+        jniEnv->ExceptionDescribe();
+        jniEnv->ExceptionClear();
+    }
+}
+
 JoystickAndroid::JoystickAndroid(const QString& name, int axisCount, int buttonCount, int id, MultiVehicleManager* multiVehicleManager)
     : Joystick(name,axisCount,buttonCount,0,multiVehicleManager)
     , deviceId(id)
@@ -30,25 +39,32 @@ JoystickAndroid::JoystickAndroid(const QString& name, int axisCount, int buttonC
     btnValue = new bool[_buttonCount];
     btnCode = new int[_buttonCount];
     int c = 0;
-    for (i=0;i<_androidBtnListCount;i++)
+    for (i = 0; i < _androidBtnListCount; i++) {
         if (supportedButtons[i]) {
             btnValue[c] = false;
             btnCode[c] = _androidBtnList[i];
             c++;
         }
+    }
 
     env->ReleaseBooleanArrayElements(jSupportedButtons, supportedButtons, 0);
 
-    //set axis mapping (number->code)
+    // set axis mapping (number->code)
     axisValue = new int[_axisCount];
     axisCode = new int[_axisCount];
     QAndroidJniObject rangeListNative = inputDevice.callObjectMethod("getMotionRanges", "()Ljava/util/List;");
-    for (i=0;i<_axisCount;i++) {
+    for (i = 0; i < _axisCount; i++) {
         QAndroidJniObject range = rangeListNative.callObjectMethod("get", "(I)Ljava/lang/Object;",i);
         axisCode[i] = range.callMethod<jint>("getAxis");
+        // Don't allow two axis with the same code
+        for (int j = 0; j < i; j++) {
+            if (axisCode[i] == axisCode[j]) {
+                axisCode[i] = -1;
+                break;
+            }
+        }
         axisValue[i] = 0;
     }
-
 
     qCDebug(JoystickLog) << "axis:" <<_axisCount << "buttons:" <<_buttonCount;
     QtAndroidPrivate::registerGenericMotionEventListener(this);
@@ -67,10 +83,7 @@ JoystickAndroid::~JoystickAndroid() {
 
 
 QMap<QString, Joystick*> JoystickAndroid::discover(MultiVehicleManager* _multiVehicleManager) {
-    bool joystickFound = false;
     static QMap<QString, Joystick*> ret;
-
-    _initStatic(); //it's enough to run it once, should be in a static constructor
 
     QMutexLocker lock(&m_mutex);
 
@@ -83,27 +96,29 @@ QMap<QString, Joystick*> JoystickAndroid::discover(MultiVehicleManager* _multiVe
     int SOURCE_GAMEPAD = QAndroidJniObject::getStaticField<jint>("android/view/InputDevice", "SOURCE_GAMEPAD");
     int SOURCE_JOYSTICK = QAndroidJniObject::getStaticField<jint>("android/view/InputDevice", "SOURCE_JOYSTICK");
 
+    QList<QString> names;
+
     for (int i = 0; i < sz; ++i) {
         QAndroidJniObject inputDevice = QAndroidJniObject::callStaticObjectMethod("android/view/InputDevice", "getDevice", "(I)Landroid/view/InputDevice;", buff[i]);
         int sources = inputDevice.callMethod<jint>("getSources", "()I");
         if (((sources & SOURCE_GAMEPAD) != SOURCE_GAMEPAD) //check if the input device is interesting to us
                 && ((sources & SOURCE_JOYSTICK) != SOURCE_JOYSTICK)) continue;
 
-        //get id and name
+        // get id and name
         QString id = inputDevice.callObjectMethod("getDescriptor", "()Ljava/lang/String;").toString();
         QString name = inputDevice.callObjectMethod("getName", "()Ljava/lang/String;").toString();
 
+        names.push_back(name);
 
-        if (joystickFound) { //skipping {
-            qWarning() << "Skipping joystick:" << name;
+        if (ret.contains(name)) {
             continue;
         }
 
-        //get number of axis
+        // get number of axis
         QAndroidJniObject rangeListNative = inputDevice.callObjectMethod("getMotionRanges", "()Ljava/util/List;");
         int axisCount = rangeListNative.callMethod<jint>("size");
 
-        //get number of buttons
+        // get number of buttons
         jintArray a = env->NewIntArray(_androidBtnListCount);
         env->SetIntArrayRegion(a,0,_androidBtnListCount,_androidBtnList);
         QAndroidJniObject btns = inputDevice.callObjectMethod("hasKeys", "([I)[Z", a);
@@ -117,11 +132,17 @@ QMap<QString, Joystick*> JoystickAndroid::discover(MultiVehicleManager* _multiVe
         qCDebug(JoystickLog) << "\t" << name << "id:" << buff[i] << "axes:" << axisCount << "buttons:" << buttonCount;
 
         ret[name] = new JoystickAndroid(name, axisCount, buttonCount, buff[i], _multiVehicleManager);
-        joystickFound = true;
+    }
+
+    for (auto i = ret.begin(); i != ret.end();) {
+        if (!names.contains(i.key())) {
+            i = ret.erase(i);
+        } else {
+            i++;
+        }
     }
 
     env->ReleaseIntArrayElements(jarr, buff, 0);
-
 
     return ret;
 }
@@ -136,10 +157,10 @@ bool JoystickAndroid::handleKeyEvent(jobject event) {
     const int action = ev.callMethod<jint>("getAction", "()I");
     const int keyCode = ev.callMethod<jint>("getKeyCode", "()I");
 
-    for (int i=0;i<_buttonCount;i++) {
-        if (btnCode[i]==keyCode) {
-            if (action==ACTION_DOWN) btnValue[i] = true;
-            if (action==ACTION_UP) btnValue[i] = false;
+    for (int i = 0; i <_buttonCount; i++) {
+        if (btnCode[i] == keyCode) {
+            if (action == ACTION_DOWN) btnValue[i] = true;
+            if (action == ACTION_UP)   btnValue[i] = false;
             return true;
         }
     }
@@ -152,13 +173,12 @@ bool JoystickAndroid::handleGenericMotionEvent(jobject event) {
     const int _deviceId = ev.callMethod<jint>("getDeviceId", "()I");
     if (_deviceId!=deviceId) return false;
  
-    for (int i=0;i<_axisCount;i++) {
+    for (int i = 0; i <_axisCount; i++) {
         const float v = ev.callMethod<jfloat>("getAxisValue", "(I)F",axisCode[i]);
-        axisValue[i] = (int)(v*32767.f);
+        axisValue[i] = static_cast<int>((v*32767.f));
     }
     return true;
 }
-
 
 bool JoystickAndroid::_open(void) {
     return true;
@@ -187,8 +207,12 @@ uint8_t JoystickAndroid::_getHat(int hat,int i) {
     return 0;
 }
 
+static JoystickManager *_manager = nullptr;
+
 //helper method
-void JoystickAndroid::_initStatic() {
+bool JoystickAndroid::init(JoystickManager *manager) {
+    _manager = manager;
+
     //this gets list of all possible buttons - this is needed to check how many buttons our gamepad supports
     //instead of the whole logic below we could have just a simple array of hardcoded int values as these 'should' not change
 
@@ -199,7 +223,8 @@ void JoystickAndroid::_initStatic() {
     //int *JoystickAndroid::
     _androidBtnList = ret;
 
-    for (i=1;i<=16;i++) {
+    clear_jni_exception();
+    for (i = 1; i <= 16; i++) {
         QString name = "KEYCODE_BUTTON_"+QString::number(i);
         ret[i-1] = QAndroidJniObject::getStaticField<jint>("android/view/KeyEvent", name.toStdString().c_str());
     }
@@ -223,5 +248,47 @@ void JoystickAndroid::_initStatic() {
 
     ACTION_DOWN = QAndroidJniObject::getStaticField<jint>("android/view/KeyEvent", "ACTION_DOWN");
     ACTION_UP = QAndroidJniObject::getStaticField<jint>("android/view/KeyEvent", "ACTION_UP");
+
+    return true;
 }
 
+static const char kJniClassName[] {"org/mavlink/qgroundcontrol/QGCActivity"};
+
+static void jniUpdateAvailableJoysticks(JNIEnv *envA, jobject thizA)
+{
+    Q_UNUSED(envA);
+    Q_UNUSED(thizA);
+
+    if (_manager != nullptr) {
+        qCDebug(JoystickLog) << "jniUpdateAvailableJoysticks triggered";
+        emit _manager->updateAvailableJoysticksSignal();
+    }
+}
+
+void JoystickAndroid::setNativeMethods()
+{
+    qCDebug(JoystickLog) << "Registering Native Functions";
+
+    //  REGISTER THE C++ FUNCTION WITH JNI
+    JNINativeMethod javaMethods[] {
+        {"nativeUpdateAvailableJoysticks", "()V", reinterpret_cast<void *>(jniUpdateAvailableJoysticks)}
+    };
+
+    clear_jni_exception();
+    QAndroidJniEnvironment jniEnv;
+    jclass objectClass = jniEnv->FindClass(kJniClassName);
+    if(!objectClass) {
+        clear_jni_exception();
+        qWarning() << "Couldn't find class:" << kJniClassName;
+        return;
+    }
+
+    jint val = jniEnv->RegisterNatives(objectClass, javaMethods, sizeof(javaMethods) / sizeof(javaMethods[0]));
+
+    if (val < 0) {
+        qWarning() << "Error registering methods: " << val;
+    } else {
+        qCDebug(JoystickLog) << "Native Functions Registered";
+    }
+    clear_jni_exception();
+}

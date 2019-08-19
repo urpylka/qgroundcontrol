@@ -37,7 +37,7 @@ Column {
     }
 
     function showSettings() {
-        qgcView.showDialog(propertyPicker, qsTr("Value Widget Setup"), qgcView.showDialogDefaultWidth, StandardButton.Ok)
+        mainWindow.showComponentDialog(propertyPicker, qsTr("Value Widget Setup"), mainWindow.showDialogDefaultWidth, StandardButton.Ok)
     }
 
     function listContains(list, value) {
@@ -222,6 +222,7 @@ Column {
 
                     RowLayout {
                         spacing: _margins
+                        visible: factGroup.getFact(modelData).shortDescription !== ""
 
                         property string propertyName: factGroupName + "." + modelData
 

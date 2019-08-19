@@ -18,9 +18,7 @@ import QGroundControl.Controls      1.0
 import QGroundControl.Controllers   1.0
 import QGroundControl.ScreenTools   1.0
 
-QGCView {
-    id:         qgcView
-    viewPanel:  panel
+Item {
 
     property var    _activeVehicle: QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable ? QGroundControl.multiVehicleManager.activeVehicle : null
     property real   _margins:       ScreenTools.defaultFontPixelHeight
@@ -34,14 +32,12 @@ QGCView {
         "So make sure to test your changes thoroughly before using them in flight.</p>" +
         "<p>Click 'Load Custom Qml file' to provide your custom qml file.</p>" +
         "<p>Click 'Reset' to reset to none.</p>" +
-        "<p>Example usage: <a href='https://dev.qgroundcontrol.com/en/tools/custom_command_widget.html'>https://dev.qgroundcontrol.com/en/tools/custom_command_widget.html</a></p>"
+        "<p>Example usage: <a href='https://docs.qgroundcontrol.com/en/app_menu/custom_command_widget.html'>https://docs.qgroundcontrol.com/en/app_menu/custom_command_widget.html</a></p>"
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
     CustomCommandWidgetController {
         id:         controller
-        factPanel:  panel
-
         onCustomQmlFileChanged: _updateLoader()
     }
 
@@ -54,7 +50,7 @@ QGCView {
         loader.visible = false
         textOutput.text = _noVehicleText
         if (_activeVehicle) {
-            if (controller.customQmlFile == "") {
+            if (controller.customQmlFile === "") {
                 textOutput.text = _assignQmlFile
             } else {
                 loader.source = controller.customQmlFile
@@ -62,8 +58,7 @@ QGCView {
         }
     }
 
-    QGCViewPanel {
-        id:             panel
+    Item {
         anchors.fill:   parent
 
         Rectangle {

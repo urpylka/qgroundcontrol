@@ -24,6 +24,8 @@ QGCPalette::Theme QGCPalette::_theme = QGCPalette::Dark;
 
 QMap<int, QMap<int, QMap<QString, QColor>>> QGCPalette::_colorInfoMap;
 
+QStringList QGCPalette::_colors;
+
 QGCPalette::QGCPalette(QObject* parent) :
     QObject(parent),
     _colorGroupEnabled(true)
@@ -44,7 +46,7 @@ QGCPalette::~QGCPalette()
     }
 }
 
-void QGCPalette::_buildMap(void)
+void QGCPalette::_buildMap()
 {
     //                                      Light                 Dark
     //                                      Disabled   Enabled    Disabled   Enabled
@@ -59,8 +61,8 @@ void QGCPalette::_buildMap(void)
     DECLARE_QGC_COLOR(buttonHighlightText,  "#2c2c2c", "#ffffff", "#2c2c2c", "#000000")
     DECLARE_QGC_COLOR(primaryButton,        "#585858", "#8cb3be", "#585858", "#8cb3be")
     DECLARE_QGC_COLOR(primaryButtonText,    "#2c2c2c", "#000000", "#2c2c2c", "#000000")
-    DECLARE_QGC_COLOR(textField,            "#ffffff", "#ffffff", "#585858", "#ffffff")
-    DECLARE_QGC_COLOR(textFieldText,        "#808080", "#000000", "#bfbfbf", "#000000")
+    DECLARE_QGC_COLOR(textField,            "#ffffff", "#ffffff", "#707070", "#ffffff")
+    DECLARE_QGC_COLOR(textFieldText,        "#808080", "#000000", "#000000", "#000000")
     DECLARE_QGC_COLOR(mapButton,            "#585858", "#000000", "#585858", "#000000")
     DECLARE_QGC_COLOR(mapButtonHighlight,   "#585858", "#be781c", "#585858", "#be781c")
     DECLARE_QGC_COLOR(mapIndicator,         "#585858", "#be781c", "#585858", "#be781c")
@@ -73,13 +75,14 @@ void QGCPalette::_buildMap(void)
     DECLARE_QGC_COLOR(alertBackground,      "#eecc44", "#eecc44", "#eecc44", "#eecc44")
     DECLARE_QGC_COLOR(alertBorder,          "#808080", "#808080", "#808080", "#808080")
     DECLARE_QGC_COLOR(alertText,            "#000000", "#000000", "#000000", "#000000")
-    DECLARE_QGC_COLOR(missionItemEditor,    "#585858", "#8cb3be", "#585858", "#8cb3be")
+    DECLARE_QGC_COLOR(missionItemEditor,    "#585858", "#dbfef8", "#585858", "#585d83")
+    DECLARE_QGC_COLOR(hoverColor,           "#585858", "#dbfef8", "#585858", "#585d83")
 
     // Colors are not affecting by theming
     DECLARE_QGC_COLOR(mapWidgetBorderLight, "#ffffff", "#ffffff", "#ffffff", "#ffffff")
     DECLARE_QGC_COLOR(mapWidgetBorderDark,  "#000000", "#000000", "#000000", "#000000")
     DECLARE_QGC_COLOR(brandingPurple,       "#4A2C6D", "#4A2C6D", "#4A2C6D", "#4A2C6D")
-    DECLARE_QGC_COLOR(brandingBlue,         "#48D6FF", "#48D6FF", "#48D6FF", "#48D6FF")
+    DECLARE_QGC_COLOR(brandingBlue,         "#48D6FF", "#6045c5", "#48D6FF", "#6045c5")
 }
 
 void QGCPalette::setColorGroupEnabled(bool enabled)

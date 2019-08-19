@@ -11,19 +11,29 @@
 #include "QGCCorePlugin.h"
 #include "QGCApplication.h"
 
+#include <QQmlEngine>
+#include <QtQml>
+
+static const char* kJsonFile = ":/json/%1.SettingsGroup.json";
+
 SettingsGroup::SettingsGroup(const QString& name, const QString& settingsGroup, QObject* parent)
     : QObject       (parent)
+    , _visible      (qgcApp()->toolbox()->corePlugin()->overrideSettingsGroupVisibility(name))
     , _name         (name)
     , _settingsGroup(settingsGroup)
-    , _visible      (qgcApp()->toolbox()->corePlugin()->overrideSettingsGroupVisibility(_name))
 {
-    QString jsonNameFormat(":/json/%1.SettingsGroup.json");
+    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 
-    _nameToMetaDataMap = FactMetaData::createMapFromJsonFile(jsonNameFormat.arg(_name), this);
+    _nameToMetaDataMap = FactMetaData::createMapFromJsonFile(QString(kJsonFile).arg(name), this);
 }
 
 SettingsFact* SettingsGroup::_createSettingsFact(const QString& factName)
 {
-    return new SettingsFact(_settingsGroup, _nameToMetaDataMap[factName], this);
+    FactMetaData* m = _nameToMetaDataMap[factName];
+    if(!m) {
+        qCritical() << "Fact name " << factName << "not found in" << QString(kJsonFile).arg(_name);
+        exit(-1);
+    }
+    return new SettingsFact(_settingsGroup, m, this);
 }
 

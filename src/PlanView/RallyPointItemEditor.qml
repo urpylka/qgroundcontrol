@@ -1,6 +1,6 @@
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtQuick.Layouts  1.2
+import QtQuick                      2.11
+import QtQuick.Controls             2.4
+import QtQuick.Layouts              1.11
 
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Vehicle       1.0
@@ -50,7 +50,7 @@ Rectangle {
             color:                  _outerTextColor
         }
 
-        Image {
+        QGCColoredImage {
             id:                     hamburger
             anchors.rightMargin:    _margin
             anchors.right:          parent.right
@@ -59,15 +59,16 @@ Rectangle {
             height:                 width
             sourceSize.height:      height
             source:                 "qrc:/qmlimages/Hamburger.svg"
+            color:                  qgcPal.text
 
             MouseArea {
                 anchors.fill:   parent
                 onClicked:      hamburgerMenu.popup()
 
-                Menu {
+                QGCMenu {
                     id: hamburgerMenu
 
-                    MenuItem {
+                    QGCMenuItem {
                         text:           qsTr("Delete")
                         onTriggered:    controller.removePoint(rallyPoint)
                     }

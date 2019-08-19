@@ -53,6 +53,9 @@ isEmpty(MAVLINK_CONF) {
 contains (CONFIG, QGC_DISABLE_APM_MAVLINK) {
     message("Disable APM MAVLink support")
     DEFINES += NO_ARDUPILOT_DIALECT
+    CONFIG  += ArdupilotDisabled
+} else {
+    CONFIG  += ArdupilotEnabled
 }
 
 # First we select the dialect, checking for valid user selection
@@ -90,13 +93,11 @@ INCLUDEPATH += libs/eigen
 DEFINES += NOMINMAX
 
 #
-# [REQUIRED] QWT plotting library dependency. Provides plotting capabilities.
-#
-!MobileBuild {
-include(libs/qwt.pri)
-DEPENDPATH += libs/qwt
-INCLUDEPATH += libs/qwt
-}
+# [REQUIRED] shapelib library
+INCLUDEPATH += libs/shapelib
+SOURCES += \
+    libs/shapelib/shpopen.c \
+    libs/shapelib/safileio.c
 
 #
 # [REQUIRED] SDL dependency. Provides joystick/gamepad support.
@@ -125,6 +126,16 @@ MacBuild {
         -lSDL2
 }
 
+AndroidBuild {
+    contains(QT_ARCH, arm) {
+        ANDROID_EXTRA_LIBS += $$BASEDIR/libs/AndroidOpenSSL/arch-armeabi-v7a/lib/libcrypto.so
+        ANDROID_EXTRA_LIBS += $$BASEDIR/libs/AndroidOpenSSL/arch-armeabi-v7a/lib/libssl.so
+    } else {
+        ANDROID_EXTRA_LIBS += $$BASEDIR/libs/AndroidOpenSSL/arch-x86/lib/libcrypto.so
+        ANDROID_EXTRA_LIBS += $$BASEDIR/libs/AndroidOpenSSL/arch-x86/lib/libssl.so
+    }
+}
+
 #
 # [OPTIONAL] Zeroconf for UDP links
 #
@@ -142,3 +153,36 @@ contains (DEFINES, DISABLE_ZEROCONF) {
     message("Skipping support for Zeroconf (unsupported platform)")
 }
 
+
+#
+# [OPTIONAL] AirMap Support
+#
+contains (DEFINES, DISABLE_AIRMAP) {
+    message("Skipping support for AirMap (manual override from command line)")
+# Otherwise the user can still disable this feature in the user_config.pri file.
+} else:exists(user_config.pri):infile(user_config.pri, DEFINES, DISABLE_AIRMAP) {
+    message("Skipping support for AirMap (manual override from user_config.pri)")
+} else {
+    AIRMAPD_PATH    = $$PWD/libs/airmapd
+    AIRMAP_QT_PATH  = Qt.$${QT_MAJOR_VERSION}.$${QT_MINOR_VERSION}
+    message(Looking for Airmap in $$AIRMAP_QT_PATH)
+    MacBuild {
+        exists($${AIRMAPD_PATH}/macOS/$$AIRMAP_QT_PATH) {
+            message("Including support for AirMap for macOS")
+            LIBS += -L$${AIRMAPD_PATH}/macOS/$$AIRMAP_QT_PATH -lairmap-qt
+            DEFINES += QGC_AIRMAP_ENABLED
+        }
+    } else:LinuxBuild {
+        exists($${AIRMAPD_PATH}/linux/$$AIRMAP_QT_PATH) {
+            message("Including support for AirMap for Linux")
+            LIBS += -L$${AIRMAPD_PATH}/linux/$$AIRMAP_QT_PATH -lairmap-qt
+            DEFINES += QGC_AIRMAP_ENABLED
+        }
+    } else {
+        message("Skipping support for Airmap (unsupported platform)")
+    }
+    contains (DEFINES, QGC_AIRMAP_ENABLED) {
+        INCLUDEPATH += \
+            $${AIRMAPD_PATH}/include
+    }
+}

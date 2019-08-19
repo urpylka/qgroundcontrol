@@ -15,14 +15,13 @@
 #include "Vehicle.h"
 
 class APMAirframeComponent;
-class APMAirframeLoader;
 class APMFlightModesComponent;
 class APMRadioComponent;
 class APMTuningComponent;
 class APMSafetyComponent;
 class APMSensorsComponent;
 class APMPowerComponent;
-class MotorComponent;
+class APMMotorComponent;
 class APMCameraComponent;
 class APMLightsComponent;
 class APMSubFrameComponent;
@@ -50,17 +49,18 @@ protected:
     APMSubFrameComponent*       _subFrameComponent;
     APMFlightModesComponent*    _flightModesComponent;
     APMPowerComponent*          _powerComponent;
-#if 0
-    // Temporarily removed, waiting for new command implementation
-    MotorComponent*             _motorComponent;
-#endif
+    APMMotorComponent*          _motorComponent;
     APMRadioComponent*          _radioComponent;
     APMSafetyComponent*         _safetyComponent;
     APMSensorsComponent*        _sensorsComponent;
     APMTuningComponent*         _tuningComponent;
-    APMAirframeLoader*          _airframeFacts;
     ESP8266Component*           _esp8266Component;
     APMHeliComponent*           _heliComponent;
+
+#if !defined(NO_SERIAL_LINK) && !defined(__android__)
+private slots:
+    void _checkForBadCubeBlack(void);
+#endif
 
 private:
     QVariantList                _components;

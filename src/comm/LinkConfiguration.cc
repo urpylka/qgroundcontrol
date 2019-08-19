@@ -20,9 +20,7 @@
 #endif
 #include "UDPLink.h"
 #include "TCPLink.h"
-#if !defined(__mobile__)
 #include "LogReplayLink.h"
-#endif
 #ifdef QGC_ENABLE_BLUETOOTH
 #include "BluetoothLink.h"
 #endif
@@ -33,7 +31,7 @@
 #define LINK_SETTING_ROOT "LinkConfigurations"
 
 LinkConfiguration::LinkConfiguration(const QString& name)
-    : _link(NULL)
+    : _link(nullptr)
     , _name(name)
     , _dynamic(false)
     , _autoConnect(false)
@@ -80,7 +78,7 @@ const QString LinkConfiguration::settingsRoot()
 */
 LinkConfiguration* LinkConfiguration::createSettings(int type, const QString& name)
 {
-    LinkConfiguration* config = NULL;
+    LinkConfiguration* config = nullptr;
     switch(type) {
 #ifndef NO_SERIAL_LINK
         case LinkConfiguration::TypeSerial:
@@ -98,11 +96,9 @@ LinkConfiguration* LinkConfiguration::createSettings(int type, const QString& na
         config = new BluetoothConfiguration(name);
         break;
 #endif
-#ifndef __mobile__
         case LinkConfiguration::TypeLogReplay:
             config = new LogReplayLinkConfiguration(name);
             break;
-#endif
 #ifdef QT_DEBUG
         case LinkConfiguration::TypeMock:
             config = new MockConfiguration(name);
@@ -118,7 +114,7 @@ LinkConfiguration* LinkConfiguration::createSettings(int type, const QString& na
 */
 LinkConfiguration* LinkConfiguration::duplicateSettings(LinkConfiguration* source)
 {
-    LinkConfiguration* dupe = NULL;
+    LinkConfiguration* dupe = nullptr;
     switch(source->type()) {
 #ifndef NO_SERIAL_LINK
         case TypeSerial:
@@ -136,18 +132,15 @@ LinkConfiguration* LinkConfiguration::duplicateSettings(LinkConfiguration* sourc
             dupe = new BluetoothConfiguration(dynamic_cast<BluetoothConfiguration*>(source));
             break;
 #endif
-#ifndef __mobile__
         case TypeLogReplay:
             dupe = new LogReplayLinkConfiguration(dynamic_cast<LogReplayLinkConfiguration*>(source));
             break;
-#endif
 #ifdef QT_DEBUG
         case TypeMock:
             dupe = new MockConfiguration(dynamic_cast<MockConfiguration*>(source));
             break;
 #endif
         case TypeLast:
-        default:
             break;
     }
     return dupe;

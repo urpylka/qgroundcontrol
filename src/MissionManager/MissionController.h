@@ -16,6 +16,8 @@
 #include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 
+#include "QGCGeoBoundingCube.h"
+
 #include <QHash>
 
 class CoordinateVector;
@@ -90,6 +92,7 @@ public:
 
     Q_PROPERTY(int                  batteryChangePoint      READ batteryChangePoint         NOTIFY batteryChangePointChanged)
     Q_PROPERTY(int                  batteriesRequired       READ batteriesRequired          NOTIFY batteriesRequiredChanged)
+    Q_PROPERTY(QGCGeoBoundingCube*  travelBoundingCube      READ travelBoundingCube         NOTIFY missionBoundingCubeChanged)
 
     Q_PROPERTY(QString              surveyComplexItemName           READ surveyComplexItemName          CONSTANT)
     Q_PROPERTY(QString              corridorScanComplexItemName     READ corridorScanComplexItemName    CONSTANT)
@@ -116,9 +119,10 @@ public:
 
     /// Add a new complex mission item to the list
     ///     @param itemName: Name of complex item to create (from complexMissionItemNames)
+    ///     @param file: kml or shp file to load from shape from
     ///     @param i: index to insert at, -1 for end
     /// @return Sequence number for new item
-    Q_INVOKABLE int insertComplexMissionItemFromKML(QString itemName, QString kmlFile, int i);
+    Q_INVOKABLE int insertComplexMissionItemFromKMLOrSHP(QString itemName, QString file, int i);
 
     Q_INVOKABLE void resumeMission(int resumeIndex);
 
@@ -138,6 +142,9 @@ public:
 
     bool loadJsonFile(QFile& file, QString& errorString);
     bool loadTextFile(QFile& file, QString& errorString);
+
+    QGCGeoBoundingCube* travelBoundingCube  () { return &_travelBoundingCube; }
+    QGeoCoordinate      takeoffCoordinate   () { return _takeoffCoordinate; }
 
     // Overrides from PlanElementController
     bool supported                  (void) const final { return true; }
@@ -168,8 +175,8 @@ public:
     VisualMissionItem*  currentPlanViewItem         (void) const;
     double              progressPct                 (void) const { return _progressPct; }
     QString             surveyComplexItemName       (void) const { return _surveyMissionItemName; }
-    QString             corridorScanComplexItemName (void) const { return _corridorScanMissionItemName; }
-    QString             structureScanComplexItemName(void) const { return _structureScanMissionItemName; }
+    QString             corridorScanComplexItemName (void) const { return patternCorridorScanName; }
+    QString             structureScanComplexItemName(void) const { return patternStructureScanName; }
 
     int missionItemCount            (void) const { return _missionItemCount; }
     int currentMissionIndex         (void) const;
@@ -186,6 +193,12 @@ public:
 
     int  batteryChangePoint         (void) const { return _missionFlightStatus.batteryChangePoint; }    ///< -1 for not supported, 0 for not needed
     int  batteriesRequired          (void) const { return _missionFlightStatus.batteriesRequired; }     ///< -1 for not supported
+
+    // These are the names shown in the UI for the pattern items. They are public so custom builds can remove the ones
+    // they don't want through the QGCCorePlugin::
+    static const QString patternFWLandingName;
+    static const QString patternStructureScanName;
+    static const QString patternCorridorScanName;
 
 signals:
     void visualItemsChanged             (void);
@@ -210,6 +223,7 @@ signals:
     void currentMissionIndexChanged     (int currentMissionIndex);
     void currentPlanViewIndexChanged    (void);
     void currentPlanViewItemChanged     (void);
+    void missionBoundingCubeChanged     (void);
     void missionItemCountChanged        (int missionItemCount);
 
 private slots:
@@ -225,6 +239,8 @@ private slots:
     void _visualItemsDirtyChanged(bool dirty);
     void _managerSendComplete(bool error);
     void _managerRemoveAllComplete(bool error);
+    void _updateTimeout();
+    void _complexBoundingBoxChanged();
     void _recalcAll(void);
 
 private:
@@ -275,13 +291,13 @@ private:
     bool                    _inRecalcSequence;
     MissionFlightStatus_t   _missionFlightStatus;
     QString                 _surveyMissionItemName;
-    QString                 _fwLandingMissionItemName;
-    QString                 _structureScanMissionItemName;
-    QString                 _corridorScanMissionItemName;
     AppSettings*            _appSettings;
     double                  _progressPct;
     int                     _currentPlanViewIndex;
     VisualMissionItem*      _currentPlanViewItem;
+    QTimer                  _updateTimer;
+    QGCGeoBoundingCube      _travelBoundingCube;
+    QGeoCoordinate          _takeoffCoordinate;
 
     static const char*  _settingsGroup;
 

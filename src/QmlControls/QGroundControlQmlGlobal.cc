@@ -28,22 +28,10 @@ QGeoCoordinate   QGroundControlQmlGlobal::_coord = QGeoCoordinate(0.0,0.0);
 double           QGroundControlQmlGlobal::_zoom = 2;
 
 QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app, QGCToolbox* toolbox)
-    : QGCTool(app, toolbox)
-    , _flightMapInitialZoom(17.0)
-    , _linkManager(NULL)
-    , _multiVehicleManager(NULL)
-    , _mapEngineManager(NULL)
-    , _qgcPositionManager(NULL)
-    , _missionCommandTree(NULL)
-    , _videoManager(NULL)
-    , _mavlinkLogManager(NULL)
-    , _corePlugin(NULL)
-    , _firmwarePluginManager(NULL)
-    , _settingsManager(NULL)
-    , _skipSetupPage(false)
+    : QGCTool               (app, toolbox)
 {
     // We clear the parent on this object since we run into shutdown problems caused by hybrid qml app. Instead we let it leak on shutdown.
-    setParent(NULL);
+    setParent(nullptr);
     // Load last coordinates and zoom from config file
     QSettings settings;
     settings.beginGroup(_flightMapPositionSettingsGroup);
@@ -76,16 +64,14 @@ void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
     _corePlugin             = toolbox->corePlugin();
     _firmwarePluginManager  = toolbox->firmwarePluginManager();
     _settingsManager        = toolbox->settingsManager();
-
-#ifndef __mobile__
-   GPSManager *gpsManager = toolbox->gpsManager();
-   if (gpsManager) {
-       connect(gpsManager, &GPSManager::onConnect, this, &QGroundControlQmlGlobal::_onGPSConnect);
-       connect(gpsManager, &GPSManager::onDisconnect, this, &QGroundControlQmlGlobal::_onGPSDisconnect);
-       connect(gpsManager, &GPSManager::surveyInStatus, this, &QGroundControlQmlGlobal::_GPSSurveyInStatus);
-       connect(gpsManager, &GPSManager::satelliteUpdate, this, &QGroundControlQmlGlobal::_GPSNumSatellites);
-   }
-#endif /* __mobile__ */
+    _gpsRtkFactGroup        = qgcApp()->gpsRtkFactGroup();
+    _airspaceManager        = toolbox->airspaceManager();
+#if defined(QGC_GST_TAISYNC_ENABLED)
+    _taisyncManager         = toolbox->taisyncManager();
+#endif
+#if defined(QGC_GST_MICROHARD_ENABLED)
+    _microhardManager       = toolbox->microhardManager();
+#endif
 }
 
 void QGroundControlQmlGlobal::saveGlobalSetting (const QString& key, const QString& value)
@@ -161,6 +147,15 @@ void QGroundControlQmlGlobal::startAPMArduSubMockLink(bool sendStatusText)
 #endif
 }
 
+void QGroundControlQmlGlobal::startAPMArduRoverMockLink(bool sendStatusText)
+{
+#ifdef QT_DEBUG
+    MockLink::startAPMArduRoverMockLink(sendStatusText);
+#else
+    Q_UNUSED(sendStatusText);
+#endif
+}
+
 void QGroundControlQmlGlobal::stopOneMockLink(void)
 {
 #ifdef QT_DEBUG
@@ -195,6 +190,27 @@ int QGroundControlQmlGlobal::supportedFirmwareCount()
     return _firmwarePluginManager->supportedFirmwareTypes().count();
 }
 
+int QGroundControlQmlGlobal::supportedVehicleCount()
+{
+    int count = 0;
+    QList<MAV_AUTOPILOT> list = _firmwarePluginManager->supportedFirmwareTypes();
+    foreach(auto firmware, list) {
+        if(firmware != MAV_AUTOPILOT_GENERIC) {
+            count += _firmwarePluginManager->supportedVehicleTypes(firmware).count();
+        }
+    }
+    return count;
+}
+
+bool QGroundControlQmlGlobal::px4ProFirmwareSupported()
+{
+    return _firmwarePluginManager->supportedFirmwareTypes().contains(MAV_AUTOPILOT_PX4);
+}
+
+bool QGroundControlQmlGlobal::apmFirmwareSupported()
+{
+    return _firmwarePluginManager->supportedFirmwareTypes().contains(MAV_AUTOPILOT_ARDUPILOTMEGA);
+}
 
 bool QGroundControlQmlGlobal::linesIntersect(QPointF line1A, QPointF line1B, QPointF line2A, QPointF line2B)
 {
@@ -229,24 +245,3 @@ void QGroundControlQmlGlobal::setFlightMapZoom(double zoom)
         emit flightMapZoomChanged(zoom);
     }
 }
-
-void QGroundControlQmlGlobal::_onGPSConnect()
-{
-    _gpsRtkFactGroup.connected()->setRawValue(true);
-}
-void QGroundControlQmlGlobal::_onGPSDisconnect()
-{
-    _gpsRtkFactGroup.connected()->setRawValue(false);
-}
-void QGroundControlQmlGlobal::_GPSSurveyInStatus(float duration, float accuracyMM, bool valid, bool active)
-{
-    _gpsRtkFactGroup.currentDuration()->setRawValue(duration);
-    _gpsRtkFactGroup.currentAccuracy()->setRawValue(accuracyMM/1000.0);
-    _gpsRtkFactGroup.valid()->setRawValue(valid);
-    _gpsRtkFactGroup.active()->setRawValue(active);
-}
-void QGroundControlQmlGlobal::_GPSNumSatellites(int numSatellites)
-{
-    _gpsRtkFactGroup.numSatellites()->setRawValue(numSatellites);
-}
-

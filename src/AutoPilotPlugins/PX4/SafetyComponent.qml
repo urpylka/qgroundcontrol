@@ -23,24 +23,25 @@ import QGroundControl.ScreenTools   1.0
 SetupPage {
     id:             safetyPage
     pageComponent:  pageComponent
-
     Component {
         id: pageComponent
 
         Item {
             width:  Math.max(availableWidth, outerGrid.width)
-            height: lastRect.y + lastRect.height
+            height: _hitlAvailable ? (lastRect.y + lastRect.height) : (otherLastRect.y + otherLastRect.height)
 
             FactPanelController {
                 id:         controller
-                factPanel:  safetyPage.viewPanel
             }
+
+            readonly property string hitlParam: "SYS_HITL"
 
             property real _margins:         ScreenTools.defaultFontPixelHeight
             property real _editFieldWidth:  ScreenTools.defaultFontPixelWidth * 20
             property real _imageWidth:      ScreenTools.defaultFontPixelWidth * 15
             property real _imageHeight:     ScreenTools.defaultFontPixelHeight * 3
 
+            property Fact _enableLogging:   controller.getParameterFact(-1, "SDLOG_MODE")
             property Fact _fenceAction:     controller.getParameterFact(-1, "GF_ACTION")
             property Fact _fenceRadius:     controller.getParameterFact(-1, "GF_MAX_HOR_DIST")
             property Fact _fenceAlt:        controller.getParameterFact(-1, "GF_MAX_VER_DIST")
@@ -50,17 +51,8 @@ SetupPage {
             property Fact _dlLossAction:    controller.getParameterFact(-1, "NAV_DLL_ACT")
             property Fact _disarmLandDelay: controller.getParameterFact(-1, "COM_DISARM_LAND")
             property Fact _landSpeedMC:     controller.getParameterFact(-1, "MPC_LAND_SPEED", false)
-            property Fact _hitlEnabled:     controller.getParameterFact(-1, "SYS_HITL", false)
-
-            ExclusiveGroup { id: homeLoiterGroup }
-
-            Rectangle {
-                x:      hitlGrid.x + outerGrid.x - _margins
-                y:      hitlGrid.y + outerGrid.y - _margins
-                width:  hitlGrid.width + (_margins * 2)
-                height: hitlGrid.height + (_margins * 2)
-                color:  qgcPal.windowShade
-            }
+            property bool _hitlAvailable:   controller.parameterExists(-1, hitlParam)
+            property Fact _hitlEnabled:     controller.getParameterFact(-1, hitlParam, false)
 
             Rectangle {
                 x:      lowBattGrid.x + outerGrid.x - _margins
@@ -103,7 +95,6 @@ SetupPage {
             }
 
             Rectangle {
-                id:     lastRect
                 x:      landModeGrid.x + outerGrid.x - _margins
                 y:      landModeGrid.y + outerGrid.y - _margins
                 width:  landModeGrid.width + (_margins * 2)
@@ -111,47 +102,29 @@ SetupPage {
                 color:  qgcPal.windowShade
             }
 
+            Rectangle {
+                id:     otherLastRect
+                x:      loggingGrid.x + outerGrid.x - _margins
+                y:      loggingGrid.y + outerGrid.y - _margins
+                width:  loggingGrid.width + (_margins * 2)
+                height: loggingGrid.height + (_margins * 2)
+                color:  qgcPal.windowShade
+            }
+
+            Rectangle {
+                id:         lastRect
+                x:          hitlGrid.x + outerGrid.x - _margins
+                y:          hitlGrid.y + outerGrid.y - _margins
+                width:      hitlGrid.width + (_margins * 2)
+                height:     hitlGrid.height + (_margins * 2)
+                color:      qgcPal.windowShade
+                visible:    _hitlAvailable
+            }
+
             GridLayout {
                 id:         outerGrid
                 columns:    3
                 anchors.horizontalCenter:   parent.horizontalCenter
-
-                QGCLabel {
-                    text:               qsTr("Hardware in the Loop Simulation")
-                    Layout.columnSpan:  3
-                }
-
-                Item { width: 1; height: _margins; Layout.columnSpan: 3 }
-
-                Item { width: _margins; height: 1 }
-
-                GridLayout {
-                    id:         hitlGrid
-                    columns:    3
-
-                    Image {
-                        mipmap:             true
-                        fillMode:           Image.PreserveAspectFit
-                        source:             qgcPal.globalTheme === qgcPal.Light ? "/qmlimages/VehicleSummaryIcon.png" : "/qmlimages/VehicleSummaryIcon.png"
-                        Layout.rowSpan:     3
-                        Layout.maximumWidth:    _imageWidth
-                        Layout.maximumHeight:   _imageHeight
-                        width:                  _imageWidth
-                        height:                 _imageHeight
-                    }
-
-                    QGCLabel {
-                        text:               qsTr("HITL Enabled:")
-                        Layout.fillWidth:   true
-                    }
-                    FactComboBox {
-                        fact:                   _hitlEnabled
-                        indexModel:             false
-                        Layout.minimumWidth:    _editFieldWidth
-                    }
-                }
-
-                Item { width: 1; height: _margins; Layout.columnSpan: 3 }
 
                 QGCLabel {
                     text:               qsTr("Low Battery Failsafe Trigger")
@@ -416,7 +389,6 @@ SetupPage {
                         QGCRadioButton {
                             id:                 homeLandRadio
                             checked:            _rtlLandDelay ? _rtlLandDelay.value === 0 : false
-                            exclusiveGroup:     homeLoiterGroup
                             text:               qsTr("Land immediately")
                             onClicked:          _rtlLandDelay.value = 0
                         }
@@ -427,7 +399,6 @@ SetupPage {
                         QGCRadioButton {
                             id:                 homeLoiterNoLandRadio
                             checked:            _rtlLandDelay ? _rtlLandDelay.value < 0 : false
-                            exclusiveGroup:     homeLoiterGroup
                             text:               qsTr("Loiter and do not land")
                             onClicked:          _rtlLandDelay.value = -1
                         }
@@ -438,7 +409,6 @@ SetupPage {
                         QGCRadioButton {
                             id:                 homeLoiterLandRadio
                             checked:            _rtlLandDelay ? _rtlLandDelay.value > 0 : false
-                            exclusiveGroup:     homeLoiterGroup
                             text:               qsTr("Loiter and land after specified time")
                             onClicked:          _rtlLandDelay.value = 60
                         }
@@ -517,6 +487,89 @@ SetupPage {
                         Layout.minimumWidth:    _editFieldWidth
                     }
                 }
+
+                Item { width: 1; height: _margins; Layout.columnSpan: 3 }
+
+                QGCLabel {
+                    text:               qsTr("Vehicle Telemetry Logging")
+                    Layout.columnSpan:  3
+                }
+
+                Item { width: 1; height: _margins; Layout.columnSpan: 3 }
+
+                Item { width: _margins; height: 1 }
+
+                GridLayout {
+                    id:                         loggingGrid
+                    columns:                    4
+                    columnSpacing:              ScreenTools.defaultFontPixelWidth * 4
+                    Item {
+                        Layout.fillWidth:       true
+                    }
+                    Image {
+                        mipmap:                 true
+                        fillMode:               Image.PreserveAspectFit
+                        source:                 qgcPal.globalTheme === qgcPal.Light ? "/qmlimages/no-logging-light.svg" : "/qmlimages/no-logging.svg"
+                        Layout.maximumWidth:    _imageWidth
+                        Layout.maximumHeight:   _imageHeight
+                        width:                  _imageWidth
+                        height:                 _imageHeight
+                    }
+                    QGCCheckBox {
+                        text:                   qsTr("Enable telemetry logging to vehicle storage")
+                        checkedState:           _enableLogging ? (_enableLogging.value >= 0 ? Qt.Checked : Qt.Unchecked) : Qt.Unchecked
+                        Layout.minimumWidth:    _editFieldWidth
+                        Layout.alignment:       Qt.AlignVCenter
+                        onClicked:  {
+                            if(_enableLogging) {
+                                _enableLogging.value = checked ? 0 : -1
+                            }
+                        }
+                    }
+                    Item {
+                        Layout.fillWidth:   true
+                    }
+                }
+
+                Item { width: 1; height: _margins; Layout.columnSpan: 3; visible: _hitlAvailable }
+
+                QGCLabel {
+                    text:               qsTr("Hardware in the Loop Simulation")
+                    Layout.columnSpan:  3
+                    visible:            _hitlAvailable
+                }
+
+                Item { width: 1; height: _margins; Layout.columnSpan: 3; visible: _hitlAvailable }
+
+                Item { width: _margins; height: 1; visible: _hitlAvailable }
+
+                GridLayout {
+                    id:         hitlGrid
+                    columns:    3
+                    visible:    _hitlAvailable
+
+                    Image {
+                        mipmap:                 true
+                        fillMode:               Image.PreserveAspectFit
+                        source:                 qgcPal.globalTheme === qgcPal.Light ? "/qmlimages/VehicleSummaryIcon.png" : "/qmlimages/VehicleSummaryIcon.png"
+                        Layout.rowSpan:         3
+                        Layout.maximumWidth:    _imageWidth
+                        Layout.maximumHeight:   _imageHeight
+                        width:                  _imageWidth
+                        height:                 _imageHeight
+                    }
+
+                    QGCLabel {
+                        text:               qsTr("HITL Enabled:")
+                        Layout.fillWidth:   true
+                    }
+                    FactComboBox {
+                        fact:                   _hitlEnabled
+                        indexModel:             false
+                        Layout.minimumWidth:    _editFieldWidth
+                    }
+                }
+
             }
         }
     }

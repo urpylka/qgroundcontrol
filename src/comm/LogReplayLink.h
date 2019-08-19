@@ -1,18 +1,15 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *   (c) 2009-2018 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
  *
  ****************************************************************************/
 
+#pragma once
 
-#ifndef LogReplayLink_H
-#define LogReplayLink_H
-
-#include "LinkInterface.h"
-#include "LinkConfiguration.h"
+#include "LinkManager.h"
 #include "MAVLinkProtocol.h"
 
 #include <QTimer>
@@ -23,7 +20,6 @@ class LogReplayLinkConfiguration : public LinkConfiguration
     Q_OBJECT
 
 public:
-
     Q_PROPERTY(QString  fileName    READ logFilename    WRITE setLogFilename    NOTIFY fileNameChanged)
 
     LogReplayLinkConfiguration(const QString& name);
@@ -41,6 +37,8 @@ public:
     void        saveSettings            (QSettings& settings, const QString& root);
     void        updateSettings          ();
     QString     settingsURL             () { return "LogReplaySettings.qml"; }
+    QString     settingsTitle           () { return tr("Log Replay Link Settings"); }
+
 signals:
     void fileNameChanged();
 
@@ -66,7 +64,7 @@ public:
     void pause(void) { emit _pauseOnThread(); }
 
     /// Move the playhead to the specified percent complete
-    void movePlayhead(int percentComplete);
+    void movePlayhead(qreal percentComplete);
 
     /// Sets the acceleration factor: -100: 0.01X, 0: 1.0X, 100: 100.0X
     void setAccelerationFactor(int factor) { emit _setAccelerationFactorOnThread(factor); }
@@ -92,8 +90,7 @@ signals:
     void playbackStarted(void);
     void playbackPaused(void);
     void playbackAtEnd(void);
-    void playbackError(void);
-    void playbackPercentCompleteChanged(int percentComplete);
+    void playbackPercentCompleteChanged(qreal percentComplete);
     void currentLogTimeSecs(int secs);
 
     // Internal signals
@@ -115,11 +112,12 @@ private:
     void _replayError(const QString& errorMsg);
     quint64 _parseTimestamp(const QByteArray& bytes);
     quint64 _seekToNextMavlinkMessage(mavlink_message_t* nextMsg);
+    quint64 _findLastTimestamp(void);
     quint64 _readNextMavlinkMessage(QByteArray& bytes);
     bool _loadLogFile(void);
     void _finishPlayback(void);
-    void _playbackError(void);
     void _resetPlaybackToBeginning(void);
+    void _signalCurrentLogTimeSecs(void);
 
     // Virtuals from LinkInterface
     virtual bool _connect(void);
@@ -131,7 +129,7 @@ private:
     LogReplayLinkConfiguration* _logReplayConfig;
 
     bool    _connected;
-    int     _mavlinkChannel;
+    uint8_t _mavlinkChannel;
     QTimer  _readTickTimer;      ///< Timer which signals a read of next log record
 
     QString _errorTitle; ///< Title for communicatorError signals
@@ -155,4 +153,51 @@ private:
     static const int cbTimestamp = sizeof(quint64);
 };
 
-#endif
+class LogReplayLinkController : public QObject
+{
+    Q_OBJECT
+
+public:
+    Q_PROPERTY(LogReplayLink*   link            READ link               WRITE setLink               NOTIFY linkChanged)
+    Q_PROPERTY(bool             isPlaying       READ isPlaying          WRITE setIsPlaying          NOTIFY isPlayingChanged)
+    Q_PROPERTY(qreal            percentComplete READ percentComplete    WRITE setPercentComplete    NOTIFY percentCompleteChanged)
+    Q_PROPERTY(QString          totalTime       MEMBER _totalTime                                   NOTIFY totalTimeChanged)
+    Q_PROPERTY(QString          playheadTime    MEMBER _playheadTime                                NOTIFY playheadTimeChanged)
+
+    LogReplayLinkController(void);
+
+    LogReplayLink*  link            (void) { return _link; }
+    bool            isPlaying       (void) { return _isPlaying; }
+    qreal           percentComplete (void) { return _percentComplete; }
+
+    void setLink            (LogReplayLink* link);
+    void setIsPlaying       (bool isPlaying);
+    void setPercentComplete (qreal percentComplete);
+
+signals:
+    void linkChanged            (LogReplayLink* link);
+    void isPlayingChanged       (bool isPlaying);
+    void percentCompleteChanged (qreal percentComplete);
+    void playheadTimeChanged    (QString playheadTime);
+    void totalTimeChanged       (QString totalTime);
+
+private slots:
+    void _logFileStats                   (bool logTimestamped, int logDurationSecs, int binaryBaudRate);
+    void _playbackStarted                (void);
+    void _playbackPaused                 (void);
+    void _playbackAtEnd                  (void);
+    void _playbackPercentCompleteChanged (qreal percentComplete);
+    void _currentLogTimeSecs             (int secs);
+    void _linkDisconnected               (void);
+
+private:
+    QString _secondsToHMS(int seconds);
+
+    LogReplayLink*  _link;
+    bool            _isPlaying;
+    qreal           _percentComplete;
+    int             _playheadSecs;
+    QString         _playheadTime;
+    QString         _totalTime;
+};
+

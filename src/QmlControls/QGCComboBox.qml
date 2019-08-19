@@ -6,7 +6,8 @@ import QGroundControl.Palette 1.0
 import QGroundControl.ScreenTools 1.0
 
 Button {
-    id: combo
+    id:                 combo
+    implicitHeight:     ScreenTools.implicitComboBoxHeight
 
     property real   pointSize:      ScreenTools.defaultFontPointSize    ///< Point size for button text
     property bool   centeredLabel:  false
@@ -40,9 +41,9 @@ Button {
         background: Rectangle {
             implicitWidth:  ScreenTools.implicitComboBoxWidth
             implicitHeight: ScreenTools.implicitComboBoxHeight
-            color:          control._qgcPal.button
-            border.width:   control._showBorder ? 1: 0
-            border.color:   control._qgcPal.buttonText
+            color:          control._qgcPal.textField
+            border.width:   enabled ? 1 : 0
+            border.color:   "#999"
 
             QGCColoredImage {
                 id:                     image
@@ -52,7 +53,7 @@ Button {
                 anchors.rightMargin:    _dropImageMargin
                 anchors.right:          parent.right
                 source:                 "/qmlimages/arrow-down.png"
-                color:                  control._qgcPal.buttonText
+                color:                  control._qgcPal.textFieldText
             }
         }
 
@@ -67,7 +68,7 @@ Button {
                 anchors.verticalCenter:     parent.verticalCenter
                 anchors.horizontalCenter:   centeredLabel ? parent.horizontalCenter : undefined
                 text:                       control.currentText
-                color:                      control._qgcPal.buttonText
+                color:                      control._qgcPal.textFieldText
                 font.pointSize:             pointSize
             }
         }
@@ -103,7 +104,7 @@ Button {
 
     ExclusiveGroup { id: eg }
 
-    Menu {
+    QGCMenu {
         id:             popup
         __minimumWidth: combo.width
         __visualItem:   combo
@@ -232,7 +233,7 @@ Button {
 
             onObjectRemoved: popup.removeItem(object)
 
-            MenuItem {
+            QGCMenuItem {
                 text:           popup.textRole === '' ? modelData : ((popup._modelIsArray ? modelData[popup.textRole] : model[popup.textRole]) || '')
                 checked:        index == currentIndex
                 checkable:      true

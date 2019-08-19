@@ -26,7 +26,7 @@
 #include "UAS.h"
 #include "QGCJSBSimLink.h"
 #include "QGC.h"
-#include "QGCMessageBox.h"
+//-- TODO: #include "QGCMessageBox.h"
 
 QGCJSBSimLink::QGCJSBSimLink(Vehicle* vehicle, QString startupArguments, QString remoteHost, QHostAddress host, quint16 port)
     : _vehicle(vehicle)
@@ -106,14 +106,14 @@ void QGCJSBSimLink::run()
     QFileInfo executable(processJSB);
     if (!executable.isExecutable())
     {
-        QGCMessageBox::critical("JSBSim", tr("JSBSim failed to start. JSBSim was not found at %1").arg(processJSB));
+        //-- TODO: QGCMessageBox::critical("JSBSim", tr("JSBSim failed to start. JSBSim was not found at %1").arg(processJSB));
         sane = false;
     }
 
     QFileInfo root(rootJSB);
     if (!root.isDir())
     {
-        QGCMessageBox::critical("JSBSim", tr("JSBSim failed to start. JSBSim data directory was not found at %1").arg(rootJSB));
+        //-- TODO: QGCMessageBox::critical("JSBSim", tr("JSBSim failed to start. JSBSim data directory was not found at %1").arg(rootJSB));
         sane = false;
     }
 
@@ -123,11 +123,11 @@ void QGCJSBSimLink::run()
 
     if (_vehicle->vehicleType() == MAV_TYPE_QUADROTOR)
     {
-        arguments << QString("--realtime --suspend --nice --simulation-rate=1000 --logdirectivefile=%s/flightgear.xml --script=%s/%s").arg(rootJSB).arg(rootJSB).arg(script);
+        arguments << QString("--realtime --suspend --nice --simulation-rate=1000 --logdirectivefile=%s/flightgear.xml --script=%s/%s").arg(rootJSB, rootJSB, script);
     }
     else
     {
-        arguments << QString("JSBSim --realtime --suspend --nice --simulation-rate=1000 --logdirectivefile=%s/flightgear.xml --script=%s/%s").arg(rootJSB).arg(rootJSB).arg(script);
+        arguments << QString("JSBSim --realtime --suspend --nice --simulation-rate=1000 --logdirectivefile=%s/flightgear.xml --script=%s/%s").arg(rootJSB, rootJSB, script);
     }
 
     process->start(processJSB, arguments);
@@ -177,7 +177,7 @@ void QGCJSBSimLink::processError(QProcess::ProcessError err)
             break;
     }
     
-    QGCMessageBox::critical("JSBSim HIL", msg);
+    //-- TODO: QGCMessageBox::critical("JSBSim HIL", msg);
 }
 
 /**
@@ -285,23 +285,20 @@ void QGCJSBSimLink::readBytes()
     if (s > maxLength) std::cerr << __FILE__ << __LINE__ << " UDP datagram overflow, allowed to read less bytes than datagram size" << std::endl;
     socket->readDatagram(data, maxLength, &sender, &senderPort);
 
-    QByteArray b(data, s);
-
+    /*
     // Print string
-//    QString state(b);
+    QByteArray b(data, s);
+    QString state(b);
 
-//    // Parse string
-//    float roll, pitch, yaw, rollspeed, pitchspeed, yawspeed;
-//    double lat, lon, alt;
-//    double vx, vy, vz, xacc, yacc, zacc;
+    // Parse string
+    float roll, pitch, yaw, rollspeed, pitchspeed, yawspeed;
+    double lat, lon, alt;
+    double vx, vy, vz, xacc, yacc, zacc;
 
-//    // Send updated state
-//    emit hilStateChanged(QGC::groundTimeUsecs(), roll, pitch, yaw, rollspeed,
-//                         pitchspeed, yawspeed, lat, lon, alt,
-//                         vx, vy, vz, xacc, yacc, zacc);
-
-
-
+    // Send updated state
+    emit hilStateChanged(QGC::groundTimeUsecs(), roll, pitch, yaw, rollspeed,
+        pitchspeed, yawspeed, lat, lon, alt, vx, vy, vz, xacc, yacc, zacc);
+    */
 
         // Echo data for debugging purposes
         std::cerr << __FILE__ << __LINE__ << "Received datagram:" << std::endl;

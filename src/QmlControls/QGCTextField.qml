@@ -11,10 +11,12 @@ TextField {
     textColor:          qgcPal.textFieldText
     implicitHeight:     ScreenTools.implicitTextFieldHeight
     activeFocusOnPress: true
+    antialiasing:       true
 
-    property bool   showUnits:  false
-    property bool   showHelp:   false
-    property string unitsLabel: ""
+    property bool   showUnits:          false
+    property bool   showHelp:           false
+    property string unitsLabel:         ""
+    property string extraUnitsLabel:    ""
 
     signal helpClicked
 
@@ -47,7 +49,11 @@ TextField {
     }
 
     style: TextFieldStyle {
+        id:             tfs
         font.pointSize: ScreenTools.defaultFontPointSize
+        font.family:    ScreenTools.normalFontFamily
+        renderType:     ScreenTools.isWindows ? Text.QtRendering : tfs.renderType   // This works around font rendering problems on windows
+
         background: Item {
             id: backgroundItem
 
@@ -61,6 +67,7 @@ TextField {
 
             Rectangle {
                 anchors.fill:           parent
+                border.width:           enabled ? 1 : 0
                 border.color:           root.activeFocus ? "#47b" : "#999"
                 color:                  qgcPal.textField
             }
@@ -83,7 +90,17 @@ TextField {
                     font.family:        ScreenTools.normalFontFamily
                     antialiasing:       true
                     color:              control.textColor
-                    visible:            control.showUnits
+                    visible:            control.showUnits && text !== ""
+                }
+
+                Text {
+                    Layout.alignment:   Qt.AlignVCenter
+                    text:               control.extraUnitsLabel
+                    font.pointSize:     ScreenTools.smallFontPointSize
+                    font.family:        ScreenTools.normalFontFamily
+                    antialiasing:       true
+                    color:              control.textColor
+                    visible:            control.showUnits && text !== ""
                 }
 
                 Rectangle {

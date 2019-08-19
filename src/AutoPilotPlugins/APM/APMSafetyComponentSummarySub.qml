@@ -7,19 +7,15 @@ import QGroundControl.FactControls 1.0
 import QGroundControl.Controls     1.0
 import QGroundControl.Palette      1.0
 
-FactPanel {
-    id:             panel
+Item {
     anchors.fill:   parent
-    color:          qgcPal.windowShadeDark
 
-    property var _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
-    property bool _firmware34: _activeVehicle.firmwareMajorVersion == 3 && _activeVehicle.firmwareMinorVersion == 4
+    property bool   _firmware34: activeVehicle.versionCompare(3, 5, 0) < 0
 
-    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
-    FactPanelController { id: controller; factPanel: panel }
+    FactPanelController { id: controller; }
 
     // Enable/Action parameters
-    property Fact _failsafeBatteryEnable:     controller.getParameterFact(-1, "FS_BATT_ENABLE")
+    property Fact _failsafeBatteryEnable:     controller.getParameterFact(-1, "r.BATT_FS_LOW_ACT")
     property Fact _failsafeEKFEnable:         controller.getParameterFact(-1, "FS_EKF_ACTION")
     property Fact _failsafeGCSEnable:         controller.getParameterFact(-1, "FS_GCS_ENABLE")
     property Fact _failsafeLeakEnable:        controller.getParameterFact(-1, "FS_LEAK_ENABLE")
@@ -34,8 +30,8 @@ FactPanel {
     property Fact _failsafeLeakPin:              controller.getParameterFact(-1, "LEAK1_PIN")
     property Fact _failsafeLeakLogic:            controller.getParameterFact(-1, "LEAK1_LOGIC")
     property Fact _failsafeEKFThreshold:         controller.getParameterFact(-1, "FS_EKF_THRESH")
-    property Fact _failsafeBatteryVoltage:       controller.getParameterFact(-1, "FS_BATT_VOLTAGE")
-    property Fact _failsafeBatteryCapacity:      controller.getParameterFact(-1, "FS_BATT_MAH")
+    property Fact _failsafeBatteryVoltage:       controller.getParameterFact(-1, "r.BATT_LOW_VOLT")
+    property Fact _failsafeBatteryCapacity:      controller.getParameterFact(-1, "r.BATT_LOW_MAH")
 
     property Fact _armingCheck: controller.getParameterFact(-1, "ARMING_CHECK")
 

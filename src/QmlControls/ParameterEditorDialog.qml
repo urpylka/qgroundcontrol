@@ -37,7 +37,7 @@ QGCViewDialog {
     property bool   _allowForceSave:            QGroundControl.corePlugin.showAdvancedUI || !_editingParameter
     property bool   _allowDefaultReset:         fact.defaultValueAvailable && (QGroundControl.corePlugin.showAdvancedUI || !_editingParameter)
 
-    ParameterEditorController { id: controller; factPanel: parent }
+    ParameterEditorController { id: controller; }
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
@@ -112,7 +112,7 @@ QGCViewDialog {
             }
 
             RowLayout {
-                spacing:        defaultTextWidth
+                spacing:        ScreenTools.defaultFontPixelWidth
                 anchors.left:   parent.left
                 anchors.right:  parent.right
 
@@ -201,7 +201,7 @@ QGCViewDialog {
             }
 
             Row {
-                spacing: defaultTextWidth
+                spacing: ScreenTools.defaultFontPixelWidth
 
                 QGCLabel {
                     id:         minValueDisplay
@@ -226,8 +226,13 @@ QGCViewDialog {
             }
 
             QGCLabel {
-                visible:    fact.rebootRequired
-                text:       "Reboot required after change"
+                visible:    fact.vehicleRebootRequired
+                text:       "Vehicle reboot required after change"
+            }
+
+            QGCLabel {
+                visible:    fact.qgcRebootRequired
+                text:       "Application restart required after change"
             }
 
             QGCLabel {

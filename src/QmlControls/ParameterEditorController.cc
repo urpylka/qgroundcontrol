@@ -7,10 +7,6 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
 #include "ParameterEditorController.h"
 #include "QGCApplication.h"
 #include "ParameterManager.h"
@@ -18,24 +14,31 @@
 #include "AppSettings.h"
 
 #ifndef __mobile__
-#include "QGCQFileDialog.h"
 #include "QGCMapRCToParamDialog.h"
-#include "MainWindow.h"
 #endif
 
 #include <QStandardPaths>
 
-/// @Brief Constructs a new ParameterEditorController Widget. This widget is used within the PX4VehicleConfig set of screens.
 ParameterEditorController::ParameterEditorController(void)
-    : _currentCategory("Standard")  // FIXME: firmware specific
-    , _parameters(new QmlObjectListModel(this))
+    : _currentCategory          ("Standard")  // FIXME: firmware specific
+    , _parameters               (new QmlObjectListModel(this))
+    , _parameterMgr             (_vehicle->parameterManager())
+    , _componentCategoryPrefix  (tr("Component "))
+    , _showModifiedOnly          (false)
 {
-    const QMap<QString, QMap<QString, QStringList> >& categoryMap = _vehicle->parameterManager()->getCategoryMap();
+    const QMap<QString, QMap<QString, QStringList> >& categoryMap = _parameterMgr->getDefaultComponentCategoryMap();
     _categories = categoryMap.keys();
 
     // Move default category to front
     _categories.removeOne(_currentCategory);
     _categories.prepend(_currentCategory);
+
+    // There is a category for each non default component
+    for (int compId: _parameterMgr->componentIds()) {
+        if (compId != _vehicle->defaultComponentId()) {
+            _categories.append(QString("%1%2").arg(_componentCategoryPrefix).arg(compId));
+        }
+    }
 
     // Be careful about no parameters
     if (categoryMap.contains(_currentCategory) && categoryMap[_currentCategory].size() != 0) {
@@ -43,39 +46,38 @@ ParameterEditorController::ParameterEditorController(void)
     }
     _updateParameters();
 
-    connect(this, &ParameterEditorController::searchTextChanged, this, &ParameterEditorController::_updateParameters);
-    connect(this, &ParameterEditorController::currentGroupChanged, this, &ParameterEditorController::_updateParameters);
+    connect(this, &ParameterEditorController::searchTextChanged,        this, &ParameterEditorController::_updateParameters);
+    connect(this, &ParameterEditorController::currentCategoryChanged,   this, &ParameterEditorController::_updateParameters);
+    connect(this, &ParameterEditorController::currentGroupChanged,      this, &ParameterEditorController::_updateParameters);
+    connect(this, &ParameterEditorController::showModifiedOnlyChanged,  this, &ParameterEditorController::_updateParameters);
 }
 
 ParameterEditorController::~ParameterEditorController()
 {
-    
+
 }
 
 QStringList ParameterEditorController::getGroupsForCategory(const QString& category)
 {
-    const QMap<QString, QMap<QString, QStringList> >& categoryMap = _vehicle->parameterManager()->getCategoryMap();
+    if (category.startsWith(_componentCategoryPrefix)) {
+        return QStringList(tr("All"));
+    } else {
+        const QMap<QString, QMap<QString, QStringList> >& categoryMap = _parameterMgr->getDefaultComponentCategoryMap();
 
-    return categoryMap[category].keys();
-}
-
-QStringList ParameterEditorController::getParametersForGroup(const QString& category, const QString& group)
-{
-    const QMap<QString, QMap<QString, QStringList> >& categoryMap = _vehicle->parameterManager()->getCategoryMap();
-
-    return categoryMap[category][group];
+        return categoryMap[category].keys();
+    }
 }
 
 QStringList ParameterEditorController::searchParameters(const QString& searchText, bool searchInName, bool searchInDescriptions)
 {
     QStringList list;
-    
-    foreach(const QString &paramName, _vehicle->parameterManager()->parameterNames(_vehicle->defaultComponentId())) {
+
+    for(const QString &paramName: _parameterMgr->parameterNames(_vehicle->defaultComponentId())) {
         if (searchText.isEmpty()) {
             list += paramName;
         } else {
-            Fact* fact = _vehicle->parameterManager()->getParameter(_vehicle->defaultComponentId(), paramName);
-            
+            Fact* fact = _parameterMgr->getParameter(_vehicle->defaultComponentId(), paramName);
+
             if (searchInName && fact->name().contains(searchText, Qt::CaseInsensitive)) {
                 list += paramName;
             } else if (searchInDescriptions && (fact->shortDescription().contains(searchText, Qt::CaseInsensitive) || fact->longDescription().contains(searchText, Qt::CaseInsensitive))) {
@@ -84,7 +86,7 @@ QStringList ParameterEditorController::searchParameters(const QString& searchTex
         }
     }
     list.sort();
-    
+
     return list;
 }
 
@@ -104,14 +106,14 @@ void ParameterEditorController::saveToFile(const QString& filename)
         }
 
         QFile file(parameterFilename);
-        
+
         if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
             qgcApp()->showMessage(tr("Unable to create file: %1").arg(parameterFilename));
             return;
         }
-        
+
         QTextStream stream(&file);
-        _vehicle->parameterManager()->writeParametersToStream(stream);
+        _parameterMgr->writeParametersToStream(stream);
         file.close();
     }
 }
@@ -119,19 +121,19 @@ void ParameterEditorController::saveToFile(const QString& filename)
 void ParameterEditorController::loadFromFile(const QString& filename)
 {
     QString errors;
-    
+
     if (!filename.isEmpty()) {
         QFile file(filename);
-        
+
         if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
             qgcApp()->showMessage(tr("Unable to open file: %1").arg(filename));
             return;
         }
-        
+
         QTextStream stream(&file);
-        errors = _vehicle->parameterManager()->readParametersFromStream(stream);
+        errors = _parameterMgr->readParametersFromStream(stream);
         file.close();
-        
+
         if (!errors.isEmpty()) {
             emit showErrorMessage(errors);
         }
@@ -140,12 +142,18 @@ void ParameterEditorController::loadFromFile(const QString& filename)
 
 void ParameterEditorController::refresh(void)
 {
-    _vehicle->parameterManager()->refreshAllParameters();
+    _parameterMgr->refreshAllParameters();
 }
 
 void ParameterEditorController::resetAllToDefaults(void)
 {
-    _vehicle->parameterManager()->resetAllParametersToDefaults();
+    _parameterMgr->resetAllParametersToDefaults();
+    refresh();
+}
+
+void ParameterEditorController::resetAllToVehicleConfiguration(void)
+{
+    _parameterMgr->resetAllToVehicleConfiguration();
     refresh();
 }
 
@@ -155,10 +163,17 @@ void ParameterEditorController::setRCToParam(const QString& paramName)
     Q_UNUSED(paramName)
 #else
     if (_uas) {
-        QGCMapRCToParamDialog * d = new QGCMapRCToParamDialog(paramName, _uas, qgcApp()->toolbox()->multiVehicleManager(), MainWindow::instance());
-        d->exec();
+        Q_UNUSED(paramName)
+        //-- TODO QGCMapRCToParamDialog * d = new QGCMapRCToParamDialog(paramName, _uas, qgcApp()->toolbox()->multiVehicleManager(), MainWindow::instance());
+        //d->exec();
     }
 #endif
+}
+
+bool ParameterEditorController::_shouldShow(Fact* fact)
+{
+    bool show = _showModifiedOnly ? (fact->defaultValueAvailable() ? (fact->valueEqualsDefault() ? false : true) : false) : true;
+    return show;
 }
 
 void ParameterEditorController::_updateParameters(void)
@@ -166,22 +181,31 @@ void ParameterEditorController::_updateParameters(void)
     QObjectList newParameterList;
     QStringList searchItems = _searchText.split(' ', QString::SkipEmptyParts);
 
-    if (searchItems.isEmpty()) {
-        const QMap<QString, QMap<QString, QStringList> >& categoryMap = _vehicle->parameterManager()->getCategoryMap();
-        foreach (const QString& parameter, categoryMap[_currentCategory][_currentGroup]) {
-            newParameterList.append(_vehicle->parameterManager()->getParameter(_vehicle->defaultComponentId(), parameter));
+    if (searchItems.isEmpty() && !_showModifiedOnly) {
+        if (_currentCategory.startsWith(_componentCategoryPrefix)) {
+            int compId = _currentCategory.right(_currentCategory.length() - _componentCategoryPrefix.length()).toInt();
+            for (const QString& paramName: _parameterMgr->parameterNames(compId)) {
+                newParameterList.append(_parameterMgr->getParameter(compId, paramName));
+            }
+
+        } else {
+            const QMap<QString, QMap<QString, QStringList> >& categoryMap = _parameterMgr->getDefaultComponentCategoryMap();
+            for (const QString& parameter: categoryMap[_currentCategory][_currentGroup]) {
+                newParameterList.append(_parameterMgr->getParameter(_vehicle->defaultComponentId(), parameter));
+            }
         }
     } else {
-        foreach(const QString &parameter, _vehicle->parameterManager()->parameterNames(_vehicle->defaultComponentId())) {
-            Fact* fact = _vehicle->parameterManager()->getParameter(_vehicle->defaultComponentId(), parameter);
-            bool matched = true;
-
-            // all of the search items must match in order for the parameter to be added to the list
-            for (const auto& searchItem : searchItems) {
-                if (!fact->name().contains(searchItem, Qt::CaseInsensitive) &&
+        for(const QString &parameter: _parameterMgr->parameterNames(_vehicle->defaultComponentId())) {
+            Fact* fact = _parameterMgr->getParameter(_vehicle->defaultComponentId(), parameter);
+            bool matched = _shouldShow(fact);
+            // All of the search items must match in order for the parameter to be added to the list
+            if(matched) {
+                for (const auto& searchItem : searchItems) {
+                    if (!fact->name().contains(searchItem, Qt::CaseInsensitive) &&
                         !fact->shortDescription().contains(searchItem, Qt::CaseInsensitive) &&
                         !fact->longDescription().contains(searchItem, Qt::CaseInsensitive)) {
-                    matched = false;
+                        matched = false;
+                    }
                 }
             }
             if (matched) {

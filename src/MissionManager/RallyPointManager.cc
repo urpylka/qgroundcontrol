@@ -21,7 +21,7 @@ RallyPointManager::RallyPointManager(Vehicle* vehicle)
     connect(&_planManager, &PlanManager::inProgressChanged,         this, &RallyPointManager::inProgressChanged);
     connect(&_planManager, &PlanManager::error,                     this, &RallyPointManager::error);
     connect(&_planManager, &PlanManager::removeAllComplete,         this, &RallyPointManager::removeAllComplete);
-    connect(&_planManager, &PlanManager::sendComplete,              this, &RallyPointManager::sendComplete);
+    connect(&_planManager, &PlanManager::sendComplete,              this, &RallyPointManager::_sendComplete);
     connect(&_planManager, &PlanManager::newMissionItemsAvailable,  this, &RallyPointManager::_planManagerLoadComplete);
 }
 
@@ -45,13 +45,17 @@ void RallyPointManager::loadFromVehicle(void)
 
 void RallyPointManager::sendToVehicle(const QList<QGeoCoordinate>& rgPoints)
 {
-    QList<MissionItem*> rallyItems;
+    _rgSendPoints.clear();
+    for (const QGeoCoordinate& rallyPoint: rgPoints) {
+        _rgSendPoints.append(rallyPoint);
+    }
 
+    QList<MissionItem*> rallyItems;
     for (int i=0; i<rgPoints.count(); i++) {
 
         MissionItem* item = new MissionItem(0,
                                             MAV_CMD_NAV_RALLY_POINT,
-                                            MAV_FRAME_GLOBAL,
+                                            MAV_FRAME_GLOBAL_RELATIVE_ALT,
                                             0, 0, 0, 0,                 // param 1-4 unused
                                             rgPoints[i].latitude(),
                                             rgPoints[i].longitude(),
@@ -68,6 +72,7 @@ void RallyPointManager::sendToVehicle(const QList<QGeoCoordinate>& rgPoints)
 
 void RallyPointManager::removeAll(void)
 {
+    _rgPoints.clear();
     _planManager.removeAll();
 }
 
@@ -100,5 +105,16 @@ void RallyPointManager::_planManagerLoadComplete(bool removeAllRequested)
     }
 
 
-    emit loadComplete(_rgPoints);
+    emit loadComplete();
+}
+
+void RallyPointManager::_sendComplete(bool error)
+{
+    if (error) {
+        _rgPoints.clear();
+    } else {
+        _rgPoints = _rgSendPoints;
+    }
+    _rgSendPoints.clear();
+    emit sendComplete(error);
 }

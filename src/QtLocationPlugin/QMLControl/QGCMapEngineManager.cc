@@ -12,8 +12,7 @@
 ///     @author Gus Grubba <mavlink@grubba.com>
 
 #if !defined(__mobile__)
-#include "QGCQFileDialog.h"
-#include "MainWindow.h"
+//-- TODO: #include "QGCQFileDialog.h"
 #endif
 
 #include "QGCMapEngineManager.h"
@@ -78,19 +77,19 @@ QGCMapEngineManager::updateForCurrentView(double lon0, double lat0, double lon1,
     _bottomRightLon = lon1;
     _minZoom        = minZoom;
     _maxZoom        = maxZoom;
-    _totalSet.clear();
+
+    _imageSet.clear();
+    _elevationSet.clear();
+
     for(int z = minZoom; z <= maxZoom; z++) {
         QGCTileSet set = QGCMapEngine::getTileCount(z, lon0, lat0, lon1, lat1, mapType);
-        _totalSet += set;
+        _imageSet += set;
     }
     if (_fetchElevation) {
         QGCTileSet set = QGCMapEngine::getTileCount(1, lon0, lat0, lon1, lat1, UrlFactory::AirmapElevation);
-        _totalSet += set;
+        _elevationSet += set;
     }
-    emit tileX0Changed();
-    emit tileX1Changed();
-    emit tileY0Changed();
-    emit tileY1Changed();
+
     emit tileCountChanged();
     emit tileSizeChanged();
 
@@ -101,14 +100,14 @@ QGCMapEngineManager::updateForCurrentView(double lon0, double lat0, double lon1,
 QString
 QGCMapEngineManager::tileCountStr()
 {
-    return QGCMapEngine::numberToString(_totalSet.tileCount);
+    return QGCMapEngine::numberToString(_imageSet.tileCount + _elevationSet.tileCount);
 }
 
 //-----------------------------------------------------------------------------
 QString
 QGCMapEngineManager::tileSizeStr()
 {
-    return QGCMapEngine::bigSizeToString(_totalSet.tileSize);
+    return QGCMapEngine::bigSizeToString(_imageSet.tileSize + _elevationSet.tileSize);
 }
 
 //-----------------------------------------------------------------------------
@@ -142,7 +141,7 @@ QGCMapEngineManager::_tileSetFetched(QGCCachedTileSet* tileSet)
 void
 QGCMapEngineManager::startDownload(const QString& name, const QString& mapType)
 {
-    if(_totalSet.tileSize) {
+    if(_imageSet.tileSize) {
         QGCCachedTileSet* set = new QGCCachedTileSet(name);
         set->setMapTypeStr(mapType);
         set->setTopleftLat(_topleftLat);
@@ -151,8 +150,8 @@ QGCMapEngineManager::startDownload(const QString& name, const QString& mapType)
         set->setBottomRightLon(_bottomRightLon);
         set->setMinZoom(_minZoom);
         set->setMaxZoom(_maxZoom);
-        set->setTotalTileSize(_totalSet.tileSize);
-        set->setTotalTileCount(_totalSet.tileCount);
+        set->setTotalTileSize(_imageSet.tileSize);
+        set->setTotalTileCount(static_cast<quint32>(_imageSet.tileCount));
         set->setType(QGCMapEngine::getTypeFromName(mapType));
         QGCCreateTileSetTask* task = new QGCCreateTileSetTask(set);
         //-- Create Tile Set (it will also create a list of tiles to download)
@@ -171,8 +170,8 @@ QGCMapEngineManager::startDownload(const QString& name, const QString& mapType)
         set->setBottomRightLon(_bottomRightLon);
         set->setMinZoom(1);
         set->setMaxZoom(1);
-        set->setTotalTileSize(_totalSet.tileSize);
-        set->setTotalTileCount(_totalSet.tileCount);
+        set->setTotalTileSize(_elevationSet.tileSize);
+        set->setTotalTileCount(static_cast<quint32>(_elevationSet.tileCount));
         set->setType(QGCMapEngine::getTypeFromName("Airmap Elevation Data"));
         QGCCreateTileSetTask* task = new QGCCreateTileSetTask(set);
         //-- Create Tile Set (it will also create a list of tiles to download)
@@ -305,7 +304,7 @@ void
 QGCMapEngineManager::_tileSetDeleted(quint64 setID)
 {
     //-- Tile Set successfully deleted
-    QGCCachedTileSet* setToDelete = NULL;
+    QGCCachedTileSet* setToDelete = nullptr;
     int i = 0;
     for(i = 0; i < _tileSets.count(); i++ ) {
         QGCCachedTileSet* set = qobject_cast<QGCCachedTileSet*>(_tileSets.get(i));
@@ -435,11 +434,11 @@ QGCMapEngineManager::importSets(QString path) {
         //-- TODO: This has to be something fixed
         dir = QDir(QDir::homePath()).filePath(QString("export_%1.db").arg(QDateTime::currentDateTime().toTime_t()));
 #else
-        dir = QGCQFileDialog::getOpenFileName(
-            NULL,
-            "Import Tile Set",
-            QDir::homePath(),
-            "Tile Sets (*.qgctiledb)");
+        dir = QString(); //-- TODO: QGCQFileDialog::getOpenFileName(
+        //    nullptr,
+        //    "Import Tile Set",
+        //    QDir::homePath(),
+        //    "Tile Sets (*.qgctiledb)");
 #endif
     }
     if(!dir.isEmpty()) {
@@ -465,13 +464,13 @@ QGCMapEngineManager::exportSets(QString path) {
 #if defined(__mobile__)
         dir = QDir(QDir::homePath()).filePath(QString("export_%1.db").arg(QDateTime::currentDateTime().toTime_t()));
 #else
-        dir = QGCQFileDialog::getSaveFileName(
-            MainWindow::instance(),
-            "Export Tile Set",
-            QDir::homePath(),
-            "Tile Sets (*.qgctiledb)",
-            "qgctiledb",
-            true);
+        dir = QString(); //-- TODO: QGCQFileDialog::getSaveFileName(
+        //    MainWindow::instance(),
+        //    "Export Tile Set",
+        //    QDir::homePath(),
+        //    "Tile Sets (*.qgctiledb)",
+        //    "qgctiledb",
+        //    true);
 #endif
     }
     if(!dir.isEmpty()) {
@@ -547,8 +546,8 @@ QGCMapEngineManager::_updateDiskFreeSpace()
     QString path = getQGCMapEngine()->getCachePath();
     if(!path.isEmpty()) {
         QStorageInfo info(path);
-        quint32 total = (quint32)(info.bytesTotal() / 1024);
-        quint32 free  = (quint32)(info.bytesFree()  / 1024);
+        quint32 total = static_cast<quint32>(info.bytesTotal() / 1024);
+        quint32 free  = static_cast<quint32>(info.bytesFree()  / 1024);
         qCDebug(QGCMapEngineManagerLog) << info.rootPath() << "has" << free << "Mbytes available.";
         if(_freeDiskSpace != free) {
             _freeDiskSpace = free;

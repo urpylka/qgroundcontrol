@@ -32,6 +32,9 @@ class Vehicle;
 class LinkInterface;
 class QmlObjectListModel;
 class VideoReceiver;
+class PlanMasterController;
+class QGCCameraManager;
+class QGCCameraControl;
 
 class QGCCorePlugin : public QGCTool
 {
@@ -51,23 +54,23 @@ public:
     Q_PROPERTY(QString              brandImageOutdoor       READ brandImageOutdoor                              CONSTANT)
     Q_PROPERTY(QmlObjectListModel*  customMapItems          READ customMapItems                                 CONSTANT)
 
-    Q_INVOKABLE bool guidedActionsControllerLogging(void) const;
+    Q_INVOKABLE bool guidedActionsControllerLogging() const;
 
     /// The list of settings under the Settings Menu
     /// @return A list of QGCSettings
-    virtual QVariantList& settingsPages(void);
+    virtual QVariantList& settingsPages();
 
     /// The list of PageWidget pages shown in the instrument panel
     /// @return A list of QmlPageInfo
-    virtual QVariantList& instrumentPages(void);
+    virtual QVariantList& instrumentPages();
 
     /// The default settings panel to show
     /// @return The settings index
-    virtual int defaultSettings(void);
+    virtual int defaultSettings();
 
     /// Global options
     /// @return An instance of QGCOptions
-    virtual QGCOptions* options(void);
+    virtual QGCOptions* options();
 
     /// Allows the core plugin to override the visibility for a settings group
     ///     @param name - SettingsGroup name
@@ -81,16 +84,16 @@ public:
     virtual bool adjustSettingMetaData(const QString& settingsGroup, FactMetaData& metaData);
 
     /// Return the resource file which contains the brand image for for Indoor theme.
-    virtual QString brandImageIndoor(void) const { return QString(); }
+    virtual QString brandImageIndoor() const { return QString(); }
 
     /// Return the resource file which contains the brand image for for Outdoor theme.
-    virtual QString brandImageOutdoor(void) const { return QString(); }
+    virtual QString brandImageOutdoor() const { return QString(); }
 
     /// @return The message to show to the user when they a re prompted to confirm turning on advanced ui.
-    virtual QString showAdvancedUIMessage(void) const;
+    virtual QString showAdvancedUIMessage() const;
 
     /// @return An instance of an alternate position source (or NULL if not available)
-    virtual QGeoPositionInfoSource* createPositionSource(QObject* parent) { Q_UNUSED(parent); return NULL; }
+    virtual QGeoPositionInfoSource* createPositionSource(QObject* parent) { Q_UNUSED(parent); return nullptr; }
 
     /// Allows a plugin to override the specified color name from the palette
     virtual void paletteOverride(QString colorName, QGCPalette::PaletteColorInfo_t& colorInfo);
@@ -110,7 +113,21 @@ public:
 
     /// Allows custom builds to add custom items to the FlightMap. Objects put into QmlObjectListModel
     /// should derive from QmlComponentInfo and set the url property.
-    virtual QmlObjectListModel* customMapItems(void);
+    virtual QmlObjectListModel* customMapItems();
+
+    /// Allows custom builds to add custom items to the plan file. Either before the document is
+    /// created or after.
+    virtual void    preSaveToJson           (PlanMasterController* pController, QJsonObject& json) { Q_UNUSED(pController); Q_UNUSED(json); }
+    virtual void    postSaveToJson          (PlanMasterController* pController, QJsonObject& json) { Q_UNUSED(pController); Q_UNUSED(json); }
+
+    /// Same for the specific "mission" portion
+    virtual void    preSaveToMissionJson    (PlanMasterController* pController, QJsonObject& missionJson) { Q_UNUSED(pController); Q_UNUSED(missionJson); }
+    virtual void    postSaveToMissionJson   (PlanMasterController* pController, QJsonObject& missionJson) { Q_UNUSED(pController); Q_UNUSED(missionJson); }
+
+    /// Allows custom builds to load custom items from the plan file. Either before the document is
+    /// parsed or after.
+    virtual void    preLoadFromJson     (PlanMasterController* pController, QJsonObject& json) { Q_UNUSED(pController); Q_UNUSED(json); }
+    virtual void    postLoadFromJson    (PlanMasterController* pController, QJsonObject& json) { Q_UNUSED(pController); Q_UNUSED(json); }
 
     /// Returns the url to download the stable version check file. Return QString() to indicate no version check should be performed.
     /// Default QGC mainline implemenentation returns QGC Stable file location. Default QGC custom build code returns QString().
@@ -118,14 +135,19 @@ public:
     /// The contents of this file should be a single line in the form:
     ///     v3.4.4
     /// This indicates the latest stable version number.
-    virtual QString stableVersionCheckFileUrl(void) const;
+    virtual QString stableVersionCheckFileUrl() const;
 
     /// Returns the user visible url to show user where to download new stable builds from.
     /// Custom builds must override to provide their own location.
-    virtual QString stableDownloadLocation(void) const { return QString("qgroundcontrol.com"); }
+    virtual QString stableDownloadLocation() const { return QString("qgroundcontrol.com"); }
 
-    bool showTouchAreas(void) const { return _showTouchAreas; }
-    bool showAdvancedUI(void) const { return _showAdvancedUI; }
+    /// Returns the complex mission items to display in the Plan UI
+    ///     @param complexMissionItemNames Default set of complex items
+    /// @return Complex items to be made available to user
+    virtual QStringList complexMissionItemNames(Vehicle* vehicle, const QStringList& complexMissionItemNames) { Q_UNUSED(vehicle); return complexMissionItemNames; }
+
+    bool showTouchAreas() const { return _showTouchAreas; }
+    bool showAdvancedUI() const { return _showAdvancedUI; }
     void setShowTouchAreas(bool show);
     void setShowAdvancedUI(bool show);
 
@@ -133,14 +155,26 @@ public:
     void                            setToolbox              (QGCToolbox* toolbox);
 
 signals:
-    void settingsPagesChanged   (void);
-    void instrumentPagesChanged (void);
+    void settingsPagesChanged   ();
+    void instrumentPagesChanged ();
     void showTouchAreasChanged  (bool showTouchAreas);
     void showAdvancedUIChanged  (bool showAdvancedUI);
+
+protected slots:
+    void _activeVehicleChanged  (Vehicle* activeVehicle);
+    void _dynamicCamerasChanged ();
+    void _currentCameraChanged  ();
+    void _autoStreamChanged     ();
+
+protected:
+    void _resetInstrumentPages  ();
 
 protected:
     bool                _showTouchAreas;
     bool                _showAdvancedUI;
+    Vehicle*            _activeVehicle  = nullptr;
+    QGCCameraManager*   _dynamicCameras = nullptr;
+    QGCCameraControl*   _currentCamera  = nullptr;
 
 private:
     QGCCorePlugin_p*    _p;

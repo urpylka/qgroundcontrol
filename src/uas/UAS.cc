@@ -26,7 +26,6 @@
 #include "UAS.h"
 #include "LinkInterface.h"
 #include "QGC.h"
-#include "AudioOutput.h"
 #include "MAVLinkProtocol.h"
 #include "QGCMAVLink.h"
 #include "LinkManager.h"
@@ -181,9 +180,6 @@ void UAS::receiveMessage(mavlink_message_t message)
     // and we already got one attitude packet
     if (message.sysid == uasId && (!attitudeStamped || lastAttitude != 0 || message.msgid == MAVLINK_MSG_ID_ATTITUDE))
     {
-        QString uasState;
-        QString stateDescription;
-
         bool multiComponentSourceDetected = false;
         bool wrongComponent = false;
 
@@ -305,32 +301,6 @@ void UAS::receiveMessage(mavlink_message_t message)
             emit valueChanged(uasId, "roll sp", "rad", roll, time);
             emit valueChanged(uasId, "pitch sp", "rad", pitch, time);
             emit valueChanged(uasId, "yaw sp", "rad", yaw, time);
-        }
-            break;
-
-        case MAVLINK_MSG_ID_STATUSTEXT:
-        {
-            QByteArray b;
-            b.resize(MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN+1);
-            mavlink_msg_statustext_get_text(&message, b.data());
-
-            // Ensure NUL-termination
-            b[b.length()-1] = '\0';
-            QString text = QString(b);
-            int severity = mavlink_msg_statustext_get_severity(&message);
-
-        // If the message is NOTIFY or higher severity, or starts with a '#',
-        // then read it aloud.
-            if (text.startsWith("#") || severity <= MAV_SEVERITY_NOTICE)
-            {
-                text.remove("#");
-                emit textMessageReceived(uasId, message.compid, severity, text);
-                _say(text.toLower(), severity);
-            }
-            else
-            {
-                emit textMessageReceived(uasId, message.compid, severity, text);
-            }
         }
             break;
 
@@ -1116,56 +1086,6 @@ void UAS::pairRX(int rxType, int rxSubType)
 }
 
 /**
-* If enabled, connect the flight gear link.
-*/
-#ifndef __mobile__
-void UAS::enableHilFlightGear(bool enable, QString options, bool sensorHil, QObject * configuration)
-{
-    Q_UNUSED(configuration);
-
-    QGCFlightGearLink* link = dynamic_cast<QGCFlightGearLink*>(simulation);
-    if (!link) {
-        // Delete wrong sim
-        if (simulation) {
-            stopHil();
-            delete simulation;
-        }
-        simulation = new QGCFlightGearLink(_vehicle, options);
-    }
-
-    float noise_scaler = 0.0001f;
-    xacc_var = noise_scaler * 0.2914f;
-    yacc_var = noise_scaler * 0.2914f;
-    zacc_var = noise_scaler * 0.9577f;
-    rollspeed_var = noise_scaler * 0.8126f;
-    pitchspeed_var = noise_scaler * 0.6145f;
-    yawspeed_var = noise_scaler * 0.5852f;
-    xmag_var = noise_scaler * 0.0786f;
-    ymag_var = noise_scaler * 0.0566f;
-    zmag_var = noise_scaler * 0.0333f;
-    abs_pressure_var = noise_scaler * 0.5604f;
-    diff_pressure_var = noise_scaler * 0.2604f;
-    pressure_alt_var = noise_scaler * 0.5604f;
-    temperature_var = noise_scaler * 0.7290f;
-
-    // Connect Flight Gear Link
-    link = dynamic_cast<QGCFlightGearLink*>(simulation);
-    link->setStartupArguments(options);
-    link->sensorHilEnabled(sensorHil);
-    // FIXME: this signal is not on the base hil configuration widget, only on the FG widget
-    //QObject::connect(configuration, SIGNAL(barometerOffsetChanged(float)), link, SLOT(setBarometerOffset(float)));
-    if (enable)
-    {
-        startHil();
-    }
-    else
-    {
-        stopHil();
-    }
-}
-#endif
-
-/**
 * If enabled, connect the JSBSim link.
 */
 #ifndef __mobile__
@@ -1611,12 +1531,6 @@ void UAS::unsetRCToParameterMap()
                                            0.0f);
         _vehicle->sendMessageOnLink(_vehicle->priorityLink(), message);
     }
-}
-
-void UAS::_say(const QString& text, int severity)
-{
-    Q_UNUSED(severity);
-    qgcApp()->toolbox()->audioOutput()->say(text);
 }
 
 void UAS::shutdownVehicle(void)

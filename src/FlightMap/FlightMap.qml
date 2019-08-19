@@ -34,21 +34,21 @@ Map {
 
     property string mapName:                        'defaultMap'
     property bool   isSatelliteMap:                 activeMapType.name.indexOf("Satellite") > -1 || activeMapType.name.indexOf("Hybrid") > -1
-    property var    gcsPosition:                    QtPositioning.coordinate()
+    property var    gcsPosition:                    QGroundControl.qgcPositionManger.gcsPosition
+    property int    gcsHeading:                     QGroundControl.qgcPositionManger.gcsHeading
     property bool   userPanned:                     false   ///< true: the user has manually panned the map
     property bool   allowGCSLocationCenter:         false   ///< true: map will center/zoom to gcs location one time
     property bool   allowVehicleLocationCenter:     false   ///< true: map will center/zoom to vehicle location one time
     property bool   firstGCSPositionReceived:       false   ///< true: first gcs position update was responded to
     property bool   firstVehiclePositionReceived:   false   ///< true: first vehicle position update was responded to
     property bool   planView:                       false   ///< true: map being using for Plan view, items should be draggable
-    property var    qgcView
 
     readonly property real  maxZoomLevel: 20
 
-    property var    _activeVehicle:                 QGroundControl.multiVehicleManager.activeVehicle
-    property var    activeVehicleCoordinate:        _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
+    property var    activeVehicleCoordinate:        activeVehicle ? activeVehicle.coordinate : QtPositioning.coordinate()
 
     function setVisibleRegion(region) {
+        // TODO: Is this still necessary with Qt 5.11?
         // This works around a bug on Qt where if you set a visibleRegion and then the user moves or zooms the map
         // and then you set the same visibleRegion the map will not move/scale appropriately since it thinks there
         // is nothing to do.
@@ -65,34 +65,23 @@ Map {
     }
 
     function centerToSpecifiedLocation() {
-        qgcView.showDialog(specifyMapPositionDialog, qsTr("Specify Position"), qgcView.showDialogDefaultWidth, StandardButton.Close)
-
+        mainWindow.showComponentDialog(specifyMapPositionDialog, qsTr("Specify Position"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
     }
 
     Component {
         id: specifyMapPositionDialog
-
         EditPositionDialog {
             coordinate:             center
             onCoordinateChanged:    center = coordinate
         }
     }
 
-    ExclusiveGroup { id: mapTypeGroup }
-
-    // Update ground station position
-    Connections {
-        target: QGroundControl.qgcPositionManger
-
-        onLastPositionUpdated: {
-            if (valid && lastPosition.latitude && Math.abs(lastPosition.latitude)  > 0.001 && lastPosition.longitude && Math.abs(lastPosition.longitude)  > 0.001) {
-                gcsPosition = QtPositioning.coordinate(lastPosition.latitude,lastPosition.longitude)
-                if (!firstGCSPositionReceived && !firstVehiclePositionReceived && allowGCSLocationCenter) {
-                    firstGCSPositionReceived = true
-                    center = gcsPosition
-                    zoomLevel = QGroundControl.flightMapInitialZoom
-                }
-            }
+    // Center map to gcs location
+    onGcsPositionChanged: {
+        if (gcsPosition.isValid && allowGCSLocationCenter && !firstGCSPositionReceived && !firstVehiclePositionReceived) {
+            firstGCSPositionReceived = true
+            center = gcsPosition
+            zoomLevel = QGroundControl.flightMapInitialZoom
         }
     }
 
@@ -140,12 +129,18 @@ Map {
         coordinate:     gcsPosition
 
         sourceItem: Image {
-            source:         "/res/QGCLogoFull"
+            id:             mapItemImage
+            source:         isNaN(gcsHeading) ? "/res/QGCLogoFull" : "/res/QGCLogoArrow"
             mipmap:         true
             antialiasing:   true
             fillMode:       Image.PreserveAspectFit
-            height:         ScreenTools.defaultFontPixelHeight * 1.75
+            height:         ScreenTools.defaultFontPixelHeight * (isNaN(gcsHeading) ? 1.75 : 2.5 )
             sourceSize.height: height
+            transform: Rotation {
+                origin.x:       mapItemImage.width  / 2
+                origin.y:       mapItemImage.height / 2
+                angle:          isNaN(gcsHeading) ? 0 : gcsHeading
+            }
         }
     }
 } // Map

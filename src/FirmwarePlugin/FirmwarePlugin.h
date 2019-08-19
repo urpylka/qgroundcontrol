@@ -105,6 +105,11 @@ public:
     /// Returns the flight mode for RTL
     virtual QString rtlFlightMode(void) const { return QString(); }
 
+    /// Returns the flight mode for Smart RTL
+    virtual QString smartRTLFlightMode(void) const { return QString(); }
+
+    virtual bool supportsSmartRTL(void) const { return false; }
+
     /// Returns the flight mode for Land
     virtual QString landFlightMode(void) const { return QString(); }
 
@@ -114,6 +119,9 @@ public:
     /// Returns whether the vehicle is in guided mode or not.
     virtual bool isGuidedMode(const Vehicle* vehicle) const;
 
+    /// Returns the flight mode which the vehicle will be in if it is performing a goto location
+    virtual QString gotoFlightMode(void) const;
+
     /// Set guided flight mode
     virtual void setGuidedMode(Vehicle* vehicle, bool guidedMode);
 
@@ -122,7 +130,7 @@ public:
     virtual void pauseVehicle(Vehicle* vehicle);
 
     /// Command vehicle to return to launch
-    virtual void guidedModeRTL(Vehicle* vehicle);
+    virtual void guidedModeRTL(Vehicle* vehicle, bool smartRTL);
 
     /// Command vehicle to land at current location
     virtual void guidedModeLand(Vehicle* vehicle);
@@ -143,14 +151,6 @@ public:
     ///     @param altitudeChange If > 0, go up by amount specified, if < 0, go down by amount specified
     virtual void guidedModeChangeAltitude(Vehicle* vehicle, double altitudeChange);
 
-    /// FIXME: This isn't quite correct being here. All code for Joystick suvehicleTypepport is currently firmware specific
-    /// not just this. I'm going to try to change that. If not, this will need to be removed.
-    /// Returns the number of buttons which are reserved for firmware use in the MANUAL_CONTROL mavlink
-    /// message. For example PX4 Flight Stack reserves the first 8 buttons to simulate rc switches.
-    /// The remainder can be assigned to Vehicle actions.
-    /// @return -1: reserver all buttons, >0 number of buttons to reserve
-    virtual int manualControlReservedButtonCount(void);
-
     /// Default tx mode to apply to joystick axes
     /// TX modes are as outlined here: http://www.rc-airplane-world.com/rc-transmitter-modes.html
     virtual int defaultJoystickTXMode(void);
@@ -162,7 +162,7 @@ public:
 
     /// Returns true if the vehicle and firmware supports the use of negative thrust
     /// Typically supported rover.
-    virtual bool supportsNegativeThrust(void);
+    virtual bool supportsNegativeThrust(Vehicle *);
 
     /// Returns true if the firmware supports the use of the RC radio and requires the RC radio
     /// setup page. Returns true by default.
@@ -207,6 +207,7 @@ public:
     virtual QString getVersionParam(void) { return QString(); }
 
     /// Returns the parameter set version info pulled from inside the meta data file. -1 if not found.
+    /// Note: The implementation for this must not vary by vehicle type.
     virtual void getParameterMetaDataVersionInfo(const QString& metaDataFile, int& majorVersion, int& minorVersion);
 
     /// Returns the internal resource parameter meta date file.
@@ -215,12 +216,12 @@ public:
     /// Loads the specified parameter meta data file.
     /// @return Opaque parameter meta data information which must be stored with Vehicle. Vehicle is responsible to
     ///         call deleteParameterMetaData when no longer needed.
-    virtual QObject* loadParameterMetaData(const QString& metaDataFile) { Q_UNUSED(metaDataFile); return NULL; }
+    virtual QObject* loadParameterMetaData(const QString& metaDataFile) { Q_UNUSED(metaDataFile); return nullptr; }
 
     /// Returns the FactMetaData associated with the parameter name
     ///     @param opaqueParameterMetaData Opaque pointer returned from loadParameterMetaData
     ///     @param name Parameter name
-    virtual FactMetaData* getMetaDataForFact(QObject* parameterMetaData, const QString& name, MAV_TYPE vehicleType) { Q_UNUSED(parameterMetaData); Q_UNUSED(name); Q_UNUSED(vehicleType); return NULL; }
+    virtual FactMetaData* getMetaDataForFact(QObject* parameterMetaData, const QString& name, MAV_TYPE vehicleType) { Q_UNUSED(parameterMetaData); Q_UNUSED(name); Q_UNUSED(vehicleType); return nullptr; }
 
     /// Adds the parameter meta data to the Fact
     ///     @param opaqueParameterMetaData Opaque pointer returned from loadParameterMetaData
@@ -272,11 +273,11 @@ public:
     /// TODO: This should go into QGCCameraManager
     virtual const QVariantList& cameraList(const Vehicle* vehicle);
 
-    /// Creates vehicle camera manager. Returns NULL if not supported.
+    /// Creates vehicle camera manager.
     virtual QGCCameraManager* createCameraManager(Vehicle *vehicle);
 
-    /// Camera control. Returns NULL if not supported.
-    virtual QGCCameraControl* createCameraControl(const mavlink_camera_information_t* info, Vehicle* vehicle, int compID, QObject* parent = NULL);
+    /// Camera control.
+    virtual QGCCameraControl* createCameraControl(const mavlink_camera_information_t* info, Vehicle* vehicle, int compID, QObject* parent = nullptr);
 
     /// Returns a pointer to a dictionary of firmware-specific FactGroups
     virtual QMap<QString, FactGroup*>* factGroups(void);
@@ -306,6 +307,19 @@ public:
     /// Convert from HIGH_LATENCY2.custom_mode value to correct 32 bit value.
     virtual uint32_t highLatencyCustomModeTo32Bits(uint16_t hlCustomMode);
 
+    /// Used to check if running firmware is latest stable version.
+    virtual void checkIfIsLatestStable(Vehicle* vehicle);
+
+    /// Used to check if running current version is equal or higher than the one being compared.
+    /// returns 1 if current > compare, 0 if current == compare, -1 if current < compare
+    int versionCompare(Vehicle* vehicle, QString& compare);
+    int versionCompare(Vehicle* vehicle, int major, int minor, int patch);
+
+    /// Allows the Firmware plugin to override the facts meta data.
+    ///     @param vehicleType - Type of current vehicle
+    ///     @param metaData - MetaData for fact
+    virtual void adjustMetaData(MAV_TYPE vehicleType, FactMetaData* metaData) {Q_UNUSED(vehicleType); Q_UNUSED(metaData);}
+
     // FIXME: Hack workaround for non pluginize FollowMe support
     static const QString px4FollowMeFlightMode;
 
@@ -320,6 +334,15 @@ protected:
     // Sets the vehicle to the specified flight mode with validation and retries
     // @return: true - vehicle in specified flight mode, false - flight mode change failed
     bool _setFlightModeAndValidate(Vehicle* vehicle, const QString& flightMode);
+
+    // returns url with latest firmware release information.
+    virtual QString _getLatestVersionFileUrl(Vehicle* vehicle) { Q_UNUSED(vehicle); return QString(); }
+
+    // Callback to process file with latest release information
+    virtual void _versionFileDownloadFinished(QString& remoteFile, QString& localFile, Vehicle* vehicle);
+
+    // Returns regex QString to extract version information from text
+    virtual QString _versionRegex() { return QString(); }
 
 private:
     QVariantList _toolBarIndicatorList;

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *   (c) 2009-2018 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -11,8 +11,7 @@
 /// @file
 ///     @author Lorenz Meier <mavteam@student.ethz.ch>
 
-#ifndef _LINKMANAGER_H_
-#define _LINKMANAGER_H_
+#pragma once
 
 #include <QList>
 #include <QMultiMap>
@@ -26,6 +25,7 @@
 #include "MAVLinkProtocol.h"
 #if !defined(__mobile__)
 #include "LogReplayLink.h"
+#include "UdpIODevice.h"
 #endif
 #include "QmlObjectListModel.h"
 
@@ -43,6 +43,7 @@ Q_DECLARE_LOGGING_CATEGORY(LinkManagerVerboseLog)
 class QGCApplication;
 class UDPConfiguration;
 class AutoConnectSettings;
+class LogReplayLink;
 
 /// Manage communication links
 ///
@@ -128,6 +129,8 @@ public:
 
     // Called to signal app shutdown. Disconnects all links while turning off auto-connect.
     Q_INVOKABLE void shutdown(void);
+
+    Q_INVOKABLE LogReplayLink* startLogReplay(const QString& logFile);
 
 #ifdef QT_DEBUG
     // Only used by unit test tp restart after a shutdown
@@ -238,10 +241,12 @@ private:
 
     // NMEA GPS device for GCS position
 #ifndef __mobile__
+#ifndef NO_SERIAL_LINK
     QString      _nmeaDeviceName;
     QSerialPort* _nmeaPort;
     uint32_t     _nmeaBaud;
+    UdpIODevice  _nmeaSocket;
+#endif
 #endif
 };
 
-#endif

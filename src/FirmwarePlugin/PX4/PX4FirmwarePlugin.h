@@ -23,8 +23,8 @@ class PX4FirmwarePlugin : public FirmwarePlugin
     Q_OBJECT
 
 public:
-    PX4FirmwarePlugin(void);
-    ~PX4FirmwarePlugin();
+    PX4FirmwarePlugin   ();
+    ~PX4FirmwarePlugin  () override;
 
     // Overrides from FirmwarePlugin
 
@@ -42,8 +42,9 @@ public:
     QString             rtlFlightMode                   (void) const override { return _rtlFlightMode; }
     QString             landFlightMode                  (void) const override { return _landingFlightMode; }
     QString             takeControlFlightMode           (void) const override { return _manualFlightMode; }
+    QString             gotoFlightMode                  (void) const override { return _holdFlightMode; }
     void                pauseVehicle                    (Vehicle* vehicle) override;
-    void                guidedModeRTL                   (Vehicle* vehicle) override;
+    void                guidedModeRTL                   (Vehicle* vehicle, bool smartRTL) override;
     void                guidedModeLand                  (Vehicle* vehicle) override;
     void                guidedModeTakeoff               (Vehicle* vehicle, double takeoffAltRel) override;
     void                guidedModeGotoLocation          (Vehicle* vehicle, const QGeoCoordinate& gotoCoord) override;
@@ -51,7 +52,6 @@ public:
     double              minimumTakeoffAltitude          (Vehicle* vehicle) override;
     void                startMission                    (Vehicle* vehicle) override;
     bool                isGuidedMode                    (const Vehicle* vehicle) const override;
-    int                 manualControlReservedButtonCount(void) override;
     void                initializeVehicle               (Vehicle* vehicle) override;
     bool                sendHomePositionToVehicle       (void) override;
     void                addMetaDataToFact               (QObject* parameterMetaData, Fact* fact, MAV_TYPE vehicleType) override;
@@ -67,10 +67,9 @@ public:
     QString             brandImageOutdoor               (const Vehicle* vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/PX4/BrandImage"); }
     bool                vehicleYawsToNextWaypointInMission(const Vehicle* vehicle) const override;
     QString             autoDisarmParameter             (Vehicle* vehicle) override { Q_UNUSED(vehicle); return QStringLiteral("COM_DISARM_LAND"); }
-    QGCCameraManager*   createCameraManager             (Vehicle* vehicle) override;
-    QGCCameraControl*   createCameraControl             (const mavlink_camera_information_t* info, Vehicle* vehicle, int compID, QObject* parent = NULL) override;
     uint32_t            highLatencyCustomModeTo32Bits   (uint16_t hlCustomMode) override;
     bool                supportsTerrainFrame            (void) const override { return false; }
+    bool                supportsNegativeThrust          (Vehicle *vehicle) override;
 
 protected:
     typedef struct {
@@ -105,12 +104,15 @@ protected:
     QString _rtgsFlightMode;
     QString _followMeFlightMode;
     QString _simpleFlightMode;
+    QString _orbitFlightMode;
 
 private slots:
     void _mavCommandResult(int vehicleId, int component, int command, int result, bool noReponseFromVehicle);
 
 private:
     void _handleAutopilotVersion(Vehicle* vehicle, mavlink_message_t* message);
+    QString _getLatestVersionFileUrl(Vehicle* vehicle) override;
+    QString _versionRegex() override;
 
     // Any instance data here must be global to all vehicles
     // Vehicle specific data should go into PX4FirmwarePluginInstanceData
@@ -121,7 +123,7 @@ class PX4FirmwarePluginInstanceData : public QObject
     Q_OBJECT
 
 public:
-    PX4FirmwarePluginInstanceData(QObject* parent = NULL);
+    PX4FirmwarePluginInstanceData(QObject* parent = nullptr);
 
     bool versionNotified;  ///< true: user notified over version issue
 };

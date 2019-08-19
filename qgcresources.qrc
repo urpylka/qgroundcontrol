@@ -173,6 +173,8 @@
         <file alias="PX4/BrandImage">src/FirmwarePlugin/PX4/PX4BrandImage.png</file>
         <file alias="subVehicleArrowOpaque.png">src/FlightMap/Images/sub.png</file>
         <file alias="check.svg">resources/check.svg</file>
+        <file alias="NanumGothic-Regular">resources/fonts/NanumGothic-Regular.ttf</file>
+        <file alias="NanumGothic-Bold">resources/fonts/NanumGothic-Bold.ttf</file>
     </qresource>
     <qresource prefix="/res">
         <file alias="action.svg">resources/action.svg</file>
@@ -183,6 +185,11 @@
         <file alias="buttonLeft.svg">resources/buttonLeft.svg</file>
         <file alias="buttonRight.svg">resources/buttonRight.svg</file>
         <file alias="cancel.svg">resources/cancel.svg</file>
+        <file alias="clockwise-arrow.svg">resources/clockwise-arrow.svg</file>
+        <file alias="counter-clockwise-arrow.svg">resources/counter-clockwise-arrow.svg</file>
+        <file alias="chevron-down.svg">resources/chevron-down.svg</file>
+        <file alias="chevron-up.svg">resources/chevron-up.svg</file>
+		<file alias="DropArrow.svg">resources/DropArrow.svg</file>
         <file alias="gear-black.svg">resources/gear-black.svg</file>
         <file alias="gear-white.svg">resources/gear-white.svg</file>
         <file alias="helicoptericon.svg">resources/helicoptericon.svg</file>
@@ -197,6 +204,7 @@
         <file alias="QGCLogoBlack">resources/QGCLogoBlack.svg</file>
         <file alias="QGCLogoFull">resources/QGCLogoFull.svg</file>
         <file alias="QGCLogoWhite">resources/QGCLogoWhite.svg</file>
+        <file alias="QGCLogoArrow">resources/QGCLogoArrow.svg</file>
         <file alias="QGroundControlConnect">resources/QGroundControlConnect.svg</file>
         <file alias="rtl.svg">resources/rtl.svg</file>
         <file alias="SplashScreen">resources/SplashScreen.png</file>
@@ -210,76 +218,52 @@
         <file alias="wind-rose-arrow.svg">resources/wind-rose-arrow.svg</file>
         <file alias="XDelete.svg">resources/XDelete.svg</file>
         <file alias="XDeleteBlack.svg">resources/XDeleteBlack.svg</file>
+        <file alias="waypoint.svg">resources/waypoint.svg</file>
         <file>resources/icons/qgroundcontrol.ico</file>
         <file alias="camera.svg">resources/camera.svg</file>
         <file alias="camera-icon.svg">resources/camera-icon.svg</file>
     </qresource>
     <qresource prefix="/res/firmware">
-        <file alias="px4.png">resources/firmware/px4.png</file>
-        <file alias="apm.png">resources/firmware/apm.png</file>
         <file alias="3drradio.png">resources/firmware/3drradio.png</file>
-    </qresource>
-    <qresource prefix="/res/mavs">
-        <file alias="Helicopter">resources/mavs/helicopter.svg</file>
-        <file alias="Unknown">resources/mavs/unknown.svg</file>
-        <file alias="FixedWing">resources/mavs/fixed-wing.svg</file>
-        <file alias="Groundstation">resources/mavs/groundstation.svg</file>
-        <file alias="Generic">resources/mavs/generic.svg</file>
-        <file alias="QuadRotor">resources/mavs/quadrotor.svg</file>
-        <file alias="Coaxial">resources/mavs/coaxial.svg</file>
-        <file alias="Airship">resources/mavs/airship.svg</file>
-        <file alias="AntennaTracker">resources/mavs/antenna-tracker.svg</file>
-        <file alias="FlappingWing">resources/mavs/flapping-wing.svg</file>
-        <file alias="FreeBallon">resources/mavs/free-balloon.svg</file>
-        <file alias="GroundRover">resources/mavs/ground-rover.svg</file>
-        <file alias="HexaRotor">resources/mavs/hexarotor.svg</file>
-        <file alias="Kite">resources/mavs/kite.svg</file>
-        <file alias="OctoRotor">resources/mavs/octorotor.svg</file>
-        <file alias="Rocket">resources/mavs/rocket.svg</file>
-        <file alias="Submarine">resources/mavs/submarine.svg</file>
-        <file alias="SurfaceBoat">resources/mavs/surface-boat.svg</file>
-        <file alias="TriCopter">resources/mavs/tricopter.svg</file>
+        <file alias="apm.png">resources/firmware/apm.png</file>
+        <file alias="px4.png">resources/firmware/px4.png</file>
     </qresource>
     <qresource prefix="/res/calibration">
         <file alias="accel_back.png">resources/calibration/accel_back.png</file>
-        <file alias="accel_front.png">resources/calibration/accel_front.png</file>
-        <file alias="accel_right.png">resources/calibration/accel_right.png</file>
         <file alias="accel_down.png">resources/calibration/accel_down.png</file>
-        <file alias="accel_up.png">resources/calibration/accel_up.png</file>
+        <file alias="accel_front.png">resources/calibration/accel_front.png</file>
         <file alias="accel_left.png">resources/calibration/accel_left.png</file>
+        <file alias="accel_right.png">resources/calibration/accel_right.png</file>
+        <file alias="accel_up.png">resources/calibration/accel_up.png</file>
     </qresource>
     <qresource prefix="/qml/calibration/mode1">
         <file alias="radioCenter.png">resources/calibration/mode1/radioCenter.png</file>
         <file alias="radioHome.png">resources/calibration/mode1/radioHome.png</file>
+        <file alias="radioPitchDown.png">resources/calibration/mode1/radioPitchDown.png</file>
+        <file alias="radioPitchUp.png">resources/calibration/mode1/radioPitchUp.png</file>
         <file alias="radioRollLeft.png">resources/calibration/mode1/radioRollLeft.png</file>
         <file alias="radioRollRight.png">resources/calibration/mode1/radioRollRight.png</file>
-        <file alias="radioPitchUp.png">resources/calibration/mode1/radioPitchUp.png</file>
-        <file alias="radioPitchDown.png">resources/calibration/mode1/radioPitchDown.png</file>
+        <file alias="radioSwitchMinMax.png">resources/calibration/mode1/radioSwitchMinMax.png</file>
+        <file alias="radioThrottleDown.png">resources/calibration/mode1/radioThrottleDown.png</file>
+        <file alias="radioThrottleUp.png">resources/calibration/mode1/radioThrottleUp.png</file>
         <file alias="radioYawLeft.png">resources/calibration/mode1/radioYawLeft.png</file>
         <file alias="radioYawRight.png">resources/calibration/mode1/radioYawRight.png</file>
-        <file alias="radioThrottleUp.png">resources/calibration/mode1/radioThrottleUp.png</file>
-        <file alias="radioThrottleDown.png">resources/calibration/mode1/radioThrottleDown.png</file>
-        <file alias="radioSwitchMinMax.png">resources/calibration/mode1/radioSwitchMinMax.png</file>
     </qresource>
     <qresource prefix="/qml/calibration/mode2">
         <file alias="radioCenter.png">resources/calibration/mode2/radioCenter.png</file>
         <file alias="radioHome.png">resources/calibration/mode2/radioHome.png</file>
+        <file alias="radioPitchDown.png">resources/calibration/mode2/radioPitchDown.png</file>
+        <file alias="radioPitchUp.png">resources/calibration/mode2/radioPitchUp.png</file>
         <file alias="radioRollLeft.png">resources/calibration/mode2/radioRollLeft.png</file>
         <file alias="radioRollRight.png">resources/calibration/mode2/radioRollRight.png</file>
-        <file alias="radioPitchUp.png">resources/calibration/mode2/radioPitchUp.png</file>
-        <file alias="radioPitchDown.png">resources/calibration/mode2/radioPitchDown.png</file>
+        <file alias="radioSwitchMinMax.png">resources/calibration/mode2/radioSwitchMinMax.png</file>
+        <file alias="radioThrottleDown.png">resources/calibration/mode2/radioThrottleDown.png</file>
+        <file alias="radioThrottleUp.png">resources/calibration/mode2/radioThrottleUp.png</file>
         <file alias="radioYawLeft.png">resources/calibration/mode2/radioYawLeft.png</file>
         <file alias="radioYawRight.png">resources/calibration/mode2/radioYawRight.png</file>
-        <file alias="radioThrottleUp.png">resources/calibration/mode2/radioThrottleUp.png</file>
-        <file alias="radioThrottleDown.png">resources/calibration/mode2/radioThrottleDown.png</file>
-        <file alias="radioSwitchMinMax.png">resources/calibration/mode2/radioSwitchMinMax.png</file>
     </qresource>
     <qresource prefix="/db/mapping/joystick">
         <file alias="gamecontrollerdb.txt">resources/SDL_GameControllerDB/gamecontrollerdb.txt</file>
-    </qresource>
-    <qresource prefix="/res/styles">
-        <file alias="style-dark.css">resources/styles/style-dark.css</file>
-        <file alias="style-light.css">resources/styles/style-light.css</file>
     </qresource>
     <qresource prefix="/res/audio">
         <file alias="Alert">resources/audio/alert.wav</file>

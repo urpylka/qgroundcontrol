@@ -10,8 +10,8 @@ Rectangle {
     id:     _root
     height: pageFlickable.y + pageFlickable.height + _margins
     color:  qgcPal.window
+    radius: ScreenTools.defaultFontPixelWidth * 0.5
 
-    property var    qgcView         ///< QGCView to use for showing dialogs
     property real   maxHeight       ///< Maximum height that should be taken, smaller than this is ok
 
     property real   _margins:           ScreenTools.defaultFontPixelWidth / 2
@@ -33,7 +33,7 @@ Rectangle {
             anchors.leftMargin:     _margins
             anchors.left:           parent.left
             anchors.verticalCenter: parent.verticalCenter
-            source:                 qgcPal.globalTheme == QGCPalette.Light ? "/res/gear-black.svg" : "/res/gear-white.svg"
+            source:                 "/res/gear-black.svg"
             mipmap:                 true
             width:                  parent.height -(_margins * 2)
             sourceSize.width:       width
@@ -63,9 +63,7 @@ Rectangle {
         Loader {
             id:     pageWidgetLoader
             source: _instrumentPages[pageCombo.currentIndex].url
-
-            property var    qgcView:    _root.qgcView
-            property real   pageWidth:  parent.width
+            property real pageWidth:  parent.width
         }
     }
 }
