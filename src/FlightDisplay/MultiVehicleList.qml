@@ -150,11 +150,7 @@ Item {
 
                     QGCButton {
                         text:       "Arm"
-<<<<<<< HEAD
                         visible:    !_vehicle.armed && !_vehicle.chargingStation
-=======
-                        visible:    _vehicle && !_vehicle.armed
->>>>>>> master
                         onClicked:  _vehicle.armed = true
                     }
 

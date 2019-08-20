@@ -126,11 +126,11 @@ Item {
                 id:                         photoButton
                 anchors.top:                parent.top
                 anchors.bottom:             parent.bottom
-                exclusiveGroup:             mainActionGroup
-                source:                     "/res/camera.svg"
+//                exclusiveGroup:             mainActionGroup
+                icon.source:                     "/res/camera.svg"
 //                visible:                    !_isCamera
-                onClicked:                  _activeVehicle.triggerCamera()
-//                enabled:                    _activeVehicle
+                onClicked:                  activeVehicle.triggerCamera()
+//                enabled:                    activeVehicle
 //                anchors.verticalCenter:     parent.verticalCenter
             }
 
@@ -138,19 +138,19 @@ Item {
                 text:                   qsTr("    Start video ")
                 id:                     videoButton
                 visible:                !_isCamera
-                enabled:                    _activeVehicle
+                enabled:                    activeVehicle
                 anchors.verticalCenter:     parent.verticalCenter
                 property var startTime: Date()
                 onClicked:
                 {
                     if(!timer.running){
                         startTime = new Date()
-                        _activeVehicle.startVideoCapture()
+                        activeVehicle.startVideoCapture()
                         timer.start()
                         videoRect.radius = 0
                     } else {
                         startTime = 0
-                        _activeVehicle.stopVideoCapture()
+                        activeVehicle.stopVideoCapture()
                         timer.stop()
                         videoButton.text = qsTr("    Start video ")
                         videoRect.radius = videoRect.width*0.5
