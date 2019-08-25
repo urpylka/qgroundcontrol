@@ -126,6 +126,7 @@ Item {
 
             ToolSeparator {
                 height: parent.height
+                visible: activeVehicle // && parent._isCamera
             }
 
             QGCButton {
@@ -143,9 +144,9 @@ Item {
                     width: photoButton.width
                     height: photoButton.height
                 }
-//                visible:                    parent._isCamera
+//                visible:                    /*parent._isCamera*/
                 onClicked:                  activeVehicle.triggerCamera()
-//                enabled:                    activeVehicle
+                enabled:                    parent._isCamera //activeVehicle
                 anchors.verticalCenter:     parent.verticalCenter
             }
 
@@ -153,7 +154,7 @@ Item {
                 text:                   qsTr("    Start video ")
                 id:                     videoButton
 //                visible:                parent._isCamera
-                enabled:                    activeVehicle
+                enabled:                    parent._isCamera //activeVehicle
                 anchors.verticalCenter:     parent.verticalCenter
                 property var startTime: Date()
                 onClicked:
@@ -200,14 +201,6 @@ Item {
                 visible: activeVehicle
             }
 
-//            Rectangle {
-//                anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
-//                anchors.top:        parent.top
-//                anchors.bottom:     parent.bottom
-//                width:              1
-//                color:              qgcPal.text
-//                visible:            activeVehicle
-//            }
         }
 
         Loader {
