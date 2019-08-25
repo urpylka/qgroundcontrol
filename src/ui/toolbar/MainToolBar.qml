@@ -201,6 +201,59 @@ Item {
                 visible: activeVehicle
             }
 
+            //-------------------------------------------------------------------------
+            //-- Vehicle Selector
+            QGCButton {
+                id:                     vehicleSelectorButton
+                width:                  ScreenTools.defaultFontPixelHeight * 8
+                text:                   "Vehicle " + (_activeVehicle ? _activeVehicle.id : "None")
+                visible:                QGroundControl.multiVehicleManager.vehicles.count > 1
+                Layout.alignment:       Qt.AlignVCenter
+
+                menu: vehicleMenu
+
+                Menu {
+                    id: vehicleMenu
+                }
+
+                Component {
+                    id: vehicleMenuItemComponent
+
+                    MenuItem {
+                        onTriggered: QGroundControl.multiVehicleManager.activeVehicle = vehicle
+
+                        property int vehicleId: Number(text.split(" ")[1])
+                        property var vehicle:   QGroundControl.multiVehicleManager.getVehicleById(vehicleId)
+                    }
+                }
+
+                property var vehicleMenuItems: []
+
+                function updateVehicleMenu() {
+                    var i;
+                    // Remove old menu items
+                    for (i = 0; i < vehicleMenuItems.length; i++) {
+                        vehicleMenu.removeItem(vehicleMenuItems[i])
+                    }
+                    vehicleMenuItems.length = 0
+
+                    // Add new items
+                    for (i = 0; i < QGroundControl.multiVehicleManager.vehicles.count; i++) {
+                        var vehicle = QGroundControl.multiVehicleManager.vehicles.get(i)
+                        var menuItem = vehicleMenuItemComponent.createObject(null, { "text": "Vehicle " + vehicle.id })
+                        vehicleMenuItems.push(menuItem)
+                        vehicleMenu.insertItem(i, menuItem)
+                    }
+                }
+
+                Component.onCompleted: updateVehicleMenu()
+
+                Connections {
+                    target:         QGroundControl.multiVehicleManager.vehicles
+                    onCountChanged: vehicleSelectorButton.updateVehicleMenu()
+                }
+            }
+
         }
 
         Loader {
