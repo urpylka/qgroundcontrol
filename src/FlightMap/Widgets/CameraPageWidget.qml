@@ -73,12 +73,12 @@ Column {
                 if (checkedState == Qt.Checked)
                 {
                     console.debug("Thermal frame, 1")
-                    _activeVehicle.setCameraProperty("showThermalFrame", 1)
+                    activeVehicle.setCameraProperty("showThermalFrame", 1)
                 }
                 else
                 {
                     console.debug("Thermal frame, 0")
-                    _activeVehicle.setCameraProperty("showThermalFrame", 0)
+                    activeVehicle.setCameraProperty("showThermalFrame", 0)
                 }
             }
         }
@@ -95,12 +95,12 @@ Column {
                 if (checkedState == Qt.Checked)
                 {
                     console.debug("Visual frame, 1")
-                    _activeVehicle.setCameraProperty("showVisualFrame", 1)
+                    activeVehicle.setCameraProperty("showVisualFrame", 1)
                 }
                 else
                 {
                     console.debug("Visual frame, 0")
-                    _activeVehicle.setCameraProperty("showVisualFrame", 0)
+                    activeVehicle.setCameraProperty("showVisualFrame", 0)
                 }
             }
         }
@@ -117,12 +117,12 @@ Column {
                 if (checkedState == Qt.Checked)
                 {
                     console.debug("Apply sobel, 1")
-                    _activeVehicle.setCameraProperty("applySobel", 1)
+                    activeVehicle.setCameraProperty("applySobel", 1)
                 }
                 else
                 {
                     console.debug("Apply sobel, 0")
-                    _activeVehicle.setCameraProperty("applySobel", 0)
+                    activeVehicle.setCameraProperty("applySobel", 0)
                 }
             }
         }
@@ -139,12 +139,12 @@ Column {
                 if (checkedState == Qt.Checked)
                 {
                     console.debug("Apply Canny, 1")
-                    _activeVehicle.setCameraProperty("applyCanny", 1)
+                    activeVehicle.setCameraProperty("applyCanny", 1)
                 }
                 else
                 {
                     console.debug("Apply Canny, 0")
-                    _activeVehicle.setCameraProperty("applyCanny", 0)
+                    activeVehicle.setCameraProperty("applyCanny", 0)
                 }
             }
         }
@@ -161,12 +161,12 @@ Column {
                 if (checkedState == Qt.Checked)
                 {
                     console.debug("Apply Colormap, 1")
-                    _activeVehicle.setCameraProperty("applyColormap", 1)
+                    activeVehicle.setCameraProperty("applyColormap", 1)
                 }
                 else
                 {
                     console.debug("Apply Colormap, 0")
-                    _activeVehicle.setCameraProperty("applyColormap", 0)
+                    activeVehicle.setCameraProperty("applyColormap", 0)
                 }
             }
         }
@@ -198,7 +198,7 @@ Column {
             width: parent.width/2
             onCurrentIndexChanged: {
                 console.debug(cbColormap.get(currentIndex).text + ", " + cbColormap.get(currentIndex).value)
-                _activeVehicle.setCameraProperty("colormap", cbColormap.get(currentIndex).value)
+                activeVehicle.setCameraProperty("colormap", cbColormap.get(currentIndex).value)
             }
         }
     }
@@ -214,12 +214,12 @@ Column {
                 if (checkedState == Qt.Checked)
                 {
                     console.debug("show FPS, 1")
-                    _activeVehicle.setCameraProperty("showFPS", 1)
+                    activeVehicle.setCameraProperty("showFPS", 1)
                 }
                 else
                 {
                     console.debug("show FPS, 0")
-                    _activeVehicle.setCameraProperty("showFPS", 0)
+                    activeVehicle.setCameraProperty("showFPS", 0)
                 }
             }
         }
@@ -236,12 +236,12 @@ Column {
                 if (checkedState == Qt.Checked)
                 {
                     console.debug("show Temperature, 1")
-                    _activeVehicle.setCameraProperty("showTemperature", 1)
+                    activeVehicle.setCameraProperty("showTemperature", 1)
                 }
                 else
                 {
                     console.debug("show Temperature, 0")
-                    _activeVehicle.setCameraProperty("showTemperature", 0)
+                    activeVehicle.setCameraProperty("showTemperature", 0)
                 }
             }
         }
@@ -263,7 +263,7 @@ Column {
 //            width: parent.width/2
 //            onCurrentIndexChanged: {
 //                console.debug(cbColorPalette.get(currentIndex).text + ", " + cbColorPalette.get(currentIndex).value)
-//                _activeVehicle.setCameraProperty("colorPalette", cbColorPalette.get(currentIndex).value)
+//                activeVehicle.setCameraProperty("colorPalette", cbColorPalette.get(currentIndex).value)
 //            }
 //        }
 //    }
@@ -279,12 +279,12 @@ Column {
 //                if (checkedState == Qt.Checked)
 //                {
 //                    console.debug("enableMSX, 1")
-//                    _activeVehicle.setCameraProperty("enableMSX", 1)
+//                    activeVehicle.setCameraProperty("enableMSX", 1)
 //                }
 //                else
 //                {
 //                    console.debug("enableMSX, 0")
-//                    _activeVehicle.setCameraProperty("enableMSX", 0)
+//                    activeVehicle.setCameraProperty("enableMSX", 0)
 //                }
 //            }
 //        }
@@ -303,7 +303,7 @@ Column {
 //            width: parent.width/2
 //            onValueChanged: {
 //                console.debug("MSX Strngth: " + value)
-//                _activeVehicle.setCameraProperty("strengthMSX", value)
+//                activeVehicle.setCameraProperty("strengthMSX", value)
 //            }
 //        }
 //    }
