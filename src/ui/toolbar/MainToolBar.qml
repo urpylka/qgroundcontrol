@@ -59,6 +59,9 @@ Item {
         //---------------------------------------------
         // Toolbar Row
         Row {
+            property var    _dynamicCameras:        activeVehicle ? activeVehicle.dynamicCameras : null
+            property bool   _isCamera:              _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
+
             id:                 viewRow
             Layout.fillHeight:  true
             spacing:            ScreenTools.defaultFontPixelWidth / 2
@@ -121,23 +124,35 @@ Item {
                 }
             }
 
-            QGCToolBarButton {
+            ToolSeparator {
+                height: parent.height
+            }
+
+            QGCButton {
                 //text:                       qsTr("Trigger Camera")
                 id:                         photoButton
-                anchors.top:                parent.top
-                anchors.bottom:             parent.bottom
+//                anchors.top:                parent.top
+//                anchors.bottom:             parent.bottom
 //                exclusiveGroup:             mainActionGroup
-                icon.source:                     "/res/camera.svg"
-//                visible:                    !_isCamera
+//                icon.source:                     "/res/camera.svg"
+//                width: 50
+                height: videoButton.height
+                Image {
+                    id: cameraImage
+                    source: "/res/camera.svg"
+                    width: photoButton.width
+                    height: photoButton.height
+                }
+//                visible:                    parent._isCamera
                 onClicked:                  activeVehicle.triggerCamera()
 //                enabled:                    activeVehicle
-//                anchors.verticalCenter:     parent.verticalCenter
+                anchors.verticalCenter:     parent.verticalCenter
             }
 
             QGCButton {
                 text:                   qsTr("    Start video ")
                 id:                     videoButton
-                visible:                !_isCamera
+//                visible:                parent._isCamera
                 enabled:                    activeVehicle
                 anchors.verticalCenter:     parent.verticalCenter
                 property var startTime: Date()
@@ -180,14 +195,19 @@ Item {
                 }
             }
 
-            Rectangle {
-                anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
-                anchors.top:        parent.top
-                anchors.bottom:     parent.bottom
-                width:              1
-                color:              qgcPal.text
-                visible:            activeVehicle
+            ToolSeparator {
+                height: parent.height
+                visible: activeVehicle
             }
+
+//            Rectangle {
+//                anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
+//                anchors.top:        parent.top
+//                anchors.bottom:     parent.bottom
+//                width:              1
+//                color:              qgcPal.text
+//                visible:            activeVehicle
+//            }
         }
 
         Loader {
