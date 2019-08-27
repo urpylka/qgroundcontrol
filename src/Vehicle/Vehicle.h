@@ -692,6 +692,24 @@ public:
     Q_PROPERTY(quint64  vehicleUID                  READ vehicleUID                 NOTIFY vehicleUIDChanged)
     Q_PROPERTY(QString  vehicleUIDStr               READ vehicleUIDStr              NOTIFY vehicleUIDChanged)
 
+    Q_PROPERTY(bool _duocamShowThermal READ getDuocamShowThermal WRITE setDuocamShowThermal NOTIFY duocamShowThermalChanged)
+    Q_PROPERTY(bool _duocamShowThermalUpdating READ getDuocamShowThermalUpdating WRITE setDuocamShowThermalUpdating NOTIFY duocamShowThermalUpdatingChanged)
+    Q_PROPERTY(bool _duocamShowVisual READ getDuocamShowVisual WRITE setDuocamShowVisual NOTIFY duocamShowVisualChanged)
+    Q_PROPERTY(bool _duocamShowVisualUpdating READ getDuocamShowVisualUpdating WRITE setDuocamShowVisualUpdating NOTIFY duocamShowVisualUpdatingChanged)
+    Q_PROPERTY(bool _duocamApplySobel READ getDuocamApplySobel WRITE setDuocamApplySobel NOTIFY duocamApplySobelChanged)
+    Q_PROPERTY(bool _duocamApplySobelUpdating READ getDuocamApplySobelUpdating WRITE setDuocamApplySobelUpdating NOTIFY duocamApplySobelUpdatingChanged)
+    Q_PROPERTY(bool _duocamApplyCanny READ getDuocamApplyCanny WRITE setDuocamApplyCanny NOTIFY duocamApplyCannyChanged)
+    Q_PROPERTY(bool _duocamApplyCannyUpdating READ getDuocamApplyCannyUpdating WRITE setDuocamApplyCannyUpdating NOTIFY duocamApplyCannyUpdatingChanged)
+    Q_PROPERTY(bool _duocamApplyColormap READ getDuocamApplyColormap WRITE setDuocamApplyColormap NOTIFY duocamApplyColormapChanged)
+    Q_PROPERTY(bool _duocamApplyColormapUpdating READ getDuocamApplyColormapUpdating WRITE setDuocamApplyColormapUpdating NOTIFY duocamApplyColormapUpdatingChanged)
+    Q_PROPERTY(int _duocamColormap READ getDuocamColormap WRITE setDuocamColormap NOTIFY duocamColormapChanged)
+    Q_PROPERTY(bool _duocamColormapUpdating READ getDuocamColormapUpdating WRITE setDuocamColormapUpdating NOTIFY duocamColormapUpdatingChanged)
+    Q_PROPERTY(bool _duocamShowFPS READ getDuocamShowFPS WRITE setDuocamShowFPS NOTIFY duocamShowFPSChanged)
+    Q_PROPERTY(bool _duocamShowFPSUpdating READ getDuocamShowFPSUpdating WRITE setDuocamShowFPSUpdating NOTIFY duocamShowFPSUpdatingChanged)
+    Q_PROPERTY(bool _duocamShowTemperature READ getDuocamShowTemperature WRITE setDuocamShowTemperature NOTIFY duocamShowTemperatureChanged)
+    Q_PROPERTY(bool _duocamShowTemperatureUpdating READ getDuocamShowTemperatureUpdating WRITE setDuocamShowTemperatureUpdating NOTIFY duocamShowTemperatureUpdatingChanged)
+
+
     /// Resets link status counters
     Q_INVOKABLE void resetCounters  ();
 
@@ -747,10 +765,14 @@ public:
     /// Clear Messages
     Q_INVOKABLE void clearMessages();
 
+    Q_INVOKABLE void updateDuocamProperties(void);
+
     Q_INVOKABLE void triggerCamera(void);
     Q_INVOKABLE void startVideoCapture(void);
     Q_INVOKABLE void stopVideoCapture(void);
     Q_INVOKABLE void setCameraProperty(QString propertyName, float value);
+    Q_INVOKABLE void getCameraProperty(QString propertyName);
+    Q_INVOKABLE void processCameraProperty(float commandType, QString propertyName, float value);
     Q_INVOKABLE void sendPlan(QString planFile);
 
     /// Used to check if running current version is equal or higher than the one being compared.
@@ -838,6 +860,46 @@ public:
 
     bool armed(void) { return _armed; }
     void setArmed(bool armed);
+
+    bool getDuocamShowThermal(void) { return this->_duocamShowThermal; }
+    Q_INVOKABLE void setDuocamShowThermal(bool showThermal) { this->_duocamShowThermal = showThermal; emit duocamShowThermalChanged(this->_duocamShowThermal); }
+    bool getDuocamShowThermalUpdating(void) { return this->_duocamShowThermalUpdating; }
+    Q_INVOKABLE void setDuocamShowThermalUpdating(bool showThermalUpdating) { this->_duocamShowThermalUpdating = showThermalUpdating; emit duocamShowThermalUpdatingChanged(this->_duocamShowThermalUpdating); }
+
+    bool getDuocamShowVisual(void) { return this->_duocamShowVisual; }
+    Q_INVOKABLE void setDuocamShowVisual(bool showVisual) { this->_duocamShowVisual = showVisual; emit duocamShowVisualChanged(this->_duocamShowVisual); }
+    bool getDuocamShowVisualUpdating(void) { return this->_duocamShowVisualUpdating; }
+    Q_INVOKABLE void setDuocamShowVisualUpdating(bool showVisualUpdating) { this->_duocamShowVisualUpdating = showVisualUpdating; emit duocamShowVisualUpdatingChanged(this->_duocamShowVisualUpdating); }
+
+    bool getDuocamApplySobel(void) { return this->_duocamApplySobel; }
+    Q_INVOKABLE void setDuocamApplySobel(bool applySobel) { this->_duocamApplySobel = applySobel; emit duocamApplySobelChanged(this->_duocamApplySobel); }
+    bool getDuocamApplySobelUpdating(void) { return this->_duocamApplySobelUpdating; }
+    Q_INVOKABLE void setDuocamApplySobelUpdating(bool applySobelUpdating) { this->_duocamApplySobelUpdating = applySobelUpdating; emit duocamApplySobelUpdatingChanged(this->_duocamApplySobelUpdating); }
+
+    bool getDuocamApplyCanny(void) { return this->_duocamApplyCanny; }
+    Q_INVOKABLE void setDuocamApplyCanny(bool applyCanny) { this->_duocamApplyCanny = applyCanny; emit duocamApplyCannyChanged(this->_duocamApplyCanny); }
+    bool getDuocamApplyCannyUpdating(void) { return this->_duocamApplyCannyUpdating; }
+    Q_INVOKABLE void setDuocamApplyCannyUpdating(bool applyCannyUpdating) { this->_duocamApplyCannyUpdating = applyCannyUpdating; emit duocamApplyCannyUpdatingChanged(this->_duocamApplyCannyUpdating); }
+
+    bool getDuocamApplyColormap(void) { return this->_duocamApplyColormap; }
+    Q_INVOKABLE void setDuocamApplyColormap(bool applyColormap) { this->_duocamApplyColormap = applyColormap; emit duocamApplyColormapChanged(this->_duocamApplyColormap); }
+    bool getDuocamApplyColormapUpdating(void) { return this->_duocamApplyColormapUpdating; }
+    Q_INVOKABLE void setDuocamApplyColormapUpdating(bool applyColormapUpdating) { this->_duocamApplyColormapUpdating = applyColormapUpdating; emit duocamApplyColormapUpdatingChanged(this->_duocamApplyColormapUpdating); }
+
+    int getDuocamColormap(void) { return this->_duocamColormap; }
+    Q_INVOKABLE void setDuocamColormap(int colormap) { this->_duocamColormap = colormap; emit duocamColormapChanged(this->_duocamColormap); }
+    bool getDuocamColormapUpdating(void) { return this->_duocamColormapUpdating; }
+    Q_INVOKABLE void setDuocamColormapUpdating(bool colormapUpdating) { this->_duocamColormapUpdating = colormapUpdating; emit duocamColormapUpdatingChanged(this->_duocamColormapUpdating); }
+
+    bool getDuocamShowFPS(void) { return this->_duocamShowFPS; }
+    Q_INVOKABLE void setDuocamShowFPS(bool showFPS) { this->_duocamShowFPS= showFPS; emit duocamShowFPSChanged(this->_duocamShowFPS); }
+    bool getDuocamShowFPSUpdating(void) { return this->_duocamShowFPSUpdating; }
+    Q_INVOKABLE void setDuocamShowFPSUpdating(bool showFPSUpdating) { this->_duocamShowFPSUpdating = showFPSUpdating; emit duocamShowFPSUpdatingChanged(this->_duocamShowFPSUpdating); }
+
+    bool getDuocamShowTemperature(void) { return this->_duocamShowTemperature; }
+    Q_INVOKABLE void setDuocamShowTemperature(bool showTemperature) { this->_duocamShowTemperature = showTemperature; emit duocamShowTemperatureChanged(this->_duocamShowTemperature); }
+    bool getDuocamShowTemperatureUpdating(void) { return this->_duocamShowTemperatureUpdating; }
+    Q_INVOKABLE void setDuocamShowTemperatureUpdating(bool showTemperatureUpdating) { this->_duocamShowTemperatureUpdating = showTemperatureUpdating; emit duocamShowTemperatureUpdatingChanged(this->_duocamShowTemperatureUpdating); }
 
     bool flightModeSetAvailable(void);
     QStringList flightModes(void);
@@ -1132,6 +1194,23 @@ signals:
     void linksPropertiesChanged(void);
     void textMessageReceived(int uasid, int componentid, int severity, QString text);
 
+    void duocamShowThermalChanged(bool showThermal);
+    void duocamShowThermalUpdatingChanged(bool showThermalUpdating);
+    void duocamShowVisualChanged(bool showVisual);
+    void duocamShowVisualUpdatingChanged(bool showVisualUpdating);
+    void duocamApplySobelChanged(bool applySobel);
+    void duocamApplySobelUpdatingChanged(bool applyCannyUpdating);
+    void duocamApplyCannyChanged(bool applyCanny);
+    void duocamApplyCannyUpdatingChanged(bool applyCannyUpdating);
+    void duocamApplyColormapChanged(bool applyColormap);
+    void duocamApplyColormapUpdatingChanged(bool applyColormapUpdating);
+    void duocamColormapChanged(int colormap);
+    void duocamColormapUpdatingChanged(bool colormapUpdating);
+    void duocamShowFPSChanged(bool showFPS);
+    void duocamShowFPSUpdatingChanged(bool showFPSUpdating);
+    void duocamShowTemperatureChanged(bool showTemperature);
+    void duocamShowTemperatureUpdatingChanged(bool showTemperatureUpdating);
+
     void messagesReceivedChanged    ();
     void messagesSentChanged        ();
     void messagesLostChanged        ();
@@ -1421,6 +1500,23 @@ private:
     bool    _armed;         ///< true: vehicle is armed
     uint8_t _base_mode;     ///< base_mode from HEARTBEAT
     uint32_t _custom_mode;  ///< custom_mode from HEARTBEAT
+
+    bool _duocamShowThermal;
+    bool _duocamShowThermalUpdating;
+    bool _duocamShowVisual;
+    bool _duocamShowVisualUpdating;
+    bool _duocamApplySobel;
+    bool _duocamApplySobelUpdating;
+    bool _duocamApplyCanny;
+    bool _duocamApplyCannyUpdating;
+    bool _duocamApplyColormap;
+    bool _duocamApplyColormapUpdating;
+    int _duocamColormap;
+    bool _duocamColormapUpdating;
+    bool _duocamShowFPS;
+    bool _duocamShowFPSUpdating;
+    bool _duocamShowTemperature;
+    bool _duocamShowTemperatureUpdating;
 
     /// Used to store a message being sent by sendMessageMultiple
     typedef struct {

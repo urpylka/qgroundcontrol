@@ -1434,6 +1434,54 @@ void Vehicle::_handleCommandLong(mavlink_message_t& message)
             }
         }
         break;
+    case MAV_CMD_DO_DIGICAM_CONFIGURE:
+        if ((int)cmd.param2 == 4) // if command type is 'answerToGetProperty'
+        {
+            qCDebug(VehicleLog) << "MAV_CMD_DO_DIGICAM_CONFIGURE answer-to-get: property " << (int)cmd.param3 << " set to " << (int)cmd.param4;
+            switch ((int)cmd.param3)
+            {
+                case 1:
+                    this->setDuocamShowThermal((bool)cmd.param4);
+                    this->setDuocamShowThermalUpdating(false);
+                    break;
+                case 2:
+                    this->setDuocamShowVisual((bool)cmd.param4);
+                    this->setDuocamShowVisualUpdating(false);
+                    break;
+                case 3:
+                    this->setDuocamApplySobel((bool)cmd.param4);
+                    this->setDuocamApplySobelUpdating(false);
+                    break;
+                case 4:
+                    this->setDuocamApplyCanny((bool)cmd.param4);
+                    this->setDuocamApplyCannyUpdating(false);
+                    break;
+                case 5:
+                    this->setDuocamApplyColormap((bool)cmd.param4);
+                    this->setDuocamApplyColormapUpdating(false);
+                    break;
+                case 6:
+                    this->setDuocamColormap((int)cmd.param4);
+                    this->setDuocamColormapUpdating(false);
+                    break;
+                case 7:
+                    this->setDuocamShowFPS((bool)cmd.param4);
+                    this->setDuocamShowFPSUpdating(false);
+                    break;
+                case 8:
+                    this->setDuocamShowTemperature((bool)cmd.param4);
+                    this->setDuocamShowTemperatureUpdating(false);
+                    break;
+                default:
+                    qCDebug(VehicleLog) << "MAV_CMD_DO_DIGICAM_CONFIGURE answer-to-get: wrong property id!";
+                break;
+            }
+
+
+
+        }
+
+        break;
     }
 #endif
 }
@@ -3344,6 +3392,10 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
         _handleUnsupportedRequestAutopilotCapabilities();
     }
 
+//    if (ack.command == MAV_CMD_DO_DIGICAM_CONFIGURE) {
+//        qCDebug(VehicleLog) << "MAV_CMD_DO_DIGICAM_CONFIGURE ack received";
+//    }
+
     if (ack.command == MAV_CMD_REQUEST_PROTOCOL_VERSION) {
         if (ack.result == MAV_RESULT_ACCEPTED) {
             // The vehicle should be sending a PROTOCOL_VERSION message in a mavlink 2 packet. This may or may not make it through the pipe.
@@ -3548,6 +3600,17 @@ void Vehicle::setOfflineEditingDefaultComponentId(int defaultComponentId)
 
 void Vehicle::triggerCamera(void)
 {
+    QObject *trigCamBut = this->_toolbox->corePlugin()->findChild<QObject*>("triggerCameraButton");
+
+    if (trigCamBut)
+    {
+        qDebug() << "trigCamBut found!";
+        trigCamBut->setProperty("color", "red");
+    }
+    else {
+        qDebug() << "trigCamBut NOT found!";
+    }
+
     sendMavCommand(_defaultComponentId,
                    MAV_CMD_DO_DIGICAM_CONTROL,
                    true,                            // show errors
@@ -3579,7 +3642,39 @@ void Vehicle::stopVideoCapture(void)
                    0.0);                            // test shot flag
 }
 
+void Vehicle::updateDuocamProperties(void)
+{
+    qDebug() << "updateDuocamProperties launched!";
+
+    this->getCameraProperty("showThermalFrame");
+    this->setDuocamShowThermalUpdating(true);
+    this->getCameraProperty("showVisualFrame");
+    this->setDuocamShowVisualUpdating(true);
+    this->getCameraProperty("applySobel");
+    this->setDuocamApplySobelUpdating(true);
+    this->getCameraProperty("applyCanny");
+    this->setDuocamApplyCannyUpdating(true);
+    this->getCameraProperty("applyColormap");
+    this->setDuocamApplyColormapUpdating(true);
+    this->getCameraProperty("colormap");
+    this->setDuocamColormapUpdating(true);
+    this->getCameraProperty("showFPS");
+    this->setDuocamShowFPSUpdating(true);
+    this->getCameraProperty("showTemperature");
+    this->setDuocamShowTemperatureUpdating(true);
+}
+
 void Vehicle::setCameraProperty(QString propertyName, float value)
+{
+    this->processCameraProperty(2.0, propertyName, value);
+}
+
+void Vehicle::getCameraProperty(QString propertyName)
+{
+    this->processCameraProperty(1.0, propertyName, 0.0);
+}
+
+void Vehicle::processCameraProperty(float commadType, QString propertyName, float value = 0)
 {
     float propertyId = -1;
 
@@ -3606,9 +3701,9 @@ void Vehicle::setCameraProperty(QString propertyName, float value)
                        MAV_CMD_DO_DIGICAM_CONFIGURE,
                        true,                            // show errors
                        0.0,                             // camera id
+                       commadType,                      // type of command id (0 - count, 1 - get, 2 - set)
                        propertyId,                      // property ID
                        value,                           // value of it
-                       0.0,
                        0.0,
                        0.0,
                        0.0);

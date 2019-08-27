@@ -25,6 +25,7 @@ import QGroundControl.FactControls      1.0
 
 /// Camera page for Instrument Panel PageView
 Column {
+    Component.onCompleted: activeVehicle.updateDuocamProperties()
     width:      pageWidth
     spacing:    ScreenTools.defaultFontPixelHeight * 0.25
 
@@ -60,6 +61,14 @@ Column {
         visible:                    !_camera
         onClicked:                  activeVehicle.triggerCamera()
         enabled:                    activeVehicle
+        objectName:                 "triggerCameraButton"
+    }
+
+    QGCButton {
+        anchors.horizontalCenter:   parent.horizontalCenter
+        text:                       qsTr("Refresh values")
+        onClicked:                  activeVehicle.updateDuocamProperties()
+        enabled:                    activeVehicle
     }
 
     Row {
@@ -69,6 +78,8 @@ Column {
 
         CheckBox{
             id: showThermalFrame
+            checked: activeVehicle._duocamShowThermal
+            visible: !activeVehicle._duocamShowThermalUpdating
             onClicked: {
                 if (checkedState == Qt.Checked)
                 {
@@ -82,6 +93,16 @@ Column {
                 }
             }
         }
+
+        QGCLabel {
+            text: "|"
+            visible: activeVehicle._duocamShowThermalUpdating
+            RotationAnimation on rotation {
+                loops: Animation.Infinite
+                from: 0
+                to: 360
+            }
+        }
     }
 
     Row {
@@ -91,6 +112,8 @@ Column {
 
         CheckBox{
             id: showVisualFrame
+            checked: activeVehicle._duocamShowVisual
+            visible: !activeVehicle._duocamShowVisualUpdating
             onClicked: {
                 if (checkedState == Qt.Checked)
                 {
@@ -104,6 +127,16 @@ Column {
                 }
             }
         }
+
+        QGCLabel {
+            text: "|"
+            visible: activeVehicle._duocamShowVisualUpdating
+            RotationAnimation on rotation {
+                loops: Animation.Infinite
+                from: 0
+                to: 360
+            }
+        }
     }
 
     Row {
@@ -113,6 +146,8 @@ Column {
 
         CheckBox{
             id: applySobel
+            checked: activeVehicle._duocamApplySobel
+            visible: !activeVehicle._duocamApplySobelUpdating
             onClicked: {
                 if (checkedState == Qt.Checked)
                 {
@@ -126,6 +161,16 @@ Column {
                 }
             }
         }
+
+        QGCLabel {
+            text: "|"
+            visible: activeVehicle._duocamApplySobelUpdating
+            RotationAnimation on rotation {
+                loops: Animation.Infinite
+                from: 0
+                to: 360
+            }
+        }
     }
 
     Row {
@@ -135,6 +180,8 @@ Column {
 
         CheckBox{
             id: applyCanny
+            checked: activeVehicle._duocamApplyCanny
+            visible: !activeVehicle._duocamApplyCannyUpdating
             onClicked: {
                 if (checkedState == Qt.Checked)
                 {
@@ -148,6 +195,16 @@ Column {
                 }
             }
         }
+
+        QGCLabel {
+            text: "|"
+            visible: activeVehicle._duocamApplyCannyUpdating
+            RotationAnimation on rotation {
+                loops: Animation.Infinite
+                from: 0
+                to: 360
+            }
+        }
     }
 
     Row {
@@ -157,6 +214,8 @@ Column {
 
         CheckBox{
             id: applyColormap
+            checked: activeVehicle._duocamApplyColormap
+            visible: !activeVehicle._duocamApplyColormapUpdating
             onClicked: {
                 if (checkedState == Qt.Checked)
                 {
@@ -170,6 +229,16 @@ Column {
                 }
             }
         }
+
+        QGCLabel {
+            text: "|"
+            visible: activeVehicle._duocamApplyColormapUpdating
+            RotationAnimation on rotation {
+                loops: Animation.Infinite
+                from: 0
+                to: 360
+            }
+        }
     }
 
     Row{
@@ -179,7 +248,8 @@ Column {
         }
 
         ComboBox {
-            currentIndex: -1
+            currentIndex: activeVehicle._duocamColormap
+            visible: !activeVehicle._duocamColormapUpdating
             model: ListModel {
                 id: cbColormap
                 ListElement { text: "AUTUMN"; value: 0.0 }
@@ -200,6 +270,17 @@ Column {
                 console.debug(cbColormap.get(currentIndex).text + ", " + cbColormap.get(currentIndex).value)
                 activeVehicle.setCameraProperty("colormap", cbColormap.get(currentIndex).value)
             }
+
+        }
+
+        QGCLabel {
+            text: "|"
+            visible: activeVehicle._duocamColormapUpdating
+            RotationAnimation on rotation {
+                loops: Animation.Infinite
+                from: 0
+                to: 360
+            }
         }
     }
 
@@ -210,6 +291,8 @@ Column {
 
         CheckBox{
             id: showFPS
+            checked: activeVehicle._duocamShowFPS
+            visible: !activeVehicle._duocamShowFPSUpdating
             onClicked: {
                 if (checkedState == Qt.Checked)
                 {
@@ -223,6 +306,16 @@ Column {
                 }
             }
         }
+
+        QGCLabel {
+            text: "|"
+            visible: activeVehicle._duocamShowFPSUpdating
+            RotationAnimation on rotation {
+                loops: Animation.Infinite
+                from: 0
+                to: 360
+            }
+        }
     }
 
     Row {
@@ -232,6 +325,8 @@ Column {
 
         CheckBox{
             id: showTemperature
+            checked: activeVehicle._duocamShowTemperature
+            visible: !activeVehicle._duocamShowTemperatureUpdating
             onClicked: {
                 if (checkedState == Qt.Checked)
                 {
@@ -243,6 +338,16 @@ Column {
                     console.debug("show Temperature, 0")
                     activeVehicle.setCameraProperty("showTemperature", 0)
                 }
+            }
+        }
+
+        QGCLabel {
+            text: "|"
+            visible: activeVehicle._duocamShowTemperatureUpdating
+            RotationAnimation on rotation {
+                loops: Animation.Infinite
+                from: 0
+                to: 360
             }
         }
     }
