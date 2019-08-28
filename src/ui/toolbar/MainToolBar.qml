@@ -146,15 +146,14 @@ Item {
                 }
 //                visible:                    /*parent._isCamera*/
                 onClicked:                  activeVehicle.triggerCamera()
-                enabled:                    parent._isCamera //activeVehicle
+                visible: activeVehicle
                 anchors.verticalCenter:     parent.verticalCenter
             }
 
             QGCButton {
                 text:                   qsTr("    Start video ")
                 id:                     videoButton
-//                visible:                parent._isCamera
-                enabled:                    parent._isCamera //activeVehicle
+                visible: activeVehicle
                 anchors.verticalCenter:     parent.verticalCenter
                 property var startTime: Date()
                 onClicked:
