@@ -1511,7 +1511,7 @@ private:
     bool _duocamApplyCannyUpdating;
     bool _duocamApplyColormap;
     bool _duocamApplyColormapUpdating;
-    int _duocamColormap;
+    int _duocamColormap = -1;
     bool _duocamColormapUpdating;
     bool _duocamShowFPS;
     bool _duocamShowFPSUpdating;

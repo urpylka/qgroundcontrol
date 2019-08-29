@@ -248,7 +248,7 @@ Column {
         }
 
         ComboBox {
-            currentIndex: activeVehicle._duocamColormap
+            currentIndex: (activeVehicle._duocamColormap != -1? activeVehicle._duocamColormap : -1)
             visible: !activeVehicle._duocamColormapUpdating
             model: ListModel {
                 id: cbColormap
@@ -267,8 +267,11 @@ Column {
             }
             width: parent.width/2
             onCurrentIndexChanged: {
-                console.debug(cbColormap.get(currentIndex).text + ", " + cbColormap.get(currentIndex).value)
-                activeVehicle.setCameraProperty("colormap", cbColormap.get(currentIndex).value)
+                if (activeVehicle._duocamColormap != -1)
+                {
+                    console.debug(cbColormap.get(currentIndex).text + ", " + cbColormap.get(currentIndex).value)
+                    activeVehicle.setCameraProperty("colormap", cbColormap.get(currentIndex).value)
+                }
             }
 
         }
