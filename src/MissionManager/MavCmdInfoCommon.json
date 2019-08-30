@@ -156,6 +156,12 @@
                 "default":          0,
                 "decimalPlaces":    2
             },
+            "param2": {
+                "label":            "Precision land",
+                "default":          0,
+                "enumStrings":      "None,Opportunistic,Required",
+                "enumValues":       "0,1,2"
+            },
             "param4": {
                 "label":            "Heading",
                 "units":            "deg",
@@ -1061,6 +1067,50 @@
             }
         },
         { "id": 30001, "rawName": "MAV_CMD_PAYLOAD_PREPARE_DEPLOY", "friendlyName": "Payload prepare deploy" },
-        { "id": 30002, "rawName": "MAV_CMD_PAYLOAD_CONTROL_DEPLOY", "friendlyName": "Payload control deploy" }
+        { "id": 30002, "rawName": "MAV_CMD_PAYLOAD_CONTROL_DEPLOY", "friendlyName": "Payload control deploy" },
+
+        {
+            "id": 31010,
+            "rawName": "MAV_CMD_USER_1",
+            "friendlyName": "CS action",
+            "category": "Charging station",
+            "description": "Open or close charging station",
+            "param1": {
+                "label":            "Charging station ID",
+                "default":          17,
+                "decimalPlaces":    0
+            },
+            "param2": {
+                "label":            "Action",
+                "enumStrings":      "Open,Close",
+                "enumValues":       "0,1"
+            }
+        },
+        {
+            "id": 31000,
+            "rawName": "MAV_CMD_WAYPOINT_USER_1",
+            "friendlyName": "Land to CS",
+            "category": "Charging station",
+            "specifiesCoordinate":  true,
+            "description": "Land to charging station",
+            "param2": {
+                "label":            "Precision land",
+                "default":          2,
+                "enumStrings":      "None,Opportunistic,Required",
+                "enumValues":       "0,1,2"
+            },
+            "param3": {
+                "label":            "Charging station ID",
+                "default":          17,
+                "decimalPlaces":    0
+            },
+            "param4": {
+                "label":            "Heading",
+                "units":            "radians",
+                "nanUnchanged":     true,
+                "default":          null,
+                "decimalPlaces":    2
+            }
+        }
     ]
 }

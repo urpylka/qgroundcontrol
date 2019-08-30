@@ -12,6 +12,7 @@
 #define GENERICAUTOPILOT_H
 
 #include "AutoPilotPlugin.h"
+#include "RTKGPSComponent.h"
 
 /// @file
 ///     @brief This is the generic implementation of the AutoPilotPlugin class for mavs
@@ -28,6 +29,12 @@ public:
     // Overrides from AutoPilotPlugin
     const QVariantList& vehicleComponents(void) final;
     QString prerequisiteSetup(VehicleComponent* component) const final;
+
+protected:
+    RTKGPSComponent*      _RTKGPSComponent;
+
+private:
+    QVariantList            _components;
 };
 
 #endif

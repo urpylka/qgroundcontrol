@@ -20,6 +20,7 @@ AudioOutput::AudioOutput(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
     , _tts(new QTextToSpeech(this))
 {
+    _tts->setLocale(QLocale::English);
     connect(_tts, &QTextToSpeech::stateChanged, this, &AudioOutput::_stateChanged);
 }
 

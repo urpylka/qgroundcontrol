@@ -97,6 +97,9 @@ public:
     /// If this file is newer than anything in the cache, cache it as the latest version
     static void cacheMetaDataFile(const QString& metaDataFile, MAV_AUTOPILOT firmwareType);
 
+    /// Updates metadata cache, returns error description on error, "" on success
+    Q_INVOKABLE const QString updateMetaDataFile(const QString& metaDataFile);
+
     /// Saves the specified param set to the json object.
     ///     @param componentId Component id which contains params, MAV_COMP_ID_ALL to save all components
     ///     @param paramsToSave List of params names to save, empty to save all for component

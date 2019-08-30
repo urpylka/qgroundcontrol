@@ -1,0 +1,108 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<parameters>
+  <version>3</version>
+  <parameter_version_major>1</parameter_version_major>
+  <parameter_version_minor>2</parameter_version_minor>
+  <group name="System">
+    <parameter category="Developer" default="1" name="SYS_PARAM_VER" type="INT32">
+      <short_desc>Parameter version</short_desc>
+      <long_desc>This monotonically increasing number encodes the parameter compatibility set. whenever it increases parameters might not be backwards compatible and ground control stations should suggest a fresh configuration.</long_desc>
+      <min>0</min>
+    </parameter>
+  </group>
+  <group name="MAVLink">
+    <parameter default="17" name="MAV_SYS_ID" type="UINT8">
+      <short_desc>MAVLink system ID</short_desc>
+      <min>1</min>
+    </parameter>
+  </group>
+  <group name="Position">
+    <parameter default="47.397618" name="POS_LATITUDE" type="FLOAT">
+      <short_desc>Latitude</short_desc>
+      <long_desc>Charging station static global latitude if GPS is not available.</long_desc>
+      <unit>deg</unit>
+      <decimal>6</decimal>
+      <min>-90</min>
+      <max>90</max>
+    </parameter>
+    <parameter default="8.54551" name="POS_LONGITUDE" type="FLOAT">
+      <short_desc>Longitude</short_desc>
+      <long_desc>Charging station static longitude if GPS is not available.</long_desc>
+      <unit>deg</unit>
+      <decimal>6</decimal>
+      <min>-180</min>
+      <max>180</max>
+    </parameter>
+    <parameter default="150" name="POS_ALTITUDE" type="FLOAT">
+      <short_desc>Absolute altitude</short_desc>
+      <long_desc>Charging station static absolute altitude if GPS is not available.</long_desc>
+      <unit>m</unit>
+      <decimal>2</decimal>
+    </parameter>
+    <parameter default="0" name="POS_HEADING" type="FLOAT">
+      <short_desc>Heading</short_desc>
+      <long_desc>Charging station heading.</long_desc>
+      <unit>deg</unit>
+      <decimal>2</decimal>
+      <min>-180</min>
+      <max>180</max>
+    </parameter>
+  </group>
+  <group name="Service">
+    <parameter category="Developer" default="0" name="CONTROL" type="INT8">
+      <short_desc>Station control</short_desc>
+      <long_desc>Charging station service control parameter.</long_desc>
+      <values>
+        <value code="-1">Restore</value>
+        <value code="0"></value>
+        <value code="1">Open</value>
+        <value code="2">Close</value>
+        <value code="3">Stop</value>
+      </values>
+    </parameter>
+  </group>
+  <group name="GPS">
+    <parameter default="0" name="ANTENNA_DX" type="FLOAT">
+      <short_desc>Antenna offset by X</short_desc>
+      <long_desc>Charging station local GPS antenna offset by X (NED).</long_desc>
+      <unit>m</unit>
+      <decimal>2</decimal>
+      <min>0</min>
+      <max>100</max>
+    </parameter>
+    <parameter default="0" name="ANTENNA_DY" type="FLOAT">
+      <short_desc>Antenna offset by Y</short_desc>
+      <long_desc>Charging station local GPS antenna offset by Y (NED).</long_desc>
+      <unit>m</unit>
+      <decimal>2</decimal>
+      <min>0</min>
+      <max>100</max>
+    </parameter>
+    <parameter default="0" name="ANTENNA_DZ" type="FLOAT">
+      <short_desc>Antenna offset by Z</short_desc>
+      <long_desc>Charging station local GPS antenna offset by Z (NED).</long_desc>
+      <unit>m</unit>
+      <decimal>2</decimal>
+      <min>0</min>
+      <max>100</max>
+    </parameter>
+  </group>
+  <group name="RTK">
+    <parameter default="0.1" name="SVIN_ACCURACY" type="FLOAT">
+      <short_desc>Survey in accuracy</short_desc>
+      <long_desc>GPS/RTK survey in accuracy.</long_desc>
+      <unit>m</unit>
+      <decimal>2</decimal>
+      <min>0.1</min>
+      <max>10</max>
+    </parameter>
+    <parameter default="10" name="SVIN_DURATION" type="UINT32">
+      <short_desc>Survey in duration</short_desc>
+      <long_desc>GPS/RTK survey in duration.</long_desc>
+      <unit>s</unit>
+      <decimal>2</decimal>
+      <min>10</min>
+      <max>21600</max>
+    </parameter>
+  </group>
+</parameters>

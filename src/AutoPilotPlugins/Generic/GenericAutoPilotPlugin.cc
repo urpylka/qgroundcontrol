@@ -14,7 +14,8 @@
 #include "GenericAutoPilotPlugin.h"
 
 GenericAutoPilotPlugin::GenericAutoPilotPlugin(Vehicle* vehicle, QObject* parent) :
-    AutoPilotPlugin(vehicle, parent)
+    AutoPilotPlugin(vehicle, parent),
+    _RTKGPSComponent(NULL)
 {
     if (!vehicle) {
         qWarning() << "Internal error";
@@ -23,9 +24,17 @@ GenericAutoPilotPlugin::GenericAutoPilotPlugin(Vehicle* vehicle, QObject* parent
 
 const QVariantList& GenericAutoPilotPlugin::vehicleComponents(void)
 {
-    static QVariantList emptyList;
-    
-    return emptyList;
+    if (_components.count() == 0) {
+        if (_vehicle) {
+            _RTKGPSComponent = new RTKGPSComponent(_vehicle, this);
+            _RTKGPSComponent->setupTriggerSignals();
+            _components.append(QVariant::fromValue((VehicleComponent*)_RTKGPSComponent));
+        } else {
+            qWarning() << "Internal error";
+        }
+    }
+
+    return _components;
 }
 
 QString GenericAutoPilotPlugin:: prerequisiteSetup(VehicleComponent* component) const
