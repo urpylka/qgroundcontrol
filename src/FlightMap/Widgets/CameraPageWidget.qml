@@ -54,15 +54,6 @@ Column {
         mainWindow.showComponentDialog(cameraSettings, _cameraVideoMode ? qsTr("Video Settings") : qsTr("Camera Settings"), 70, StandardButton.Ok)
     }
 
-    //-- Dumb camera trigger if no actual camera interface exists
-    QGCButton {
-        anchors.horizontalCenter:   parent.horizontalCenter
-        text:                       qsTr("Trigger Camera")
-        visible:                    !_camera
-        onClicked:                  activeVehicle.triggerCamera()
-        enabled:                    activeVehicle
-        objectName:                 "triggerCameraButton"
-    }
 
     QGCButton {
         anchors.horizontalCenter:   parent.horizontalCenter
@@ -248,7 +239,7 @@ Column {
         }
 
         ComboBox {
-            currentIndex: (activeVehicle._duocamColormap != -1? activeVehicle._duocamColormap : -1)
+            currentIndex: activeVehicle._duocamColormap
             visible: !activeVehicle._duocamColormapUpdating
             model: ListModel {
                 id: cbColormap
@@ -351,6 +342,48 @@ Column {
                 loops: Animation.Infinite
                 from: 0
                 to: 360
+            }
+        }
+    }
+
+    Rectangle {
+        width: parent.width
+        height: 1
+        color: qgcPal.text
+    }
+
+    QGCLabel {
+        text: "Capture images (count, interval):"
+    }
+    Row {
+        SpinBox {
+            id: photoCountBox
+            value: 1
+        }
+        SpinBox {
+            id: photoIntervalBox
+            value: 0
+        }
+    }
+
+    Row {
+        Column {
+            QGCButton {
+                anchors.horizontalCenter:   parent.horizontalCenter
+                text:                       qsTr("Start")
+                visible:                    !_camera
+                onClicked:                  activeVehicle.startImageCapture(photoIntervalBox.value, photoCountBox.value)
+                enabled:                    activeVehicle
+            }
+        }
+
+        Column {
+            QGCButton {
+                anchors.horizontalCenter:   parent.horizontalCenter
+                text:                       qsTr("Stop")
+                visible:                    !_camera
+                onClicked:                  activeVehicle.stopImageCapture()
+                enabled:                    activeVehicle
             }
         }
     }

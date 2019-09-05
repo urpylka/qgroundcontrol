@@ -3600,17 +3600,6 @@ void Vehicle::setOfflineEditingDefaultComponentId(int defaultComponentId)
 
 void Vehicle::triggerCamera(void)
 {
-    QObject *trigCamBut = this->_toolbox->corePlugin()->findChild<QObject*>("triggerCameraButton");
-
-    if (trigCamBut)
-    {
-        qDebug() << "trigCamBut found!";
-        trigCamBut->setProperty("color", "red");
-    }
-    else {
-        qDebug() << "trigCamBut NOT found!";
-    }
-
     sendMavCommand(_defaultComponentId,
                    MAV_CMD_DO_DIGICAM_CONTROL,
                    true,                            // show errors
@@ -3618,6 +3607,31 @@ void Vehicle::triggerCamera(void)
                    1.0,                             // trigger camera
                    0.0,                             // param 6 unused
                    1.0);                            // test shot flag
+}
+
+void Vehicle::startImageCapture(float interval, float count)
+{
+    sendMavCommand(_defaultComponentId,
+                   MAV_CMD_IMAGE_START_CAPTURE,
+                   true,                            // show errors
+                   0.0,                             // camera id
+                   interval,
+                   count,
+                   0.0,
+                   0.0,
+                   0.0,
+                   0.0);
+}
+
+void Vehicle::stopImageCapture(void)
+{
+    sendMavCommand(_defaultComponentId,
+                   MAV_CMD_IMAGE_STOP_CAPTURE,
+                   true,                            // show errors
+                   0.0, 0.0, 0.0, 0.0,
+                   0.0,
+                   0.0,
+                   0.0);
 }
 
 void Vehicle::startVideoCapture(void)

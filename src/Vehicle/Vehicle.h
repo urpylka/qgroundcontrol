@@ -768,6 +768,8 @@ public:
     Q_INVOKABLE void updateDuocamProperties(void);
 
     Q_INVOKABLE void triggerCamera(void);
+    Q_INVOKABLE void startImageCapture(float interval, float count);
+    Q_INVOKABLE void stopImageCapture(void);
     Q_INVOKABLE void startVideoCapture(void);
     Q_INVOKABLE void stopVideoCapture(void);
     Q_INVOKABLE void setCameraProperty(QString propertyName, float value);
