@@ -72,10 +72,10 @@ public class QGCActivity extends QtActivity
     private static HashMap<Integer, Integer>            _userDataHashByDeviceId;
     private static final String                         TAG = "QGC_QGCActivity";
     private static PowerManager.WakeLock                _wakeLock;
-//    private static final String                         ACTION_USB_PERMISSION = "com.android.example.USB_PERMISSION";
     private static final String                         ACTION_USB_PERMISSION = "org.mavlink.qgroundcontrol.action.USB_PERMISSION";
     private static PendingIntent                        _usbPermissionIntent = null;
     private TaiSync                                     taiSync = null;
+    private Timer                                       probeAccessoriesTimer = null;
 
     public static Context m_context;
 
@@ -106,10 +106,10 @@ public class QGCActivity extends QtActivity
                 String action = intent.getAction();
                 if (ACTION_USB_PERMISSION.equals(action)) {
                     UsbAccessory accessory = intent.getParcelableExtra(UsbManager.EXTRA_ACCESSORY);
-                    if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
+                    if (accessory != null && intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
                         openAccessory(accessory);
                     }
-                } else if( UsbManager.ACTION_USB_ACCESSORY_DETACHED.equals(action)) {
+                } else if (UsbManager.ACTION_USB_ACCESSORY_DETACHED.equals(action)) {
                     UsbAccessory accessory = intent.getParcelableExtra(UsbManager.EXTRA_ACCESSORY);
                     if (accessory != null) {
                         closeAccessory(accessory);
@@ -183,6 +183,8 @@ public class QGCActivity extends QtActivity
     public static native void qgcLogDebug(String message);
     public static native void qgcLogWarning(String message);
 
+    private static native void nativeInit();
+
     // QGCActivity singleton
     public QGCActivity()
     {
@@ -226,15 +228,34 @@ public class QGCActivity extends QtActivity
             filter.addAction(UsbManager.ACTION_USB_ACCESSORY_DETACHED);
             registerReceiver(mOpenAccessoryReceiver, accessoryFilter);
 
-            probeAccessories();
+            probeAccessoriesTimer = new Timer();
+            probeAccessoriesTimer.schedule(new TimerTask() {
+                @Override
+                public void run()
+                {
+                    probeAccessories();
+                }
+            }, 0, 3000);
         } catch(Exception e) {
            Log.e(TAG, "Exception: " + e);
         }
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+
+        // Plug in of USB ACCESSORY triggers only onResume event.
+        // Then we scan if there is actually anything new
+        probeAccessories();
+    }
+
+    @Override
     protected void onDestroy()
     {
+        if (probeAccessoriesTimer != null) {
+            probeAccessoriesTimer.cancel();
+        }
         unregisterReceiver(mOpenAccessoryReceiver);
         try {
             if(_wakeLock != null) {
@@ -698,6 +719,8 @@ public class QGCActivity extends QtActivity
         }
     }
 
+    Object probeAccessoriesLock = new Object();
+
     private void probeAccessories()
     {
         final PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_USB_PERMISSION), 0);
@@ -710,16 +733,24 @@ public class QGCActivity extends QtActivity
                UsbAccessory[] accessories = _usbManager.getAccessoryList();
                if (accessories != null) {
                    for (UsbAccessory usbAccessory : accessories) {
+                       if (usbAccessory == null) {
+                           continue;
+                       }
                        if (_usbManager.hasPermission(usbAccessory)) {
                            openAccessory(usbAccessory);
                        } else {
                            Log.i(TAG, "requestPermission");
                            _usbManager.requestPermission(usbAccessory, pendingIntent);
                        }
-                   }
-               }
-           }
-        }, 0, 3000);
+                    }
+                }
+            }
+        }).start();
+    }
+
+    public void jniOnLoad()
+    {
+        nativeInit();
     }
 }
 

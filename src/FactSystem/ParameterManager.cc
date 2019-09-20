@@ -1109,8 +1109,8 @@ void ParameterManager::_checkInitialLoadComplete(void)
     // We aren't waiting for any more initial parameter updates, initial parameter loading is complete
     _initialLoadComplete = true;
 
-	// Parameter cache crc failure debugging
-	for (int componentId: _debugCacheParamSeen.keys()) {
+    // Parameter cache crc failure debugging
+    for (int componentId: _debugCacheParamSeen.keys()) {
         if (!_logReplay && _debugCacheCRC.contains(componentId) && _debugCacheCRC[componentId]) {
             for (const QString& paramName: _debugCacheParamSeen[componentId].keys()) {
                 if (!_debugCacheParamSeen[componentId][paramName]) {
@@ -1177,7 +1177,7 @@ void ParameterManager::_initialRequestTimeout(void)
 QString ParameterManager::parameterMetaDataFile(Vehicle* vehicle, MAV_AUTOPILOT firmwareType, int wantedMajorVersion, int& majorVersion, int& minorVersion)
 {
     bool            cacheHit = false;
-    FirmwarePlugin* plugin = qgcApp()->toolbox()->firmwarePluginManager()->firmwarePluginForAutopilot(firmwareType, MAV_TYPE_QUADROTOR);
+    FirmwarePlugin* plugin = _anyVehicleTypeFirmwarePlugin(firmwareType);
 
     // Cached files are stored in settings location
     QSettings settings;
@@ -1270,9 +1270,17 @@ QString ParameterManager::parameterMetaDataFile(Vehicle* vehicle, MAV_AUTOPILOT 
     return metaDataFile;
 }
 
+FirmwarePlugin* ParameterManager::_anyVehicleTypeFirmwarePlugin(MAV_AUTOPILOT firmwareType)
+{
+    // There are cases where we need a FirmwarePlugin but we don't have a vehicle. In those specified case the plugin for any of the supported vehicle types will do.
+    MAV_TYPE anySupportedVehicleType = qgcApp()->toolbox()->firmwarePluginManager()->supportedVehicleTypes(firmwareType)[0];
+
+    return qgcApp()->toolbox()->firmwarePluginManager()->firmwarePluginForAutopilot(firmwareType, anySupportedVehicleType);
+}
+
 void ParameterManager::cacheMetaDataFile(const QString& metaDataFile, MAV_AUTOPILOT firmwareType)
 {
-    FirmwarePlugin* plugin = qgcApp()->toolbox()->firmwarePluginManager()->firmwarePluginForAutopilot(firmwareType, MAV_TYPE_QUADROTOR);
+    FirmwarePlugin* plugin = _anyVehicleTypeFirmwarePlugin(firmwareType);
 
     int newMajorVersion, newMinorVersion;
     plugin->getParameterMetaDataVersionInfo(metaDataFile, newMajorVersion, newMinorVersion);
@@ -1392,7 +1400,7 @@ QString ParameterManager::_remapParamNameToVersion(const QString& paramName)
 
 /// The offline editing vehicle can have custom loaded params bolted into it.
 void ParameterManager::_loadOfflineEditingParams(void)
-{    
+{
     QString paramFilename = _vehicle->firmwarePlugin()->offlineEditingParamFile(_vehicle);
     if (paramFilename.isEmpty()) {
         return;
@@ -1571,13 +1579,22 @@ bool ParameterManager::loadFromJson(const QJsonObject& json, bool required, QStr
     return true;
 }
 
-void ParameterManager::resetAllParametersToDefaults(void)
+void ParameterManager::resetAllParametersToDefaults()
 {
     _vehicle->sendMavCommand(MAV_COMP_ID_ALL,
                              MAV_CMD_PREFLIGHT_STORAGE,
                              true,  // showError
                              2,     // Reset params to default
                              -1);   // Don't do anything with mission storage
+}
+
+void ParameterManager::resetAllToVehicleConfiguration()
+{
+    //-- https://github.com/PX4/Firmware/pull/11760
+    Fact* sysAutoConfigFact = getParameter(-1, "SYS_AUTOCONFIG");
+    if(sysAutoConfigFact) {
+        sysAutoConfigFact->setRawValue(2);
+    }
 }
 
 QString ParameterManager::_logVehiclePrefix(int componentId)
@@ -1592,7 +1609,7 @@ QString ParameterManager::_logVehiclePrefix(int componentId)
 void ParameterManager::_setLoadProgress(double loadProgress)
 {
     _loadProgress = loadProgress;
-    emit loadProgressChanged(loadProgress);
+    emit loadProgressChanged(static_cast<float>(loadProgress));
 }
 
 QList<int> ParameterManager::componentIds(void)

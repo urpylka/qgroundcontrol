@@ -1,7 +1,7 @@
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtQuick.Dialogs  1.2
-import QtQuick.Layouts  1.2
+import QtQuick                      2.11
+import QtQuick.Controls             2.4
+import QtQuick.Dialogs              1.2
+import QtQuick.Layouts              1.11
 
 import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0
@@ -14,7 +14,6 @@ Item {
     id:         _root
     visible:    false
 
-    property var    qgcView
     property string folder              // Due to Qt bug with file url parsing this must be an absolute path
     property var    nameFilters
     property string fileExtension       // Primary file extension to search for
@@ -44,7 +43,7 @@ Item {
     function openForLoad() {
         _openForLoad = true
         if (_mobileDlg && folder.length !== 0) {
-            qgcView.showDialog(mobileFileOpenDialog, title, qgcView.showDialogDefaultWidth, StandardButton.Cancel)
+            mainWindow.showComponentDialog(mobileFileOpenDialog, title, mainWindow.showDialogDefaultWidth, StandardButton.Cancel)
         } else {
             fullFileDialog.open()
         }
@@ -53,7 +52,7 @@ Item {
     function openForSave() {
         _openForLoad = false
         if (_mobileDlg && folder.length !== 0) {
-            qgcView.showDialog(mobileFileSaveDialog, title, qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
+            mainWindow.showComponentDialog(mobileFileSaveDialog, title, mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
         } else {
             fullFileDialog.open()
         }
@@ -127,14 +126,14 @@ Item {
                                 hamburgerMenu.popup()
                             }
 
-                            Menu {
+                            QGCMenu {
                                 id: hamburgerMenu
 
                                 property string fileToDelete
 
                                 onAboutToHide: fileButton.highlight = false
 
-                                MenuItem {
+                                QGCMenuItem {
                                     text:           qsTr("Delete")
                                     onTriggered: {
                                         controller.deleteFile(hamburgerMenu.fileToDelete)
@@ -240,14 +239,14 @@ Item {
                                 hamburgerMenu.popup()
                             }
 
-                            Menu {
+                            QGCMenu {
                                 id: hamburgerMenu
 
                                 property string fileToDelete
 
                                 onAboutToHide: fileButton.highlight = false
 
-                                MenuItem {
+                                QGCMenuItem {
                                     text:           qsTr("Delete")
                                     onTriggered: {
                                         controller.deleteFile(hamburgerMenu.fileToDelete)

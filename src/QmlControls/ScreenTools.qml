@@ -46,7 +46,6 @@ Item {
     property real mediumFontPointSize:      10
     property real largeFontPointSize:       10
 
-    property real availableHeight:          0
     property real toolbarHeight:            0
 
     readonly property real smallFontPointRatio:      0.75
@@ -92,11 +91,12 @@ Item {
     property real implicitComboBoxHeight:           Math.round(defaultFontPixelHeight * (isMobile ? 2.0 : 1.6))
     property real implicitComboBoxWidth:            Math.round(defaultFontPixelWidth *  (isMobile ? 7.0 : 5.0))
     property real implicitSliderHeight:             isMobile ? Math.max(defaultFontPixelHeight, minTouchPixels) : defaultFontPixelHeight
-    property real checkBoxIndicatorSize:            Math.round(defaultFontPixelHeight * (isMobile ? 1.5 : 1.0))
+    // It's not possible to centralize an even number of pixels, checkBoxIndicatorSize should be an odd number to allow centralization
+    property real checkBoxIndicatorSize:            2 * Math.floor(defaultFontPixelHeight * (isMobile ? 1.5 : 1.0) / 2) + 1
     property real radioButtonIndicatorSize:         checkBoxIndicatorSize
 
-    readonly property string normalFontFamily:      "opensans"
-    readonly property string demiboldFontFamily:    "opensans-demibold"
+    readonly property string normalFontFamily:      ScreenToolsController.normalFontFamily
+    readonly property string demiboldFontFamily:    ScreenToolsController.boldFontFamily
     readonly property string fixedFontFamily:       ScreenToolsController.fixedFontFamily
     /* This mostly works but for some reason, reflowWidths() in SetupView doesn't change size.
        I've disabled (in release builds) until I figure out why. Changes require a restart for now.

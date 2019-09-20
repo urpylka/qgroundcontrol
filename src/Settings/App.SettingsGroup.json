@@ -104,6 +104,13 @@
     "defaultValue":     false
 },
 {
+    "name":             "virtualJoystickCentralized",
+    "shortDescription": "Set virtual joystick to be centralize throttle (spring-loaded).",
+    "longDescription":  "If this option is enabled the virtual joystick throttle stick will be centralized.",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
     "name":             "gstDebugLevel",
     "shortDescription": "Video streaming debug",
     "longDescription":  "Sets the environment variable GST_DEBUG for all pipeline elements on boot.",
@@ -201,10 +208,11 @@
     "defaultValue":     0
 },
 {
-    "name":             "apmStartMavlinkStreams",
-    "shortDescription": "Request start of MAVLink telemetry streams (ArduPilot only)",
-    "type":             "bool",
-    "defaultValue":     true
+    "name":                 "apmStartMavlinkStreams",
+    "shortDescription":     "Request start of MAVLink telemetry streams (ArduPilot only)",
+    "type":                 "bool",
+    "defaultValue":         true,
+    "qgcRebootRequired":    true
 },
 {
     "name":             "enableTaisync",
@@ -219,5 +227,27 @@
     "longDescription":  "Enable Taisync Video Support",
     "type":             "bool",
     "defaultValue":     true
+},
+{
+    "name":             "enableMicrohard",
+    "shortDescription": "Enable Microhard Module Support",
+    "longDescription":  "Enable Microhard Module Support",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
+    "name":             "language",
+    "shortDescription": "Language",
+    "type":             "uint32",
+    "enumStrings":      "System,български (Bulgarian),中文 (Chinese),Nederlands (Dutch),English,Suomi (Finnish),Français (French),Deutsche (German),Ελληνικά (Greek), עברית (Hebrew),Italiano (Italian),日本人 (Japanese),한국어 (Korean),Norsk (Norwegian),Polskie (Polish),Português (Portuguese),Pусский (Russian),Español (Spanish),Svenska (Swedish),Türk (Turkish)",
+    "enumValues":       "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19",
+    "defaultValue":     0
+},
+{
+    "name":             "disableAllPersistence",
+    "shortDescription": "Disable all data persistence",
+    "longDescription":  "If this option is set, nothing will be saved to disk.",
+    "type":             "bool",
+    "defaultValue":     false
 }
 ]

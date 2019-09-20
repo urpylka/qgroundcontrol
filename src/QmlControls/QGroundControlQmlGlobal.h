@@ -28,6 +28,11 @@
 #else
 class TaisyncManager;
 #endif
+#if defined(QGC_GST_MICROHARD_ENABLED)
+#include "MicrohardManager.h"
+#else
+class MicrohardManager;
+#endif
 
 #ifdef QT_DEBUG
 #include "MockLink.h"
@@ -68,8 +73,13 @@ public:
     Q_PROPERTY(bool                 airmapSupported     READ airmapSupported        CONSTANT)
     Q_PROPERTY(TaisyncManager*      taisyncManager      READ taisyncManager         CONSTANT)
     Q_PROPERTY(bool                 taisyncSupported    READ taisyncSupported       CONSTANT)
+    Q_PROPERTY(MicrohardManager*    microhardManager    READ microhardManager       CONSTANT)
+    Q_PROPERTY(bool                 microhardSupported  READ microhardSupported     CONSTANT)
 
     Q_PROPERTY(int      supportedFirmwareCount          READ supportedFirmwareCount CONSTANT)
+    Q_PROPERTY(int      supportedVehicleCount           READ supportedVehicleCount  CONSTANT)
+    Q_PROPERTY(bool     px4ProFirmwareSupported         READ px4ProFirmwareSupported CONSTANT)
+    Q_PROPERTY(int      apmFirmwareSupported            READ apmFirmwareSupported   CONSTANT)
 
     Q_PROPERTY(qreal zOrderTopMost              READ zOrderTopMost              CONSTANT) ///< z order for top most items, toolbar, main window sub view
     Q_PROPERTY(qreal zOrderWidgets              READ zOrderWidgets              CONSTANT) ///< z order value to widgets, for example: zoom controls, hud widgetss
@@ -83,6 +93,7 @@ public:
     // MavLink Protocol
     Q_PROPERTY(bool     isVersionCheckEnabled   READ isVersionCheckEnabled      WRITE setIsVersionCheckEnabled      NOTIFY isVersionCheckEnabledChanged)
     Q_PROPERTY(int      mavlinkSystemID         READ mavlinkSystemID            WRITE setMavlinkSystemID            NOTIFY mavlinkSystemIDChanged)
+    Q_PROPERTY(bool     hasAPMSupport           READ hasAPMSupport              CONSTANT)
 
     Q_PROPERTY(QGeoCoordinate flightMapPosition     READ flightMapPosition      WRITE setFlightMapPosition          NOTIFY flightMapPositionChanged)
     Q_PROPERTY(double         flightMapZoom         READ flightMapZoom          WRITE setFlightMapZoom              NOTIFY flightMapZoomChanged)
@@ -169,6 +180,13 @@ public:
     bool                    taisyncSupported    () { return false; }
 #endif
 
+    MicrohardManager*       microhardManager    ()  { return _microhardManager; }
+#if defined(QGC_GST_TAISYNC_ENABLED)
+    bool                    microhardSupported  () { return true; }
+#else
+    bool                    microhardSupported  () { return false; }
+#endif
+
     qreal zOrderTopMost             () { return 1000; }
     qreal zOrderWidgets             () { return 100; }
     qreal zOrderMapItems            () { return 50; }
@@ -179,8 +197,16 @@ public:
 
     bool    isVersionCheckEnabled   () { return _toolbox->mavlinkProtocol()->versionCheckEnabled(); }
     int     mavlinkSystemID         () { return _toolbox->mavlinkProtocol()->getSystemId(); }
+#if defined(NO_ARDUPILOT_DIALECT)
+    bool    hasAPMSupport           () { return false; }
+#else
+    bool    hasAPMSupport           () { return true; }
+#endif
 
     int     supportedFirmwareCount  ();
+    int     supportedVehicleCount   ();
+    bool    px4ProFirmwareSupported ();
+    bool    apmFirmwareSupported    ();
     bool    skipSetupPage           () { return _skipSetupPage; }
     void    setSkipSetupPage        (bool skip);
 
@@ -227,6 +253,7 @@ private:
     FactGroup*              _gpsRtkFactGroup        = nullptr;
     AirspaceManager*        _airspaceManager        = nullptr;
     TaisyncManager*         _taisyncManager         = nullptr;
+    MicrohardManager*       _microhardManager       = nullptr;
 
     bool                    _skipSetupPage          = false;
 

@@ -131,6 +131,7 @@
                 "label":            "Heading",
                 "units":            "deg",
                 "nanUnchanged":     true,
+                "default":          null,
                 "decimalPlaces":    2
             }
         },

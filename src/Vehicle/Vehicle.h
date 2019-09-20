@@ -601,6 +601,8 @@ public:
     Q_PROPERTY(QString              missionFlightMode       READ missionFlightMode                                      CONSTANT)
     Q_PROPERTY(QString              pauseFlightMode         READ pauseFlightMode                                        CONSTANT)
     Q_PROPERTY(QString              rtlFlightMode           READ rtlFlightMode                                          CONSTANT)
+    Q_PROPERTY(QString              smartRTLFlightMode      READ smartRTLFlightMode                                     CONSTANT)
+    Q_PROPERTY(bool                 supportsSmartRTL        READ supportsSmartRTL                                       CONSTANT)
     Q_PROPERTY(QString              landFlightMode          READ landFlightMode                                         CONSTANT)
     Q_PROPERTY(QString              takeControlFlightMode   READ takeControlFlightMode                                  CONSTANT)
     Q_PROPERTY(QString              firmwareTypeString      READ firmwareTypeString                                     NOTIFY firmwareTypeChanged)
@@ -666,6 +668,7 @@ public:
     Q_PROPERTY(Fact* headingToHome      READ headingToHome      CONSTANT)
     Q_PROPERTY(Fact* distanceToGCS      READ distanceToGCS      CONSTANT)
     Q_PROPERTY(Fact* hobbs              READ hobbs              CONSTANT)
+    Q_PROPERTY(Fact* throttlePct        READ throttlePct        CONSTANT)
 
     Q_PROPERTY(FactGroup* gps               READ gpsFactGroup               CONSTANT)
     Q_PROPERTY(FactGroup* battery           READ battery1FactGroup          CONSTANT)
@@ -689,6 +692,24 @@ public:
     Q_PROPERTY(quint64  vehicleUID                  READ vehicleUID                 NOTIFY vehicleUIDChanged)
     Q_PROPERTY(QString  vehicleUIDStr               READ vehicleUIDStr              NOTIFY vehicleUIDChanged)
 
+    Q_PROPERTY(bool _duocamShowThermal READ getDuocamShowThermal WRITE setDuocamShowThermal NOTIFY duocamShowThermalChanged)
+    Q_PROPERTY(bool _duocamShowThermalUpdating READ getDuocamShowThermalUpdating WRITE setDuocamShowThermalUpdating NOTIFY duocamShowThermalUpdatingChanged)
+    Q_PROPERTY(bool _duocamShowVisual READ getDuocamShowVisual WRITE setDuocamShowVisual NOTIFY duocamShowVisualChanged)
+    Q_PROPERTY(bool _duocamShowVisualUpdating READ getDuocamShowVisualUpdating WRITE setDuocamShowVisualUpdating NOTIFY duocamShowVisualUpdatingChanged)
+    Q_PROPERTY(bool _duocamApplySobel READ getDuocamApplySobel WRITE setDuocamApplySobel NOTIFY duocamApplySobelChanged)
+    Q_PROPERTY(bool _duocamApplySobelUpdating READ getDuocamApplySobelUpdating WRITE setDuocamApplySobelUpdating NOTIFY duocamApplySobelUpdatingChanged)
+    Q_PROPERTY(bool _duocamApplyCanny READ getDuocamApplyCanny WRITE setDuocamApplyCanny NOTIFY duocamApplyCannyChanged)
+    Q_PROPERTY(bool _duocamApplyCannyUpdating READ getDuocamApplyCannyUpdating WRITE setDuocamApplyCannyUpdating NOTIFY duocamApplyCannyUpdatingChanged)
+    Q_PROPERTY(bool _duocamApplyColormap READ getDuocamApplyColormap WRITE setDuocamApplyColormap NOTIFY duocamApplyColormapChanged)
+    Q_PROPERTY(bool _duocamApplyColormapUpdating READ getDuocamApplyColormapUpdating WRITE setDuocamApplyColormapUpdating NOTIFY duocamApplyColormapUpdatingChanged)
+    Q_PROPERTY(int _duocamColormap READ getDuocamColormap WRITE setDuocamColormap NOTIFY duocamColormapChanged)
+    Q_PROPERTY(bool _duocamColormapUpdating READ getDuocamColormapUpdating WRITE setDuocamColormapUpdating NOTIFY duocamColormapUpdatingChanged)
+    Q_PROPERTY(bool _duocamShowFPS READ getDuocamShowFPS WRITE setDuocamShowFPS NOTIFY duocamShowFPSChanged)
+    Q_PROPERTY(bool _duocamShowFPSUpdating READ getDuocamShowFPSUpdating WRITE setDuocamShowFPSUpdating NOTIFY duocamShowFPSUpdatingChanged)
+    Q_PROPERTY(bool _duocamShowTemperature READ getDuocamShowTemperature WRITE setDuocamShowTemperature NOTIFY duocamShowTemperatureChanged)
+    Q_PROPERTY(bool _duocamShowTemperatureUpdating READ getDuocamShowTemperatureUpdating WRITE setDuocamShowTemperatureUpdating NOTIFY duocamShowTemperatureUpdatingChanged)
+
+
     /// Resets link status counters
     Q_INVOKABLE void resetCounters  ();
 
@@ -699,7 +720,7 @@ public:
     Q_INVOKABLE void disconnectInactiveVehicle(void);
 
     /// Command vehicle to return to launch
-    Q_INVOKABLE void guidedModeRTL(void);
+    Q_INVOKABLE void guidedModeRTL(bool smartRTL);
 
     /// Command vehicle to land at current location
     Q_INVOKABLE void guidedModeLand(void);
@@ -744,7 +765,16 @@ public:
     /// Clear Messages
     Q_INVOKABLE void clearMessages();
 
+    Q_INVOKABLE void updateDuocamProperties(void);
+
     Q_INVOKABLE void triggerCamera(void);
+    Q_INVOKABLE void startImageCapture(float interval, float count);
+    Q_INVOKABLE void stopImageCapture(void);
+    Q_INVOKABLE void startVideoCapture(void);
+    Q_INVOKABLE void stopVideoCapture(void);
+    Q_INVOKABLE void setCameraProperty(QString propertyName, float value);
+    Q_INVOKABLE void getCameraProperty(QString propertyName);
+    Q_INVOKABLE void processCameraProperty(float commandType, QString propertyName, float value);
     Q_INVOKABLE void sendPlan(QString planFile);
 
     /// Used to check if running current version is equal or higher than the one being compared.
@@ -756,6 +786,14 @@ public:
     ///     @param motor Motor number, 1-based
     ///     @param percent 0-no power, 100-full power
     Q_INVOKABLE void motorTest(int motor, int percent);
+
+    Q_INVOKABLE void setPIDTuningTelemetryMode(bool pidTuning);
+
+    Q_INVOKABLE void gimbalControlValue(double pitch, double yaw);
+
+#if !defined(NO_ARDUPILOT_DIALECT)
+    Q_INVOKABLE void flashBootloader(void);
+#endif
 
     bool    guidedModeSupported     (void) const;
     bool    pauseVehicleSupported   (void) const;
@@ -825,6 +863,46 @@ public:
     bool armed(void) { return _armed; }
     void setArmed(bool armed);
 
+    bool getDuocamShowThermal(void) { return this->_duocamShowThermal; }
+    Q_INVOKABLE void setDuocamShowThermal(bool showThermal) { this->_duocamShowThermal = showThermal; emit duocamShowThermalChanged(this->_duocamShowThermal); }
+    bool getDuocamShowThermalUpdating(void) { return this->_duocamShowThermalUpdating; }
+    Q_INVOKABLE void setDuocamShowThermalUpdating(bool showThermalUpdating) { this->_duocamShowThermalUpdating = showThermalUpdating; emit duocamShowThermalUpdatingChanged(this->_duocamShowThermalUpdating); }
+
+    bool getDuocamShowVisual(void) { return this->_duocamShowVisual; }
+    Q_INVOKABLE void setDuocamShowVisual(bool showVisual) { this->_duocamShowVisual = showVisual; emit duocamShowVisualChanged(this->_duocamShowVisual); }
+    bool getDuocamShowVisualUpdating(void) { return this->_duocamShowVisualUpdating; }
+    Q_INVOKABLE void setDuocamShowVisualUpdating(bool showVisualUpdating) { this->_duocamShowVisualUpdating = showVisualUpdating; emit duocamShowVisualUpdatingChanged(this->_duocamShowVisualUpdating); }
+
+    bool getDuocamApplySobel(void) { return this->_duocamApplySobel; }
+    Q_INVOKABLE void setDuocamApplySobel(bool applySobel) { this->_duocamApplySobel = applySobel; emit duocamApplySobelChanged(this->_duocamApplySobel); }
+    bool getDuocamApplySobelUpdating(void) { return this->_duocamApplySobelUpdating; }
+    Q_INVOKABLE void setDuocamApplySobelUpdating(bool applySobelUpdating) { this->_duocamApplySobelUpdating = applySobelUpdating; emit duocamApplySobelUpdatingChanged(this->_duocamApplySobelUpdating); }
+
+    bool getDuocamApplyCanny(void) { return this->_duocamApplyCanny; }
+    Q_INVOKABLE void setDuocamApplyCanny(bool applyCanny) { this->_duocamApplyCanny = applyCanny; emit duocamApplyCannyChanged(this->_duocamApplyCanny); }
+    bool getDuocamApplyCannyUpdating(void) { return this->_duocamApplyCannyUpdating; }
+    Q_INVOKABLE void setDuocamApplyCannyUpdating(bool applyCannyUpdating) { this->_duocamApplyCannyUpdating = applyCannyUpdating; emit duocamApplyCannyUpdatingChanged(this->_duocamApplyCannyUpdating); }
+
+    bool getDuocamApplyColormap(void) { return this->_duocamApplyColormap; }
+    Q_INVOKABLE void setDuocamApplyColormap(bool applyColormap) { this->_duocamApplyColormap = applyColormap; emit duocamApplyColormapChanged(this->_duocamApplyColormap); }
+    bool getDuocamApplyColormapUpdating(void) { return this->_duocamApplyColormapUpdating; }
+    Q_INVOKABLE void setDuocamApplyColormapUpdating(bool applyColormapUpdating) { this->_duocamApplyColormapUpdating = applyColormapUpdating; emit duocamApplyColormapUpdatingChanged(this->_duocamApplyColormapUpdating); }
+
+    int getDuocamColormap(void) { return this->_duocamColormap; }
+    Q_INVOKABLE void setDuocamColormap(int colormap) { this->_duocamColormap = colormap; emit duocamColormapChanged(this->_duocamColormap); }
+    bool getDuocamColormapUpdating(void) { return this->_duocamColormapUpdating; }
+    Q_INVOKABLE void setDuocamColormapUpdating(bool colormapUpdating) { this->_duocamColormapUpdating = colormapUpdating; emit duocamColormapUpdatingChanged(this->_duocamColormapUpdating); }
+
+    bool getDuocamShowFPS(void) { return this->_duocamShowFPS; }
+    Q_INVOKABLE void setDuocamShowFPS(bool showFPS) { this->_duocamShowFPS= showFPS; emit duocamShowFPSChanged(this->_duocamShowFPS); }
+    bool getDuocamShowFPSUpdating(void) { return this->_duocamShowFPSUpdating; }
+    Q_INVOKABLE void setDuocamShowFPSUpdating(bool showFPSUpdating) { this->_duocamShowFPSUpdating = showFPSUpdating; emit duocamShowFPSUpdatingChanged(this->_duocamShowFPSUpdating); }
+
+    bool getDuocamShowTemperature(void) { return this->_duocamShowTemperature; }
+    Q_INVOKABLE void setDuocamShowTemperature(bool showTemperature) { this->_duocamShowTemperature = showTemperature; emit duocamShowTemperatureChanged(this->_duocamShowTemperature); }
+    bool getDuocamShowTemperatureUpdating(void) { return this->_duocamShowTemperatureUpdating; }
+    Q_INVOKABLE void setDuocamShowTemperatureUpdating(bool showTemperatureUpdating) { this->_duocamShowTemperatureUpdating = showTemperatureUpdating; emit duocamShowTemperatureUpdatingChanged(this->_duocamShowTemperatureUpdating); }
+
     bool flightModeSetAvailable(void);
     QStringList flightModes(void);
     QString flightMode(void) const;
@@ -844,7 +922,7 @@ public:
     bool sub(void) const;
 
     bool supportsThrottleModeCenterZero (void) const;
-    bool supportsNegativeThrust         (void) const;
+    bool supportsNegativeThrust         (void);
     bool supportsRadio                  (void) const;
     bool supportsJSButton               (void) const;
     bool supportsMotorInterference      (void) const;
@@ -910,13 +988,15 @@ public:
     QString         brandImageIndoor        () const;
     QString         brandImageOutdoor       () const;
     QStringList     unhealthySensors        () const;
-    int             sensorsPresentBits      () const { return _onboardControlSensorsPresent; }
-    int             sensorsEnabledBits      () const { return _onboardControlSensorsEnabled; }
-    int             sensorsHealthBits       () const { return _onboardControlSensorsHealth; }
-    int             sensorsUnhealthyBits    () const { return _onboardControlSensorsUnhealthy; }
+    int             sensorsPresentBits      () const { return static_cast<int>(_onboardControlSensorsPresent); }
+    int             sensorsEnabledBits      () const { return static_cast<int>(_onboardControlSensorsEnabled); }
+    int             sensorsHealthBits       () const { return static_cast<int>(_onboardControlSensorsHealth); }
+    int             sensorsUnhealthyBits    () const { return static_cast<int>(_onboardControlSensorsUnhealthy); }
     QString         missionFlightMode       () const;
     QString         pauseFlightMode         () const;
     QString         rtlFlightMode           () const;
+    QString         smartRTLFlightMode      () const;
+    bool            supportsSmartRTL        () const;
     QString         landFlightMode          () const;
     QString         takeControlFlightMode   () const;
     double          defaultCruiseSpeed      () const { return _defaultCruiseSpeed; }
@@ -955,6 +1035,7 @@ public:
     Fact* headingToHome     (void) { return &_headingToHomeFact; }
     Fact* distanceToGCS     (void) { return &_distanceToGCSFact; }
     Fact* hobbs             (void) { return &_hobbsFact; }
+    Fact* throttlePct       (void) { return &_throttlePctFact; }
 
     FactGroup* gpsFactGroup             (void) { return &_gpsFactGroup; }
     FactGroup* battery1FactGroup        (void) { return &_battery1FactGroup; }
@@ -1115,6 +1196,23 @@ signals:
     void linksPropertiesChanged(void);
     void textMessageReceived(int uasid, int componentid, int severity, QString text);
 
+    void duocamShowThermalChanged(bool showThermal);
+    void duocamShowThermalUpdatingChanged(bool showThermalUpdating);
+    void duocamShowVisualChanged(bool showVisual);
+    void duocamShowVisualUpdatingChanged(bool showVisualUpdating);
+    void duocamApplySobelChanged(bool applySobel);
+    void duocamApplySobelUpdatingChanged(bool applyCannyUpdating);
+    void duocamApplyCannyChanged(bool applyCanny);
+    void duocamApplyCannyUpdatingChanged(bool applyCannyUpdating);
+    void duocamApplyColormapChanged(bool applyColormap);
+    void duocamApplyColormapUpdatingChanged(bool applyColormapUpdating);
+    void duocamColormapChanged(int colormap);
+    void duocamColormapUpdatingChanged(bool colormapUpdating);
+    void duocamShowFPSChanged(bool showFPS);
+    void duocamShowFPSUpdatingChanged(bool showFPSUpdating);
+    void duocamShowTemperatureChanged(bool showTemperature);
+    void duocamShowTemperatureUpdatingChanged(bool showTemperatureUpdating);
+
     void messagesReceivedChanged    ();
     void messagesSentChanged        ();
     void messagesLostChanged        ();
@@ -1220,6 +1318,7 @@ private slots:
     void _trafficUpdate         (bool alert, QString traffic_id, QString vehicle_id, QGeoCoordinate location, float heading);
     void _adsbTimerTimeout      ();
     void _orbitTelemetryTimeout (void);
+    void _protocolVersionTimeOut(void);
 
 private:
     bool _containsLink(LinkInterface* link);
@@ -1259,6 +1358,7 @@ private:
     void _handleEstimatorStatus(mavlink_message_t& message);
     void _handleStatusText(mavlink_message_t& message, bool longVersion);
     void _handleOrbitExecutionStatus(const mavlink_message_t& message);
+    void _handleMessageInterval(const mavlink_message_t& message);
     // ArduPilot dialect messages
 #if !defined(NO_ARDUPILOT_DIALECT)
     void _handleCameraFeedback(const mavlink_message_t& message);
@@ -1285,11 +1385,18 @@ private:
     void _setCapabilities(uint64_t capabilityBits);
     void _updateArmed(bool armed);
     bool _apmArmingNotRequired(void);
+    void _pidTuningAdjustRates(bool setRatesForTuning);
+    void _handleUnsupportedRequestAutopilotCapabilities(void);
+    void _handleUnsupportedRequestProtocolVersion(void);
 
     int     _id;                    ///< Mavlink system id
     int     _defaultComponentId;
     bool    _active;
     bool    _offlineEditingVehicle; ///< This Vehicle is a "disconnected" vehicle for ui use while offline editing
+    float   _flirduoMSXEnabled = 1;
+    float   _flirduoMSXStrength = 50;
+    float   _flirduoColorPalette = 0;
+    float   _flirduoRotateImage = 0;
 
     MAV_AUTOPILOT       _firmwareType;
     MAV_TYPE            _vehicleType;
@@ -1342,6 +1449,7 @@ private:
     uint32_t        _telemetryTXBuffer;
     int             _telemetryLNoise;
     int             _telemetryRNoise;
+    bool            _mavlinkProtocolRequestComplete;
     unsigned        _maxProtoVersion;
     bool            _vehicleCapabilitiesKnown;
     uint64_t        _capabilityBits;
@@ -1394,6 +1502,23 @@ private:
     bool    _armed;         ///< true: vehicle is armed
     uint8_t _base_mode;     ///< base_mode from HEARTBEAT
     uint32_t _custom_mode;  ///< custom_mode from HEARTBEAT
+
+    bool _duocamShowThermal;
+    bool _duocamShowThermalUpdating;
+    bool _duocamShowVisual;
+    bool _duocamShowVisualUpdating;
+    bool _duocamApplySobel;
+    bool _duocamApplySobelUpdating;
+    bool _duocamApplyCanny;
+    bool _duocamApplyCannyUpdating;
+    bool _duocamApplyColormap;
+    bool _duocamApplyColormapUpdating;
+    int _duocamColormap = -1;
+    bool _duocamColormapUpdating;
+    bool _duocamShowFPS;
+    bool _duocamShowFPSUpdating;
+    bool _duocamShowTemperature;
+    bool _duocamShowTemperatureUpdating;
 
     /// Used to store a message being sent by sendMessageMultiple
     typedef struct {
@@ -1467,6 +1592,12 @@ private:
     QTimer          _orbitTelemetryTimer;
     static const int _orbitTelemetryTimeoutMsecs = 3000; // No telemetry for this amount and orbit will go inactive
 
+    // PID Tuning telemetry mode
+    bool            _pidTuningTelemetryMode;
+    bool            _pidTuningWaitingForRates;
+    QList<int>      _pidTuningMessages;
+    QMap<int, int>  _pidTuningMessageRatesUsecs;
+
     // FactGroup facts
 
     Fact _rollFact;
@@ -1486,6 +1617,7 @@ private:
     Fact _headingToHomeFact;
     Fact _distanceToGCSFact;
     Fact _hobbsFact;
+    Fact _throttlePctFact;
 
     VehicleGPSFactGroup             _gpsFactGroup;
     VehicleBatteryFactGroup         _battery1FactGroup;
@@ -1515,6 +1647,7 @@ private:
     static const char* _headingToHomeFactName;
     static const char* _distanceToGCSFactName;
     static const char* _hobbsFactName;
+    static const char* _throttlePctFactName;
 
     static const char* _gpsFactGroupName;
     static const char* _battery1FactGroupName;

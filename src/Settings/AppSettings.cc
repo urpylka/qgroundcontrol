@@ -10,6 +10,7 @@
 #include "AppSettings.h"
 #include "QGCPalette.h"
 #include "QGCApplication.h"
+#include "ParameterManager.h"
 
 #include <QQmlEngine>
 #include <QtQml>
@@ -35,7 +36,6 @@ const char* AppSettings::crashDirectory =           "CrashLogs";
 
 DECLARE_SETTINGGROUP(App, "")
 {
-    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qmlRegisterUncreatableType<AppSettings>("QGroundControl.SettingsManager", 1, 0, "AppSettings", "Reference only");
     QGCPalette::setGlobalTheme(indoorPalette()->rawValue().toBool() ? QGCPalette::Dark : QGCPalette::Light);
 
@@ -46,7 +46,7 @@ DECLARE_SETTINGGROUP(App, "")
     if (savePathFact->rawValue().toString().isEmpty() && _nameToMetaDataMap[savePathName]->rawDefaultValue().toString().isEmpty()) {
 #ifdef __mobile__
 #ifdef __ios__
-        QDir rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
+        QDir rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
 #else
         QDir rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation));
 #endif
@@ -59,7 +59,11 @@ DECLARE_SETTINGGROUP(App, "")
 
     connect(savePathFact, &Fact::rawValueChanged, this, &AppSettings::savePathsChanged);
     connect(savePathFact, &Fact::rawValueChanged, this, &AppSettings::_checkSavePathDirectories);
+
     _checkSavePathDirectories();
+    //-- Keep track of language changes
+    SettingsFact* languageFact = qobject_cast<SettingsFact*>(language());
+    connect(languageFact, &Fact::rawValueChanged, this, &AppSettings::_languageChanged);
 }
 
 DECLARE_SETTINGSFACT(AppSettings, offlineEditingFirmwareType)
@@ -74,6 +78,7 @@ DECLARE_SETTINGSFACT(AppSettings, telemetrySave)
 DECLARE_SETTINGSFACT(AppSettings, telemetrySaveNotArmed)
 DECLARE_SETTINGSFACT(AppSettings, audioMuted)
 DECLARE_SETTINGSFACT(AppSettings, virtualJoystick)
+DECLARE_SETTINGSFACT(AppSettings, virtualJoystickCentralized)
 DECLARE_SETTINGSFACT(AppSettings, appFontPointSize)
 DECLARE_SETTINGSFACT(AppSettings, showLargeCompass)
 DECLARE_SETTINGSFACT(AppSettings, savePath)
@@ -87,6 +92,9 @@ DECLARE_SETTINGSFACT(AppSettings, followTarget)
 DECLARE_SETTINGSFACT(AppSettings, apmStartMavlinkStreams)
 DECLARE_SETTINGSFACT(AppSettings, enableTaisync)
 DECLARE_SETTINGSFACT(AppSettings, enableTaisyncVideo)
+DECLARE_SETTINGSFACT(AppSettings, enableMicrohard)
+DECLARE_SETTINGSFACT(AppSettings, language)
+DECLARE_SETTINGSFACT(AppSettings, disableAllPersistence)
 
 DECLARE_SETTINGSFACT_NO_FUNC(AppSettings, indoorPalette)
 {
@@ -95,6 +103,11 @@ DECLARE_SETTINGSFACT_NO_FUNC(AppSettings, indoorPalette)
         connect(_indoorPaletteFact, &Fact::rawValueChanged, this, &AppSettings::_indoorPaletteChanged);
     }
     return _indoorPaletteFact;
+}
+
+void AppSettings::_languageChanged()
+{
+    qgcApp()->setLanguage();
 }
 
 void AppSettings::_checkSavePathDirectories(void)
@@ -115,7 +128,6 @@ void AppSettings::_checkSavePathDirectories(void)
 
 void AppSettings::_indoorPaletteChanged(void)
 {
-    qgcApp()->_loadCurrentStyleSheet();
     QGCPalette::setGlobalTheme(indoorPalette()->rawValue().toBool() ? QGCPalette::Dark : QGCPalette::Light);
 }
 

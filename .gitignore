@@ -5,7 +5,6 @@ libs/lib/Frameworks/GStreamer.framework
 CMakeFiles
 tags
 build*/
-Info.plist
 obj
 .DS_Store
 *.log
@@ -28,7 +27,6 @@ doc/html
 doc/doxy.log
 deploy/mac
 deploy/linux
-deploy/qgroundcontrol*
 controller_log*
 user_config.pri
 *.app
@@ -57,6 +55,7 @@ libs/thirdParty/libxbee/lib/
 GeneratedFiles/
 gstreamer-1.0-android*
 src/Airmap/Airmap_api_key.h
+localization/qgroundcontrol/
 
 *.autosave
 .settings/
@@ -68,8 +67,6 @@ ios/iOSForAppStore-Info.plist
 moc_*
 ui_*
 *.o
-*.a
-*.so*
 *.moc
 *.prl
 

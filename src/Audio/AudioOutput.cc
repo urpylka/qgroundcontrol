@@ -20,7 +20,11 @@ AudioOutput::AudioOutput(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
     , _tts(new QTextToSpeech(this))
 {
-    _tts->setLocale(QLocale::English);
+    //-- Force TTS engine to English as all incoming messages from the autopilot
+    //   are in English and not localized.
+#ifdef Q_OS_LINUX
+    _tts->setLocale(QLocale("en_US"));
+#endif
     connect(_tts, &QTextToSpeech::stateChanged, this, &AudioOutput::_stateChanged);
 }
 
@@ -125,6 +129,9 @@ QString AudioOutput::fixTextMessageForAudio(const QString& string) {
     }
     if(result.contains("PREARM", Qt::CaseInsensitive)) {
         result.replace("PREARM", "pre arm", Qt::CaseInsensitive);
+    }
+    if(result.contains("PITOT", Qt::CaseInsensitive)) {
+        result.replace("PITOT", "pee toe", Qt::CaseInsensitive);
     }
 
     // Convert negative numbers

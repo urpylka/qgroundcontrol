@@ -2,8 +2,8 @@
 include_directories(
 	.
 	${CMAKE_CURRENT_BINARY_DIR}
-
 	${Qt5Location_PRIVATE_INCLUDE_DIRS}
+	VideoStreaming
 )
 
 set(EXTRA_SRC)
@@ -12,6 +12,23 @@ if(MOBILE)
 	list(APPEND EXTRA_SRC
 		MobileScreenMgr.cc
 	)
+endif()
+if(GST_FOUND)
+	# TODO: Transform those in targets.
+	list(APPEND EXTRA_SRC
+		Taisync/TaisyncManager.cc
+		Taisync/TaisyncHandler.cc
+		Taisync/TaisyncSettings.cc
+		Microhard/MicrohardManager.cc
+		Microhard/MicrohardHandler.cc
+		Microhard/MicrohardSettings.cc
+	)
+	if(ANDROID) # Should also be expanded to iOS
+		list(APPEND EXTRA_SRC
+			src/Taisync/TaisyncTelemetry.cc
+			src/Taisync/TaisyncVideoReceiver.cc
+		)
+	endif()
 endif()
 
 if(BUILD_TESTING)
@@ -72,8 +89,8 @@ add_library(qgc
 	KMLFileHelper.cc
 	LogCompressor.cc
 	main.cc
-	QGC.cc
 	QGCApplication.cc
+	QGC.cc
 	QGCComboBox.cc
 	QGCDockWidget.cc
 	QGCFileDownload.cc
@@ -81,21 +98,15 @@ add_library(qgc
 	QGCLoggingCategory.cc
 	QGCMapPalette.cc
 	QGCPalette.cc
-	QGCQFileDialog.cc
 	QGCQGeoCoordinate.cc
-	QGCQmlWidgetHolder.cpp
-	QGCQuickWidget.cc
 	QGCTemporaryFile.cc
 	QGCToolbox.cc
 	RunGuard.cc
 	ShapeFileHelper.cc
 	SHPFileHelper.cc
 	TerrainTile.cc
-	UTM.cpp
 
-	# UI
-	QGCQmlWidgetHolder.ui
-        QGCQmlWidgetHolder.h
+	UTM.cpp
 )
 
 set_source_files_properties(QGCApplication.cc PROPERTIES COMPILE_DEFINITIONS GIT_VERSION="${git_tag}")
@@ -129,15 +140,15 @@ add_subdirectory(VideoStreaming)
 add_subdirectory(ViewWidgets)
 
 target_link_libraries(qgc
-        PRIVATE
+	PRIVATE
 		shp
 
 	PUBLIC
-                Qt5::QuickWidgets
-                Qt5::Widgets
+		Qt5::QuickWidgets
+		Qt5::Widgets
 
 		Airmap
-                AnalyzeView
+		AnalyzeView
 		api
 		Audio
 		AutoPilotPlugins
@@ -148,7 +159,7 @@ target_link_libraries(qgc
 		FlightDisplay
 		FlightMap
 		FollowMe
-                gps
+		gps
 		Joystick
 		MissionManager
 		PositionManager
@@ -169,10 +180,11 @@ if(BUILD_TESTING)
 endif()
 
 target_include_directories(qgc
-    PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_CURRENT_BINARY_DIR}/ui/ui_autogen/include # HACK: AUTOUIC paths not inheriting?
-        ${CMAKE_CURRENT_BINARY_DIR}/ui/ui_autogen/include_Debug
-        ${CMAKE_CURRENT_BINARY_DIR}/qgc_autogen/include # HACK: AUTOUIC paths not inheriting?
-        ${CMAKE_CURRENT_BINARY_DIR}/qgc_autogen/include_Debug
-        )
+	PUBLIC
+		${CMAKE_CURRENT_SOURCE_DIR}
+		${CMAKE_CURRENT_BINARY_DIR}/ui/ui_autogen/include # HACK: AUTOUIC paths not inheriting?
+		${CMAKE_CURRENT_BINARY_DIR}/ui/ui_autogen/include_Debug
+		${CMAKE_CURRENT_BINARY_DIR}/qgc_autogen/include # HACK: AUTOUIC paths not inheriting?
+		${CMAKE_CURRENT_BINARY_DIR}/qgc_autogen/include_Debug
+)
+

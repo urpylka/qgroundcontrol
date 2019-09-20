@@ -14,9 +14,7 @@
 #include "AppSettings.h"
 
 #ifndef __mobile__
-#include "QGCQFileDialog.h"
 #include "QGCMapRCToParamDialog.h"
-#include "MainWindow.h"
 #endif
 
 #include <QStandardPaths>
@@ -26,6 +24,7 @@ ParameterEditorController::ParameterEditorController(void)
     , _parameters               (new QmlObjectListModel(this))
     , _parameterMgr             (_vehicle->parameterManager())
     , _componentCategoryPrefix  (tr("Component "))
+    , _showModifiedOnly          (false)
 {
     const QMap<QString, QMap<QString, QStringList> >& categoryMap = _parameterMgr->getDefaultComponentCategoryMap();
     _categories = categoryMap.keys();
@@ -50,11 +49,12 @@ ParameterEditorController::ParameterEditorController(void)
     connect(this, &ParameterEditorController::searchTextChanged,        this, &ParameterEditorController::_updateParameters);
     connect(this, &ParameterEditorController::currentCategoryChanged,   this, &ParameterEditorController::_updateParameters);
     connect(this, &ParameterEditorController::currentGroupChanged,      this, &ParameterEditorController::_updateParameters);
+    connect(this, &ParameterEditorController::showModifiedOnlyChanged,  this, &ParameterEditorController::_updateParameters);
 }
 
 ParameterEditorController::~ParameterEditorController()
 {
-    
+
 }
 
 QStringList ParameterEditorController::getGroupsForCategory(const QString& category)
@@ -71,13 +71,13 @@ QStringList ParameterEditorController::getGroupsForCategory(const QString& categ
 QStringList ParameterEditorController::searchParameters(const QString& searchText, bool searchInName, bool searchInDescriptions)
 {
     QStringList list;
-    
+
     for(const QString &paramName: _parameterMgr->parameterNames(_vehicle->defaultComponentId())) {
         if (searchText.isEmpty()) {
             list += paramName;
         } else {
             Fact* fact = _parameterMgr->getParameter(_vehicle->defaultComponentId(), paramName);
-            
+
             if (searchInName && fact->name().contains(searchText, Qt::CaseInsensitive)) {
                 list += paramName;
             } else if (searchInDescriptions && (fact->shortDescription().contains(searchText, Qt::CaseInsensitive) || fact->longDescription().contains(searchText, Qt::CaseInsensitive))) {
@@ -86,7 +86,7 @@ QStringList ParameterEditorController::searchParameters(const QString& searchTex
         }
     }
     list.sort();
-    
+
     return list;
 }
 
@@ -106,12 +106,12 @@ void ParameterEditorController::saveToFile(const QString& filename)
         }
 
         QFile file(parameterFilename);
-        
+
         if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
             qgcApp()->showMessage(tr("Unable to create file: %1").arg(parameterFilename));
             return;
         }
-        
+
         QTextStream stream(&file);
         _parameterMgr->writeParametersToStream(stream);
         file.close();
@@ -121,19 +121,19 @@ void ParameterEditorController::saveToFile(const QString& filename)
 void ParameterEditorController::loadFromFile(const QString& filename)
 {
     QString errors;
-    
+
     if (!filename.isEmpty()) {
         QFile file(filename);
-        
+
         if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
             qgcApp()->showMessage(tr("Unable to open file: %1").arg(filename));
             return;
         }
-        
+
         QTextStream stream(&file);
         errors = _parameterMgr->readParametersFromStream(stream);
         file.close();
-        
+
         if (!errors.isEmpty()) {
             emit showErrorMessage(errors);
         }
@@ -151,16 +151,29 @@ void ParameterEditorController::resetAllToDefaults(void)
     refresh();
 }
 
+void ParameterEditorController::resetAllToVehicleConfiguration(void)
+{
+    _parameterMgr->resetAllToVehicleConfiguration();
+    refresh();
+}
+
 void ParameterEditorController::setRCToParam(const QString& paramName)
 {
 #ifdef __mobile__
     Q_UNUSED(paramName)
 #else
     if (_uas) {
-        QGCMapRCToParamDialog * d = new QGCMapRCToParamDialog(paramName, _uas, qgcApp()->toolbox()->multiVehicleManager(), MainWindow::instance());
-        d->exec();
+        Q_UNUSED(paramName)
+        //-- TODO QGCMapRCToParamDialog * d = new QGCMapRCToParamDialog(paramName, _uas, qgcApp()->toolbox()->multiVehicleManager(), MainWindow::instance());
+        //d->exec();
     }
 #endif
+}
+
+bool ParameterEditorController::_shouldShow(Fact* fact)
+{
+    bool show = _showModifiedOnly ? (fact->defaultValueAvailable() ? (fact->valueEqualsDefault() ? false : true) : false) : true;
+    return show;
 }
 
 void ParameterEditorController::_updateParameters(void)
@@ -168,7 +181,7 @@ void ParameterEditorController::_updateParameters(void)
     QObjectList newParameterList;
     QStringList searchItems = _searchText.split(' ', QString::SkipEmptyParts);
 
-    if (searchItems.isEmpty()) {
+    if (searchItems.isEmpty() && !_showModifiedOnly) {
         if (_currentCategory.startsWith(_componentCategoryPrefix)) {
             int compId = _currentCategory.right(_currentCategory.length() - _componentCategoryPrefix.length()).toInt();
             for (const QString& paramName: _parameterMgr->parameterNames(compId)) {
@@ -184,14 +197,15 @@ void ParameterEditorController::_updateParameters(void)
     } else {
         for(const QString &parameter: _parameterMgr->parameterNames(_vehicle->defaultComponentId())) {
             Fact* fact = _parameterMgr->getParameter(_vehicle->defaultComponentId(), parameter);
-            bool matched = true;
-
-            // all of the search items must match in order for the parameter to be added to the list
-            for (const auto& searchItem : searchItems) {
-                if (!fact->name().contains(searchItem, Qt::CaseInsensitive) &&
+            bool matched = _shouldShow(fact);
+            // All of the search items must match in order for the parameter to be added to the list
+            if(matched) {
+                for (const auto& searchItem : searchItems) {
+                    if (!fact->name().contains(searchItem, Qt::CaseInsensitive) &&
                         !fact->shortDescription().contains(searchItem, Qt::CaseInsensitive) &&
                         !fact->longDescription().contains(searchItem, Qt::CaseInsensitive)) {
-                    matched = false;
+                        matched = false;
+                    }
                 }
             }
             if (matched) {

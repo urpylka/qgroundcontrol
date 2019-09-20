@@ -104,6 +104,7 @@ QString APMParameterMetaData::mavTypeToString(MAV_TYPE vehicleTypeEnum)
             break;
         case MAV_TYPE_ANTENNA_TRACKER:
             vehicleName = "Antenna Tracker";
+            break;
         case MAV_TYPE_GENERIC:
         case MAV_TYPE_GCS:
         case MAV_TYPE_AIRSHIP:
@@ -611,5 +612,7 @@ void APMParameterMetaData::getParameterMetaDataVersionInfo(const QString& metaDa
     if (regExp.exactMatch(metaDataFile) && regExp.captureCount() == 2) {
         majorVersion = regExp.cap(2).toInt();
         minorVersion = 0;
+    } else {
+        qWarning() << QStringLiteral("Unable to parse version from parameter meta data file name: '%1'").arg(metaDataFile);
     }
 }

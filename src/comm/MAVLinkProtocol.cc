@@ -404,9 +404,13 @@ void MAVLinkProtocol::_startLogging(void)
     if (qgcApp()->runningUnitTests()) {
         return;
     }
+    AppSettings* appSettings = _app->toolbox()->settingsManager()->appSettings();
+    if(appSettings->disableAllPersistence()->rawValue().toBool()) {
+        return;
+    }
 #ifdef __mobile__
     //-- Mobile build don't write to /tmp unless told to do so
-    if (!_app->toolbox()->settingsManager()->appSettings()->telemetrySave()->rawValue().toBool()) {
+    if (!appSettings->telemetrySave()->rawValue().toBool()) {
         return;
     }
 #endif
@@ -435,7 +439,8 @@ void MAVLinkProtocol::_stopLogging(void)
     if (_tempLogFile.isOpen()) {
         if (_closeLogFile()) {
             if ((_vehicleWasArmed || _app->toolbox()->settingsManager()->appSettings()->telemetrySaveNotArmed()->rawValue().toBool()) &&
-                _app->toolbox()->settingsManager()->appSettings()->telemetrySave()->rawValue().toBool()) {
+                _app->toolbox()->settingsManager()->appSettings()->telemetrySave()->rawValue().toBool() &&
+                !_app->toolbox()->settingsManager()->appSettings()->disableAllPersistence()->rawValue().toBool()) {
                 emit saveTelemetryLog(_tempLogFile.fileName());
             } else {
                 QFile::remove(_tempLogFile.fileName());
@@ -456,7 +461,7 @@ void MAVLinkProtocol::checkForLostLogFiles(void)
     QFileInfoList fileInfoList = tempDir.entryInfoList(QStringList(filter), QDir::Files);
     //qDebug() << "Orphaned log file count" << fileInfoList.count();
 
-    for(const QFileInfo fileInfo: fileInfoList) {
+    for(const QFileInfo& fileInfo: fileInfoList) {
         //qDebug() << "Orphaned log file" << fileInfo.filePath();
         if (fileInfo.size() == 0) {
             // Delete all zero length files

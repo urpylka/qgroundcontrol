@@ -1,8 +1,8 @@
-import QtQuick                  2.3
-import QtQuick.Controls         1.2
-import QtQuick.Controls.Styles  1.4
-import QtQuick.Dialogs          1.2
-import QtQml                    2.2
+import QtQuick                      2.11
+import QtQuick.Controls             2.4
+import QtQuick.Controls.Styles      1.4
+import QtQuick.Dialogs              1.2
+import QtQml                        2.2
 
 import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0
@@ -23,7 +23,6 @@ Rectangle {
     property var    masterController
     property var    missionItem         ///< MissionItem associated with this editor
     property bool   readOnly            ///< true: read only view, false: full editing view
-    property var    rootQgcView
 
     signal clicked
     signal remove
@@ -101,15 +100,15 @@ Rectangle {
             hamburgerMenu.popup()
         }
 
-        Menu {
+        QGCMenu {
             id: hamburgerMenu
 
-            MenuItem {
+            QGCMenuItem {
                 text:           qsTr("Insert waypoint")
                 onTriggered:    insertWaypoint()
             }
 
-            Menu {
+            QGCMenu {
                 id:         patternMenu
                 title:      qsTr("Insert pattern")
                 visible:    !_singleComplexItem
@@ -120,41 +119,41 @@ Rectangle {
                     onObjectAdded:      patternMenu.insertItem(index, object)
                     onObjectRemoved:    patternMenu.removeItem(object)
 
-                    MenuItem {
+                    QGCMenuItem {
                         text:           modelData
                         onTriggered:    insertComplexItem(modelData)
                     }
                 }
             }
 
-            MenuItem {
+            QGCMenuItem {
                 text:           qsTr("Insert ") + _missionController.complexMissionItemNames[0]
                 visible:        _singleComplexItem
                 onTriggered:    insertComplexItem(_missionController.complexMissionItemNames[0])
             }
 
-            MenuItem {
+            QGCMenuItem {
                 text:           qsTr("Delete")
                 onTriggered:    remove()
             }
 
-            MenuItem {
+            QGCMenuItem {
                 text:           qsTr("Change command...")
                 onTriggered:    commandPicker.clicked()
                 visible:        missionItem.isSimpleItem && !_waypointsOnlyMode
             }
 
-            MenuItem {
+            QGCMenuItem {
                 text:           qsTr("Edit position...")
                 visible:        missionItem.specifiesCoordinate
-                onTriggered:    qgcView.showDialog(editPositionDialog, qsTr("Edit Position"), qgcView.showDialogDefaultWidth, StandardButton.Close)
+                onTriggered:    mainWindow.showComponentDialog(editPositionDialog, qsTr("Edit Position"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
             }
 
-            MenuSeparator {
+            QGCMenuSeparator {
                 visible: missionItem.isSimpleItem && !_waypointsOnlyMode
             }
 
-            MenuItem {
+            QGCMenuItem {
                 text:       qsTr("Show all values")
                 checkable:  true
                 checked:    missionItem.isSimpleItem ? missionItem.rawEdit : false
@@ -165,7 +164,7 @@ Rectangle {
                         if (missionItem.friendlyEditAllowed) {
                             missionItem.rawEdit = false
                         } else {
-                            qgcView.showMessage(qsTr("Mission Edit"), qsTr("You have made changes to the mission item which cannot be shown in Simple Mode"), StandardButton.Ok)
+                            mainWindow.showMessageDialog(qsTr("Mission Edit"), qsTr("You have made changes to the mission item which cannot be shown in Simple Mode"))
                         }
                     } else {
                         missionItem.rawEdit = true
@@ -194,7 +193,7 @@ Rectangle {
             }
         }
 
-        onClicked: qgcView.showDialog(commandDialog, qsTr("Select Mission Command"), qgcView.showDialogDefaultWidth, StandardButton.Cancel)
+        onClicked: mainWindow.showComponentDialog(commandDialog, qsTr("Select Mission Command"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel)
     }
 
     QGCLabel {

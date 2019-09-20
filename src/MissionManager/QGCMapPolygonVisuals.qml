@@ -7,11 +7,11 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtLocation       5.3
-import QtPositioning    5.3
-import QtQuick.Dialogs  1.2
+import QtQuick                      2.11
+import QtQuick.Controls             2.4
+import QtLocation                   5.3
+import QtPositioning                5.3
+import QtQuick.Dialogs              1.2
 
 import QGroundControl                   1.0
 import QGroundControl.ScreenTools       1.0
@@ -24,7 +24,6 @@ import QGroundControl.ShapeFileHelper   1.0
 Item {
     id: _root
 
-    property var    qgcView                                     ///< QGCView for popping dialogs
     property var    mapControl                                  ///< Map control to place item in
     property var    mapPolygon                                  ///< QGCMapPolygon object
     property bool   interactive:        mapPolygon.interactive
@@ -173,7 +172,6 @@ Item {
 
     QGCFileDialog {
         id:             kmlOrSHPLoadDialog
-        qgcView:        _root.qgcView
         folder:         QGroundControl.settingsManager.appSettings.missionSavePath
         title:          qsTr("Select Polygon File")
         selectExisting: true
@@ -188,7 +186,7 @@ Item {
         }
     }
 
-    Menu {
+    QGCMenu {
         id: menu
 
         property int _editingVertexIndex: -1
@@ -203,7 +201,7 @@ Item {
             menu.popup()
         }
 
-        MenuItem {
+        QGCMenuItem {
             id:             removeVertexItem
             visible:        !_circle
             text:           qsTr("Remove vertex")
@@ -214,39 +212,39 @@ Item {
             }
         }
 
-        MenuSeparator {
+        QGCMenuSeparator {
             visible:        removeVertexItem.visible
         }
 
-        MenuItem {
+        QGCMenuItem {
             text:           qsTr("Circle" )
             onTriggered:    resetCircle()
         }
 
-        MenuItem {
+        QGCMenuItem {
             text:           qsTr("Polygon")
             onTriggered:    resetPolygon()
         }
 
-        MenuItem {
+        QGCMenuItem {
             text:           qsTr("Set radius..." )
             visible:        _circle
             onTriggered:    _editCircleRadius = true
         }
 
-        MenuItem {
+        QGCMenuItem {
             text:           qsTr("Edit position..." )
             visible:        _circle
-            onTriggered:    qgcView.showDialog(editCenterPositionDialog, qsTr("Edit Center Position"), qgcView.showDialogDefaultWidth, StandardButton.Close)
+            onTriggered:    mainWindow.showComponentDialog(editCenterPositionDialog, qsTr("Edit Center Position"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
         }
 
-        MenuItem {
+        QGCMenuItem {
             text:           qsTr("Edit position..." )
             visible:        !_circle && menu._editingVertexIndex >= 0
-            onTriggered:    qgcView.showDialog(editVertexPositionDialog, qsTr("Edit Vertex Position"), qgcView.showDialogDefaultWidth, StandardButton.Close)
+            onTriggered:    mainWindow.showComponentDialog(editVertexPositionDialog, qsTr("Edit Vertex Position"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
         }
 
-        MenuItem {
+        QGCMenuItem {
             text:           qsTr("Load KML/SHP...")
             onTriggered:    kmlOrSHPLoadDialog.openForLoad()
         }

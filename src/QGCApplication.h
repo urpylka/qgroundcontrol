@@ -41,7 +41,6 @@
 
 // Work around circular header includes
 class QGCSingleton;
-class MainWindow;
 class QGCToolbox;
 class QGCFileDownload;
 
@@ -52,12 +51,7 @@ class QGCFileDownload;
  * the central management unit of the groundstation application.
  *
  **/
-class QGCApplication : public
-#ifdef __mobile__
-    QGuiApplication // Native Qml based application
-#else
-    QApplication    // QtWidget based application
-#endif
+class QGCApplication : public QGuiApplication
 {
     Q_OBJECT
 
@@ -101,6 +95,9 @@ public:
     static QString cachedParameterMetaDataFile(void);
     static QString cachedAirframeMetaDataFile(void);
 
+    void            setLanguage();
+    QQuickItem*     mainRootWindow();
+
 public slots:
     /// You can connect to this slot to show an information message box from a different thread.
     void informationMessageBoxOnMainThread(const QString& title, const QString& msg);
@@ -111,45 +108,50 @@ public slots:
     /// You can connect to this slot to show a critical message box from a different thread.
     void criticalMessageBoxOnMainThread(const QString& title, const QString& msg);
 
-    void showSetupView(void);
+    void showSetupView();
 
-    void qmlAttemptWindowClose(void);
+    void qmlAttemptWindowClose();
 
     /// Save the specified telemetry Log
     void saveTelemetryLogOnMainThread(QString tempLogfile);
 
     /// Check that the telemetry save path is set correctly
-    void checkTelemetrySavePathOnMainThread(void);
+    void checkTelemetrySavePathOnMainThread();
+
+    /// Get current language
+    const QLocale getCurrentLanguage() { return _locale; }
 
 signals:
     /// This is connected to MAVLinkProtocol::checkForLostLogFiles. We signal this to ourselves to call the slot
     /// on the MAVLinkProtocol thread;
-    void checkForLostLogFiles(void);
+    void checkForLostLogFiles   ();
+
+    void languageChanged        (const QLocale locale);
 
 public:
     // Although public, these methods are internal and should only be called by UnitTest code
 
     /// @brief Perform initialize which is common to both normal application running and unit tests.
     ///         Although public should only be called by main.
-    void _initCommon(void);
+    void _initCommon();
 
     /// @brief Initialize the application for normal application boot. Or in other words we are not going to run
     ///         unit tests. Although public should only be called by main.
-    bool _initForNormalAppBoot(void);
+    bool _initForNormalAppBoot();
 
     /// @brief Initialize the application for normal application boot. Or in other words we are not going to run
     ///         unit tests. Although public should only be called by main.
-    bool _initForUnitTests(void);
-
-    void _loadCurrentStyleSheet(void);
+    bool _initForUnitTests();
 
     static QGCApplication*  _app;   ///< Our own singleton. Should be reference directly by qgcApp
+
+    bool    isErrorState()  { return _error; }
 
 public:
     // Although public, these methods are internal and should only be called by UnitTest code
 
     /// Shutdown the application object
-    void _shutdown(void);
+    void _shutdown();
 
     bool _checkTelemetrySavePath(bool useMessageBox);
 
@@ -164,34 +166,32 @@ private slots:
     void _gpsNumSatellites(int numSatellites);
 
 private:
-    QObject* _rootQmlObject(void);
-    void _checkForNewVersion(void);
+    QObject*    _rootQmlObject          ();
+    void        _checkForNewVersion     ();
+    void        _exitWithError          (QString errorMessage);
 
-#ifdef __mobile__
-    QQmlApplicationEngine* _qmlAppEngine;
-#endif
 
-    bool _runningUnitTests; ///< true: running unit tests, false: normal app
-    bool _logOutput;        ///< true: Log Qt debug output to file
-
-    static const char*  _darkStyleFile;
-    static const char*  _lightStyleFile;
+    bool                _runningUnitTests;                                  ///< true: running unit tests, false: normal app
     static const int    _missingParamsDelayedDisplayTimerTimeout = 1000;    ///< Timeout to wait for next missing fact to come in before display
     QTimer              _missingParamsDelayedDisplayTimer;                  ///< Timer use to delay missing fact display
     QStringList         _missingParams;                                     ///< List of missing facts to be displayed
-    bool				_fakeMobile;                                        ///< true: Fake ui into displaying mobile interface
-    bool                _settingsUpgraded;                                  ///< true: Settings format has been upgrade to new version
-    int                 _majorVersion;
-    int                 _minorVersion;
-    int                 _buildVersion;
-    QGCFileDownload*    _currentVersionDownload;
-    GPSRTKFactGroup*    _gpsRtkFactGroup;
 
-    QGCToolbox* _toolbox;
-
-    QTranslator _QGCTranslator;
-
-    bool _bluetoothAvailable;
+    QQmlApplicationEngine* _qmlAppEngine        = nullptr;
+    bool                _logOutput              = false;                    ///< true: Log Qt debug output to file
+    bool				_fakeMobile             = false;                    ///< true: Fake ui into displaying mobile interface
+    bool                _settingsUpgraded       = false;                    ///< true: Settings format has been upgrade to new version
+    int                 _majorVersion           = 0;
+    int                 _minorVersion           = 0;
+    int                 _buildVersion           = 0;
+    QGCFileDownload*    _currentVersionDownload = nullptr;
+    GPSRTKFactGroup*    _gpsRtkFactGroup        = nullptr;
+    QGCToolbox*         _toolbox                = nullptr;
+    QQuickItem*         _mainRootWindow         = nullptr;
+    bool                _bluetoothAvailable     = false;
+    QTranslator         _QGCTranslator;
+    QTranslator         _QGCTranslatorQt;
+    QLocale             _locale;
+    bool                _error                  = false;
 
     static const char* _settingsVersionKey;             ///< Settings key which hold settings version
     static const char* _deleteAllSettingsKey;           ///< If this settings key is set on boot, all settings will be deleted

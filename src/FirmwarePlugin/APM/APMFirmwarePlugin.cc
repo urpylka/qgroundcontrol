@@ -19,6 +19,7 @@
 #include "QGCFileDownload.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
+#include "APMMavlinkStreamRateSettings.h"
 
 #include <QTcpSocket>
 
@@ -294,6 +295,11 @@ void APMFirmwarePlugin::_handleOutgoingParamSet(Vehicle* vehicle, LinkInterface*
 
     mavlink_msg_param_set_decode(message, &paramSet);
 
+    if (!_ardupilotComponentMap[paramSet.target_system][paramSet.target_component]) {
+        // Message is targetted to non-ArduPilot firmware component, assume it uses current mavlink spec
+        return;
+    }
+
     paramUnion.param_float = paramSet.param_value;
 
     switch (paramSet.param_type) {
@@ -363,7 +369,7 @@ bool APMFirmwarePlugin::_handleIncomingStatusText(Vehicle* vehicle, mavlink_mess
                 case MAV_TYPE_VTOL_RESERVED5:
                 case MAV_TYPE_FIXED_WING:
                     supportedMajorNumber = 3;
-                    supportedMinorNumber = 4;
+                    supportedMinorNumber = 8;
                     break;
                 case MAV_TYPE_QUADROTOR:
                     // Start TCP video handshake with ARTOO in case it's a Solo running ArduPilot firmware
@@ -375,8 +381,12 @@ bool APMFirmwarePlugin::_handleIncomingStatusText(Vehicle* vehicle, mavlink_mess
                 case MAV_TYPE_OCTOROTOR:
                 case MAV_TYPE_TRICOPTER:
                     supportedMajorNumber = 3;
-                    supportedMinorNumber = 3;
+                    supportedMinorNumber = 5;
                     break;
+                case MAV_TYPE_GROUND_ROVER:
+                case MAV_TYPE_SURFACE_BOAT:
+                    supportedMajorNumber = 3;
+                    supportedMinorNumber = 4;
                 default:
                     break;
                 }
@@ -441,46 +451,55 @@ void APMFirmwarePlugin::_handleIncomingHeartbeat(Vehicle* vehicle, mavlink_messa
 {
     bool flying = false;
 
-    // We pull Vehicle::flying state from HEARTBEAT on ArduPilot. This is a firmware specific test.
+    mavlink_heartbeat_t heartbeat;
+    mavlink_msg_heartbeat_decode(message, &heartbeat);
 
-    if (vehicle->armed()) {
-        mavlink_heartbeat_t heartbeat;
-        mavlink_msg_heartbeat_decode(message, &heartbeat);
+    if (message->compid == MAV_COMP_ID_AUTOPILOT1) {
+        // We pull Vehicle::flying state from HEARTBEAT on ArduPilot. This is a firmware specific test.
+        if (vehicle->armed()) {
 
-        flying = heartbeat.system_status == MAV_STATE_ACTIVE;
-        if (!flying && vehicle->flying()) {
-            // If we were previously flying, and we go into critical or emergency assume we are still flying
-            flying = heartbeat.system_status == MAV_STATE_CRITICAL || heartbeat.system_status == MAV_STATE_EMERGENCY;
+            flying = heartbeat.system_status == MAV_STATE_ACTIVE;
+            if (!flying && vehicle->flying()) {
+                // If we were previously flying, and we go into critical or emergency assume we are still flying
+                flying = heartbeat.system_status == MAV_STATE_CRITICAL || heartbeat.system_status == MAV_STATE_EMERGENCY;
+            }
         }
+        vehicle->_setFlying(flying);
     }
 
-    vehicle->_setFlying(flying);
+    // We need to know whether this component is part of the ArduPilot stack code or not so we can adjust mavlink quirks appropriately.
+    // If the component sends a heartbeat we can know that. If it's doesn't there is pretty much no way to know.
+    _ardupilotComponentMap[message->sysid][message->compid] = heartbeat.autopilot == MAV_AUTOPILOT_ARDUPILOTMEGA;
+
+    // Force the ESP8266 to be non-ArduPilot code (it doesn't send heartbeats)
+    _ardupilotComponentMap[message->sysid][MAV_COMP_ID_UDP_BRIDGE] = false;
 }
 
 bool APMFirmwarePlugin::adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message)
 {
-    // Only translate messages which come from the autopilot. All other components are expected to follow current mavlink spec.
-    if (message->compid != MAV_COMP_ID_AUTOPILOT1) {
+    if (message->msgid == MAVLINK_MSG_ID_HEARTBEAT) {
+        // We need to look at all heartbeats that go by from any component
+        _handleIncomingHeartbeat(vehicle, message);
         return true;
     }
 
-    switch (message->msgid) {
-    case MAVLINK_MSG_ID_PARAM_VALUE:
-        _handleIncomingParamValue(vehicle, message);
-        break;
-    case MAVLINK_MSG_ID_STATUSTEXT:
-        return _handleIncomingStatusText(vehicle, message, false /* longVersion */);
-    case MAVLINK_MSG_ID_STATUSTEXT_LONG:
-        return _handleIncomingStatusText(vehicle, message, true /* longVersion */);
-    case MAVLINK_MSG_ID_HEARTBEAT:
-        _handleIncomingHeartbeat(vehicle, message);
-        break;
-    case MAVLINK_MSG_ID_RC_CHANNELS:
-        _handleRCChannels(vehicle, message);
-        break;
-    case MAVLINK_MSG_ID_RC_CHANNELS_RAW:
-        _handleRCChannelsRaw(vehicle, message);
-        break;
+    // Only translate messages which come from ArduPilot code. All other components are expected to follow current mavlink spec.
+    if (_ardupilotComponentMap[vehicle->id()][message->compid]) {
+        switch (message->msgid) {
+        case MAVLINK_MSG_ID_PARAM_VALUE:
+            _handleIncomingParamValue(vehicle, message);
+            break;
+        case MAVLINK_MSG_ID_STATUSTEXT:
+            return _handleIncomingStatusText(vehicle, message, false /* longVersion */);
+        case MAVLINK_MSG_ID_STATUSTEXT_LONG:
+            return _handleIncomingStatusText(vehicle, message, true /* longVersion */);
+        case MAVLINK_MSG_ID_RC_CHANNELS:
+            _handleRCChannels(vehicle, message);
+            break;
+        case MAVLINK_MSG_ID_RC_CHANNELS_RAW:
+            _handleRCChannelsRaw(vehicle, message);
+            break;
+        }
     }
 
     return true;
@@ -488,11 +507,6 @@ bool APMFirmwarePlugin::adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_m
 
 void APMFirmwarePlugin::adjustOutgoingMavlinkMessage(Vehicle* vehicle, LinkInterface* outgoingLink, mavlink_message_t* message)
 {
-    //-- Don't process messages to/from UDP Bridge. It doesn't suffer from these issues
-    if (message->compid == MAV_COMP_ID_UDP_BRIDGE) {
-        return;
-    }
-
     switch (message->msgid) {
     case MAVLINK_MSG_ID_PARAM_SET:
         _handleOutgoingParamSet(vehicle, outgoingLink, message);
@@ -614,13 +628,30 @@ void APMFirmwarePlugin::_adjustCalibrationMessageSeverity(mavlink_message_t* mes
 
 void APMFirmwarePlugin::initializeStreamRates(Vehicle* vehicle)
 {
-    vehicle->requestDataStream(MAV_DATA_STREAM_RAW_SENSORS,     2);
-    vehicle->requestDataStream(MAV_DATA_STREAM_EXTENDED_STATUS, 2);
-    vehicle->requestDataStream(MAV_DATA_STREAM_RC_CHANNELS,     2);
-    vehicle->requestDataStream(MAV_DATA_STREAM_POSITION,        3);
-    vehicle->requestDataStream(MAV_DATA_STREAM_EXTRA1,          10);
-    vehicle->requestDataStream(MAV_DATA_STREAM_EXTRA2,          10);
-    vehicle->requestDataStream(MAV_DATA_STREAM_EXTRA3,          3);
+    APMMavlinkStreamRateSettings* streamRates = qgcApp()->toolbox()->settingsManager()->apmMavlinkStreamRateSettings();
+
+    struct StreamInfo_s {
+        MAV_DATA_STREAM mavStream;
+        int             streamRate;
+    };
+
+    StreamInfo_s rgStreamInfo[] = {
+        { MAV_DATA_STREAM_RAW_SENSORS,      streamRates->streamRateRawSensors()->rawValue().toInt() },
+        { MAV_DATA_STREAM_EXTENDED_STATUS,  streamRates->streamRateExtendedStatus()->rawValue().toInt() },
+        { MAV_DATA_STREAM_RC_CHANNELS,      streamRates->streamRateRCChannels()->rawValue().toInt() },
+        { MAV_DATA_STREAM_POSITION,         streamRates->streamRatePosition()->rawValue().toInt() },
+        { MAV_DATA_STREAM_EXTRA1,           streamRates->streamRateExtra1()->rawValue().toInt() },
+        { MAV_DATA_STREAM_EXTRA2,           streamRates->streamRateExtra2()->rawValue().toInt() },
+        { MAV_DATA_STREAM_EXTRA3,           streamRates->streamRateExtra3()->rawValue().toInt() },
+    };
+
+    for (size_t i=0; i<sizeof(rgStreamInfo)/sizeof(rgStreamInfo[0]); i++) {
+        const StreamInfo_s& streamInfo = rgStreamInfo[i];
+
+        if (streamInfo.streamRate >= 0) {
+            vehicle->requestDataStream(streamInfo.mavStream, static_cast<uint16_t>(streamInfo.streamRate));
+        }
+    }
 }
 
 
@@ -636,7 +667,7 @@ void APMFirmwarePlugin::initializeVehicle(Vehicle* vehicle)
         case MAV_TYPE_TRICOPTER:
         case MAV_TYPE_COAXIAL:
         case MAV_TYPE_HELICOPTER:
-            vehicle->setFirmwareVersion(3, 4, 0);
+            vehicle->setFirmwareVersion(3, 6, 0);
             break;
         case MAV_TYPE_VTOL_DUOROTOR:
         case MAV_TYPE_VTOL_QUADROTOR:
@@ -646,11 +677,11 @@ void APMFirmwarePlugin::initializeVehicle(Vehicle* vehicle)
         case MAV_TYPE_VTOL_RESERVED4:
         case MAV_TYPE_VTOL_RESERVED5:
         case MAV_TYPE_FIXED_WING:
-            vehicle->setFirmwareVersion(3, 5, 0);
+            vehicle->setFirmwareVersion(3, 9, 0);
             break;
         case MAV_TYPE_GROUND_ROVER:
         case MAV_TYPE_SURFACE_BOAT:
-            vehicle->setFirmwareVersion(3, 0, 0);
+            vehicle->setFirmwareVersion(3, 5, 0);
             break;
         case MAV_TYPE_SUBMARINE:
             vehicle->setFirmwareVersion(3, 4, 0);
@@ -733,22 +764,16 @@ QString APMFirmwarePlugin::missionCommandOverrides(MAV_TYPE vehicleType) const
     switch (vehicleType) {
     case MAV_TYPE_GENERIC:
         return QStringLiteral(":/json/APM/MavCmdInfoCommon.json");
-        break;
     case MAV_TYPE_FIXED_WING:
         return QStringLiteral(":/json/APM/MavCmdInfoFixedWing.json");
-        break;
     case MAV_TYPE_QUADROTOR:
         return QStringLiteral(":/json/APM/MavCmdInfoMultiRotor.json");
-        break;
     case MAV_TYPE_VTOL_QUADROTOR:
         return QStringLiteral(":/json/APM/MavCmdInfoVTOL.json");
-        break;
     case MAV_TYPE_SUBMARINE:
         return QStringLiteral(":/json/APM/MavCmdInfoSub.json");
-        break;
     case MAV_TYPE_GROUND_ROVER:
         return QStringLiteral(":/json/APM/MavCmdInfoRover.json");
-        break;
     default:
         qWarning() << "APMFirmwarePlugin::missionCommandOverrides called with bad MAV_TYPE:" << vehicleType;
         return QString();
@@ -795,17 +820,13 @@ QString APMFirmwarePlugin::internalParameterMetaDataFile(Vehicle* vehicle)
     case MAV_TYPE_TRICOPTER:
     case MAV_TYPE_COAXIAL:
     case MAV_TYPE_HELICOPTER:
+        if (vehicle->versionCompare(3, 7, 0) >= 0) {  // 3.7.0 and higher
+            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.3.7.xml");
+        }
         if (vehicle->versionCompare(3, 6, 0) >= 0) {  // 3.6.0 and higher
-             return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.3.6.xml");
+            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.3.6.xml");
         }
-        if (vehicle->versionCompare(3, 5, 0) >= 0) {  // 3.5.x
-            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.3.5.xml");
-        }
-        if (vehicle->versionCompare(3, 4, 0) >= 0) {  // 3.4.x
-            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.3.4.xml");
-        }
-        // Up to 3.3.x
-        return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.3.3.xml");
+        return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.3.5.xml");
 
     case MAV_TYPE_VTOL_DUOROTOR:
     case MAV_TYPE_VTOL_QUADROTOR:
@@ -815,28 +836,23 @@ QString APMFirmwarePlugin::internalParameterMetaDataFile(Vehicle* vehicle)
     case MAV_TYPE_VTOL_RESERVED4:
     case MAV_TYPE_VTOL_RESERVED5:
     case MAV_TYPE_FIXED_WING:
-        if (vehicle->versionCompare(3, 8, 0) >= 0) {  // 3.8.0 and higher
-            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Plane.3.8.xml");
+        if (vehicle->versionCompare(3, 10, 0) >= 0) {
+            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Plane.3.10.xml");
         }
-        if (vehicle->versionCompare(3, 7, 0) >= 0) {  // 3.7.x
-            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Plane.3.7.xml");
+        if (vehicle->versionCompare(3, 9, 0) >= 0) {
+            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Plane.3.9.xml");
         }
-        if (vehicle->versionCompare(3, 5, 0) >= 0) {  // 3.5.x to 3.6.x
-            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Plane.3.5.xml");
-        }
-        // up to 3.4.x
-        return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Plane.3.3.xml");
+        return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Plane.3.8.xml");
 
     case MAV_TYPE_GROUND_ROVER:
     case MAV_TYPE_SURFACE_BOAT:
-        if (vehicle->versionCompare(3, 4, 0) >= 0) {  // 3.4.0 and higher
-            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Rover.3.4.xml");
+        if (vehicle->versionCompare(3, 6, 0) >= 0) {
+            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Rover.3.6.xml");
         }
-        if (vehicle->versionCompare(3, 2, 0) >= 0) { // 3.2.x to 3.3.x
-            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Rover.3.2.xml");
+        if (vehicle->versionCompare(3, 5, 0) >= 0) {
+            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Rover.3.5.xml");
         }
-        // up to 3.1.x
-        return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Rover.3.0.xml");
+        return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Rover.3.4.xml");
 
     case MAV_TYPE_SUBMARINE:
         if (vehicle->versionCompare(3, 6, 0) >= 0) { // 3.5.x
@@ -882,9 +898,9 @@ void APMFirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoord
     vehicle->missionManager()->writeArduPilotGuidedMissionItem(coordWithAltitude, false /* altChangeOnly */);
 }
 
-void APMFirmwarePlugin::guidedModeRTL(Vehicle* vehicle)
+void APMFirmwarePlugin::guidedModeRTL(Vehicle* vehicle, bool smartRTL)
 {
-    _setFlightModeAndValidate(vehicle, rtlFlightMode());
+    _setFlightModeAndValidate(vehicle, smartRTL ? smartRTLFlightMode() : rtlFlightMode());
 }
 
 void APMFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitudeChange)
@@ -911,11 +927,11 @@ void APMFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
 
     MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
     mavlink_msg_set_position_target_local_ned_encode_chan(
-        static_cast<uint8_t>(mavlink->getSystemId()),
-        static_cast<uint8_t>(mavlink->getComponentId()),
-        vehicle->priorityLink()->mavlinkChannel(),
-        &msg,
-        &cmd);
+                static_cast<uint8_t>(mavlink->getSystemId()),
+                static_cast<uint8_t>(mavlink->getComponentId()),
+                vehicle->priorityLink()->mavlinkChannel(),
+                &msg,
+                &cmd);
 
     vehicle->sendMessageOnLink(vehicle->priorityLink(), msg);
 }
@@ -1044,11 +1060,11 @@ void APMFirmwarePlugin::_handleRCChannels(Vehicle* vehicle, mavlink_message_t* m
     }
     MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
     mavlink_msg_rc_channels_encode_chan(
-        static_cast<uint8_t>(mavlink->getSystemId()),
-        static_cast<uint8_t>(mavlink->getComponentId()),
-        vehicle->priorityLink()->mavlinkChannel(),
-        message,
-        &channels);
+                static_cast<uint8_t>(mavlink->getSystemId()),
+                static_cast<uint8_t>(mavlink->getComponentId()),
+                vehicle->priorityLink()->mavlinkChannel(),
+                message,
+                &channels);
 }
 
 void APMFirmwarePlugin::_handleRCChannelsRaw(Vehicle* vehicle, mavlink_message_t *message)
@@ -1061,10 +1077,10 @@ void APMFirmwarePlugin::_handleRCChannelsRaw(Vehicle* vehicle, mavlink_message_t
     }
     MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
     mavlink_msg_rc_channels_raw_encode_chan(
-        static_cast<uint8_t>(mavlink->getSystemId()),
-        static_cast<uint8_t>(mavlink->getComponentId()),
-        vehicle->priorityLink()->mavlinkChannel(),
-        message,
-        &channels);
+                static_cast<uint8_t>(mavlink->getSystemId()),
+                static_cast<uint8_t>(mavlink->getComponentId()),
+                vehicle->priorityLink()->mavlinkChannel(),
+                message,
+                &channels);
 }
 

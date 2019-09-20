@@ -31,12 +31,11 @@ SetupPage {
             spacing:    _margins
             width:      availableWidth
 
-            FactPanelController { id: controller; factPanel: cameraPage.viewPanel }
+            FactPanelController { id: controller; }
 
             QGCPalette { id: palette; colorGroupEnabled: true }
 
-            property var  _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
-            property bool _oldFW:               !(_activeVehicle.firmwareMajorVersion > 3 || _activeVehicle.firmwareMinorVersion > 5 || _activeVehicle.firmwarePatchVersion >= 2)
+            property bool _oldFW:               !(activeVehicle.firmwareMajorVersion > 3 || activeVehicle.firmwareMinorVersion > 5 || activeVehicle.firmwarePatchVersion >= 2)
 
             property Fact _mountRetractX:       controller.getParameterFact(-1, "MNT_RETRACT_X")
             property Fact _mountRetractY:       controller.getParameterFact(-1, "MNT_RETRACT_Y")
@@ -166,17 +165,17 @@ SetupPage {
             // Whenever an MNT_RC_IN_* setting is changed make sure to turn on RC targeting
             Connections {
                 target:         _mountRCInPan
-                onValueChanged: _mountDefaultMode.value = _mountDefaultModeRCTargetting
+                onValueChanged: if(_mountDefaultMode) _mountDefaultMode.value = _mountDefaultModeRCTargetting
             }
 
             Connections {
                 target:         _mountRCInRoll
-                onValueChanged: _mountDefaultMode.value = _mountDefaultModeRCTargetting
+                onValueChanged: if(_mountDefaultMode) _mountDefaultMode.value = _mountDefaultModeRCTargetting
             }
 
             Connections {
                 target:         _mountRCInTilt
-                onValueChanged: _mountDefaultMode.value = _mountDefaultModeRCTargetting
+                onValueChanged: if(_mountDefaultMode) _mountDefaultMode.value = _mountDefaultModeRCTargetting
             }
 
             ListModel {
