@@ -724,19 +724,23 @@ public class QGCActivity extends QtActivity
     private void probeAccessories()
     {
         final PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_USB_PERMISSION), 0);
-        new Thread(new Runnable() {
-            public void run() {
-                synchronized(openAccessoryLock) {
-//                    Log.i(TAG, "probeAccessories");
-                    UsbAccessory[] accessories = _usbManager.getAccessoryList();
-                    if (accessories != null) {
-                       for (UsbAccessory usbAccessory : accessories) {
-                           if (usbAccessory == null) {
-                               continue;
-                           }
-                           if (_usbManager.hasPermission(usbAccessory)) {
-                               openAccessory(usbAccessory);
-                           }
+        Timer timer = new Timer();
+        timer.schedule(new TimerTask() {
+           @Override
+           public void run()
+           {
+//               Log.i(TAG, "probeAccessories");
+               UsbAccessory[] accessories = _usbManager.getAccessoryList();
+               if (accessories != null) {
+                   for (UsbAccessory usbAccessory : accessories) {
+                       if (usbAccessory == null) {
+                           continue;
+                       }
+                       if (_usbManager.hasPermission(usbAccessory)) {
+                           openAccessory(usbAccessory);
+                       } else {
+                           Log.i(TAG, "requestPermission");
+                           _usbManager.requestPermission(usbAccessory, pendingIntent);
                        }
                     }
                 }
