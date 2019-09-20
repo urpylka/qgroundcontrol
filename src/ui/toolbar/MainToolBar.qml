@@ -205,11 +205,12 @@ Item {
             QGCButton {
                 id:                     vehicleSelectorButton
                 width:                  ScreenTools.defaultFontPixelHeight * 8
-                text:                   "Vehicle " + (_activeVehicle ? _activeVehicle.id : "None")
+                text:                   "Vehicle " + (activeVehicle ? activeVehicle.id : "None")
                 visible:                QGroundControl.multiVehicleManager.vehicles.count > 1
                 Layout.alignment:       Qt.AlignVCenter
+                anchors.verticalCenter:     parent.verticalCenter
 
-                menu: vehicleMenu
+                onClicked:      vehicleMenu.popup()
 
                 Menu {
                     id: vehicleMenu
