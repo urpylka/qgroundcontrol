@@ -470,7 +470,7 @@ QHash<FirmwareUpgradeController::FirmwareIdentifier, QString>* FirmwareUpgradeCo
         _rgFirmwareDynamic = _rgOmnibusF4SDFirmware;
         break;
     case Bootloader::boardIDFMUK66V3:
-        rgFirmware = &_rgFMUK66V3Firmware;
+        _rgFirmwareDynamic = _rgFMUK66V3Firmware;
         break;
     case Bootloader::boardID3DRRadio:
         _rgFirmwareDynamic = _rg3DRRadioFirmware;
@@ -487,10 +487,9 @@ void FirmwareUpgradeController::_getFirmwareFile(FirmwareIdentifier firmwareId)
 {
     QHash<FirmwareIdentifier, QString>* prgFirmware = _firmwareHashForBoardId(static_cast<int>(_bootloaderBoardID));
     if (firmwareId.firmwareType == CustomFirmware) {
-        _firmwareFilename = QGCQFileDialog::getOpenFileName(nullptr,                                                                // Parent to main window
-                                                            tr("Select Firmware File"),                                             // Dialog Caption
-                                                            QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),    // Initial directory
-                                                            tr("Firmware Files (*.px4 *.apj *.bin *.ihx)"));                        // File filter
+        _firmwareFilename = QString();
+        _errorCancel(tr("Custom firmware selected but no filename given."));
+
     } else {
         if (prgFirmware->contains(firmwareId)) {
             _firmwareFilename = prgFirmware->value(firmwareId);

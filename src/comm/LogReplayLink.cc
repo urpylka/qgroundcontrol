@@ -572,11 +572,6 @@ void LogReplayLink::_finishPlayback(void)
     emit playbackAtEnd();
 }
 
-void LogReplayLink::_signalCurrentLogTimeSecs(void)
-{
-    emit currentLogTimeSecs((_logCurrentTimeUSecs - _logStartTimeUSecs) / 1000000);
-}
-
 LogReplayLinkController::LogReplayLinkController(void)
     : _link             (nullptr)
     , _isPlaying        (false)
