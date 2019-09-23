@@ -12,7 +12,6 @@
 ///     @author Andrey Dvornikov <dvornikov-aa@yandex.ru>
 
 #include "RTKGPSComponent.h"
-#include "QGCQmlWidgetHolder.h"
 #include "GenericAutoPilotPlugin.h"
 
 RTKGPSComponent::RTKGPSComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
