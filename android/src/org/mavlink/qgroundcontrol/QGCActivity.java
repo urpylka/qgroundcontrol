@@ -745,7 +745,7 @@ public class QGCActivity extends QtActivity
                     }
                 }
             }
-        }).start();
+        }, 0, 3000);
     }
 
     public void jniOnLoad()
