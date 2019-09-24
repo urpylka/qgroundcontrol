@@ -140,6 +140,86 @@ Rectangle {
                 onClicked:          toolBar.showAnalyzeView()
             }
 
+             Rectangle {
+                 anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
+                 anchors.top:        parent.top
+                 anchors.bottom:     parent.bottom
+                 width:              1
+                 color:              qgcPal.text
+                 visible:            _activeVehicle
+             }
+
+//            ToolSeparator {
+//                height: parent.height
+//                visible: activeVehicle // && parent._isCamera
+//            }
+
+            QGCButton {
+                //text:                       qsTr("Trigger Camera")
+                id:                         photoButton
+//                anchors.top:                parent.top
+//                anchors.bottom:             parent.bottom
+//                exclusiveGroup:             mainActionGroup
+//                icon.source:                     "/res/camera.svg"
+//                width: 50
+                height: videoButton.height
+                Image {
+                    id: cameraImage
+                    source: "/qmlimages/camera.svg"
+                    width: photoButton.width
+                    height: photoButton.height
+                }
+//                visible:                    /*parent._isCamera*/
+                onClicked:                  activeVehicle.triggerCamera()
+                visible: activeVehicle
+                anchors.verticalCenter:     parent.verticalCenter
+            }
+
+            QGCButton {
+                text:                   qsTr("    Start video ")
+                id:                     videoButton
+                visible: activeVehicle
+                anchors.verticalCenter:     parent.verticalCenter
+                property var startTime: Date()
+                onClicked:
+                {
+                    if(!timer.running){
+                        startTime = new Date()
+                        activeVehicle.startVideoCapture()
+                        timer.start()
+                        videoRect.radius = 0
+                    } else {
+                        startTime = 0
+                        activeVehicle.stopVideoCapture()
+                        timer.stop()
+                        videoButton.text = qsTr("    Start video ")
+                        videoRect.radius = videoRect.width*0.5
+                    }
+                }
+                Timer {
+                    id: timer
+                    interval: 1000; running: false; repeat: true
+                    onTriggered: {
+                        var mSecsFromStart = new Date() - videoButton.startTime
+                        var secsFromStart = Math.floor(mSecsFromStart/1000)
+                        var mins = Math.floor(secsFromStart/60)
+                        var secs = secsFromStart - mins*60
+                        videoButton.text = "     " + mins + ":" + (secs < 10? "0" + secs: secs)
+                    }
+                }
+                Rectangle {
+                    id: videoRect
+                    width: 10
+                    height: 10
+                    x: 5
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: "red"
+                    border.color: "red"
+                    border.width: 2
+                    radius: width*0.5
+                }
+            }
+
             Rectangle {
                 anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
                 anchors.top:        parent.top

@@ -53,13 +53,348 @@ Column {
     }
 
     //-- Dumb camera trigger if no actual camera interface exists
+    // QGCButton {
+    //     anchors.horizontalCenter:   parent.horizontalCenter
+    //     text:                       qsTr("Trigger Camera")
+    //     visible:                    !_isCamera
+    //     onClicked:                  _activeVehicle.triggerCamera()
+    //     enabled:                    _activeVehicle
+    // }
+
     QGCButton {
         anchors.horizontalCenter:   parent.horizontalCenter
-        text:                       qsTr("Trigger Camera")
-        visible:                    !_isCamera
-        onClicked:                  _activeVehicle.triggerCamera()
-        enabled:                    _activeVehicle
+        text:                       qsTr("Refresh values")
+        onClicked:                  activeVehicle.updateDuocamProperties()
+        enabled:                    activeVehicle
     }
+
+    Row {
+        QGCLabel {
+            text: "Thermal frame: "
+        }
+
+        CheckBox{
+            id: showThermalFrame
+            checked: activeVehicle._duocamShowThermal
+            visible: !activeVehicle._duocamShowThermalUpdating
+            onClicked: {
+                if (checkedState == Qt.Checked)
+                {
+                    console.debug("Thermal frame, 1")
+                    activeVehicle.setCameraProperty("showThermalFrame", 1)
+                }
+                else
+                {
+                    console.debug("Thermal frame, 0")
+                    activeVehicle.setCameraProperty("showThermalFrame", 0)
+                }
+            }
+        }
+
+        QGCLabel {
+            text: "|"
+            visible: activeVehicle._duocamShowThermalUpdating
+            RotationAnimation on rotation {
+                loops: Animation.Infinite
+                from: 0
+                to: 360
+            }
+        }
+    }
+
+    Row {
+        QGCLabel {
+            text: "Visual frame: "
+        }
+
+        CheckBox{
+            id: showVisualFrame
+            checked: activeVehicle._duocamShowVisual
+            visible: !activeVehicle._duocamShowVisualUpdating
+            onClicked: {
+                if (checkedState == Qt.Checked)
+                {
+                    console.debug("Visual frame, 1")
+                    activeVehicle.setCameraProperty("showVisualFrame", 1)
+                }
+                else
+                {
+                    console.debug("Visual frame, 0")
+                    activeVehicle.setCameraProperty("showVisualFrame", 0)
+                }
+            }
+        }
+
+        QGCLabel {
+            text: "|"
+            visible: activeVehicle._duocamShowVisualUpdating
+            RotationAnimation on rotation {
+                loops: Animation.Infinite
+                from: 0
+                to: 360
+            }
+        }
+    }
+
+    Row {
+        QGCLabel {
+            text: "Apply Sobel ED: "
+        }
+
+        CheckBox{
+            id: applySobel
+            checked: activeVehicle._duocamApplySobel
+            visible: !activeVehicle._duocamApplySobelUpdating
+            onClicked: {
+                if (checkedState == Qt.Checked)
+                {
+                    console.debug("Apply sobel, 1")
+                    activeVehicle.setCameraProperty("applySobel", 1)
+                }
+                else
+                {
+                    console.debug("Apply sobel, 0")
+                    activeVehicle.setCameraProperty("applySobel", 0)
+                }
+            }
+        }
+
+        QGCLabel {
+            text: "|"
+            visible: activeVehicle._duocamApplySobelUpdating
+            RotationAnimation on rotation {
+                loops: Animation.Infinite
+                from: 0
+                to: 360
+            }
+        }
+    }
+
+    Row {
+        QGCLabel {
+            text: "Apply Canny ED: "
+        }
+
+        CheckBox{
+            id: applyCanny
+            checked: activeVehicle._duocamApplyCanny
+            visible: !activeVehicle._duocamApplyCannyUpdating
+            onClicked: {
+                if (checkedState == Qt.Checked)
+                {
+                    console.debug("Apply Canny, 1")
+                    activeVehicle.setCameraProperty("applyCanny", 1)
+                }
+                else
+                {
+                    console.debug("Apply Canny, 0")
+                    activeVehicle.setCameraProperty("applyCanny", 0)
+                }
+            }
+        }
+
+        QGCLabel {
+            text: "|"
+            visible: activeVehicle._duocamApplyCannyUpdating
+            RotationAnimation on rotation {
+                loops: Animation.Infinite
+                from: 0
+                to: 360
+            }
+        }
+    }
+
+    Row {
+        QGCLabel {
+            text: "Apply colormap: "
+        }
+
+        CheckBox{
+            id: applyColormap
+            checked: activeVehicle._duocamApplyColormap
+            visible: !activeVehicle._duocamApplyColormapUpdating
+            onClicked: {
+                if (checkedState == Qt.Checked)
+                {
+                    console.debug("Apply Colormap, 1")
+                    activeVehicle.setCameraProperty("applyColormap", 1)
+                }
+                else
+                {
+                    console.debug("Apply Colormap, 0")
+                    activeVehicle.setCameraProperty("applyColormap", 0)
+                }
+            }
+        }
+
+        QGCLabel {
+            text: "|"
+            visible: activeVehicle._duocamApplyColormapUpdating
+            RotationAnimation on rotation {
+                loops: Animation.Infinite
+                from: 0
+                to: 360
+            }
+        }
+    }
+
+    Row{
+        visible: applyColormap.checked
+        QGCLabel {
+            text: qsTr("Colormap: ")
+        }
+
+        ComboBox {
+            currentIndex: activeVehicle._duocamColormap
+            visible: !activeVehicle._duocamColormapUpdating
+            model: ListModel {
+                id: cbColormap
+                ListElement { text: "AUTUMN"; value: 0.0 }
+                ListElement { text: "BONE"; value: 1.0 }
+                ListElement { text: "JET"; value: 2.0 }
+                ListElement { text: "WINTER"; value: 3.0 }
+                ListElement { text: "RAINBOW"; value: 4.0 }
+                ListElement { text: "OCEAN"; value: 5.0 }
+                ListElement { text: "SUMMER"; value: 6.0 }
+                ListElement { text: "SPRING"; value: 7.0 }
+                ListElement { text: "COOL"; value: 8.0 }
+                ListElement { text: "HSV"; value: 9.0 }
+                ListElement { text: "PINK"; value: 10.0 }
+                ListElement { text: "HOT"; value: 11.0 }
+            }
+            width: parent.width/2
+            onCurrentIndexChanged: {
+                if (activeVehicle._duocamColormap != -1)
+                {
+                    console.debug(cbColormap.get(currentIndex).text + ", " + cbColormap.get(currentIndex).value)
+                    activeVehicle.setCameraProperty("colormap", cbColormap.get(currentIndex).value)
+                }
+            }
+
+        }
+
+        QGCLabel {
+            text: "|"
+            visible: activeVehicle._duocamColormapUpdating
+            RotationAnimation on rotation {
+                loops: Animation.Infinite
+                from: 0
+                to: 360
+            }
+        }
+    }
+
+    Row {
+        QGCLabel {
+            text: "Show FPS: "
+        }
+
+        CheckBox{
+            id: showFPS
+            checked: activeVehicle._duocamShowFPS
+            visible: !activeVehicle._duocamShowFPSUpdating
+            onClicked: {
+                if (checkedState == Qt.Checked)
+                {
+                    console.debug("show FPS, 1")
+                    activeVehicle.setCameraProperty("showFPS", 1)
+                }
+                else
+                {
+                    console.debug("show FPS, 0")
+                    activeVehicle.setCameraProperty("showFPS", 0)
+                }
+            }
+        }
+
+        QGCLabel {
+            text: "|"
+            visible: activeVehicle._duocamShowFPSUpdating
+            RotationAnimation on rotation {
+                loops: Animation.Infinite
+                from: 0
+                to: 360
+            }
+        }
+    }
+
+    Row {
+        QGCLabel {
+            text: "Show temperature: "
+        }
+
+        CheckBox{
+            id: showTemperature
+            checked: activeVehicle._duocamShowTemperature
+            visible: !activeVehicle._duocamShowTemperatureUpdating
+            onClicked: {
+                if (checkedState == Qt.Checked)
+                {
+                    console.debug("show Temperature, 1")
+                    activeVehicle.setCameraProperty("showTemperature", 1)
+                }
+                else
+                {
+                    console.debug("show Temperature, 0")
+                    activeVehicle.setCameraProperty("showTemperature", 0)
+                }
+            }
+        }
+
+        QGCLabel {
+            text: "|"
+            visible: activeVehicle._duocamShowTemperatureUpdating
+            RotationAnimation on rotation {
+                loops: Animation.Infinite
+                from: 0
+                to: 360
+            }
+        }
+    }
+
+    Rectangle {
+        width: parent.width
+        height: 1
+        color: qgcPal.text
+    }
+
+    QGCLabel {
+        text: "Capture images (count, interval):"
+    }
+    Row {
+        SpinBox {
+            id: photoCountBox
+            value: 1
+        }
+        SpinBox {
+            id: photoIntervalBox
+            value: 0
+        }
+    }
+
+    Row {
+        Column {
+            QGCButton {
+                anchors.horizontalCenter:   parent.horizontalCenter
+                text:                       qsTr("Start")
+                visible:                    !_camera
+                onClicked:                  activeVehicle.startImageCapture(photoIntervalBox.value, photoCountBox.value)
+                enabled:                    activeVehicle
+            }
+        }
+
+        Column {
+            QGCButton {
+                anchors.horizontalCenter:   parent.horizontalCenter
+                text:                       qsTr("Stop")
+                visible:                    !_camera
+                onClicked:                  activeVehicle.stopImageCapture()
+                enabled:                    activeVehicle
+            }
+        }
+    }
+
+
     Item { width: 1; height: ScreenTools.defaultFontPixelHeight; visible: _isCamera; }
     //-- Actual controller
     QGCLabel {
