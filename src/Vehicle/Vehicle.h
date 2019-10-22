@@ -850,6 +850,7 @@ public:
 
     typedef enum {
         JoystickModeRC,         ///< Joystick emulates an RC Transmitter
+        JoystickModeRCOverride, // RC_CONTROLS_OVERRIDE mavlink message will be sent
         JoystickModeAttitude,
         JoystickModePosition,
         JoystickModeForce,

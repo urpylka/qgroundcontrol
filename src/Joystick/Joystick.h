@@ -160,7 +160,8 @@ signals:
     ///     @param yaw      Range is -1:1, negative meaning yaw left, positive meaning yaw right
     ///     @param throttle Range is 0:1, 0 meaning no throttle, 1 meaning full throttle
     ///     @param mode     See Vehicle::JoystickMode_t enum
-    void manualControl(float roll, float pitch, float yaw, float throttle, quint16 buttons, int joystickMmode);
+    ///     @param axis4-7  Additional axises from joystick (Taranis QX7 for example)
+    void manualControl(float roll, float pitch, float yaw, float throttle, quint16 buttons, int joystickMmode, float axis4, float axis5, float axis6, float axis7);
 
     void buttonActionTriggered(int action);
 

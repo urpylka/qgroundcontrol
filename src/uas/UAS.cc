@@ -836,10 +836,18 @@ void UAS::processParamValueMsg(mavlink_message_t& msg, const QString& paramName,
 }
 
 /**
+ * Converts value from -32768..32767 to 1000..2000 range
+ */
+uint16_t _convertUintToPWM(float val)
+{
+   return static_cast<uint16_t>(((val + 32768.0f)/65536.0f)*1000.0f + 1000.0f);
+}
+
+/**
 * Set the manual control commands.
 * This can only be done if the system has manual inputs enabled and is armed.
 */
-void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float thrust, quint16 buttons, int joystickMode)
+void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float thrust, quint16 buttons, int joystickMode, float axis4, float axis5, float axis6, float axis7)
 {
     if (!_vehicle) {
         return;
@@ -1022,6 +1030,36 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
                                                  &message,
                                                  this->uasId,
                                                  newPitchCommand, newRollCommand, newThrustCommand, newYawCommand, buttons);
+
+        } else if (joystickMode == Vehicle::JoystickModeRCOverride) {
+
+            // Send the RC_CHANNELS_OVERRIDE command to look like an ordinary radio rc
+            mavlink_msg_rc_channels_override_pack_chan(mavlink->getSystemId(),
+                                                       mavlink->getComponentId(),
+                                                       _vehicle->priorityLink()->mavlinkChannel(),
+                                                       &message,
+                                                       this->uasId,
+                                                       255,
+                                                       _convertUintToPWM(pitch),
+                                                       _convertUintToPWM(roll),
+                                                       _convertUintToPWM(thrust),
+                                                       _convertUintToPWM(yaw),
+                                                       _convertUintToPWM(axis4),
+                                                       _convertUintToPWM(axis5),
+                                                       _convertUintToPWM(axis6),
+                                                       _convertUintToPWM(axis7),
+                                                       0,
+                                                       0,
+                                                       0,
+                                                       0,
+                                                       0,
+                                                       0,
+                                                       0,
+                                                       0,
+                                                       0,
+                                                       0
+                                                       );
+
         }
 
         _vehicle->sendMessageOnLink(_vehicle->priorityLink(), message);

@@ -461,57 +461,88 @@ void Joystick::run(void)
         }
 
         if (_activeVehicle->joystickEnabled() && !_calibrationMode && _calibrated) {
-            int     axis = _rgFunctionAxis[rollFunction];
-            float   roll = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis], _deadband);
+            float addditional_axises[4] = {0, 0, 0, 0};
+            float roll, pitch, yaw, throttle;
 
-                    axis = _rgFunctionAxis[pitchFunction];
-            float   pitch = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis], _deadband);
+            if (_activeVehicle->joystickMode() == Vehicle::JoystickModeRCOverride)
+            {
+                int     axis = _rgFunctionAxis[rollFunction];
+                roll = static_cast<float>(_rgAxisValues[axis]);
 
-                    axis = _rgFunctionAxis[yawFunction];
-            float   yaw = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis],_deadband);
+                axis = _rgFunctionAxis[pitchFunction];
+                pitch = static_cast<float>(_rgAxisValues[axis]);
 
-                    axis = _rgFunctionAxis[throttleFunction];
-            float   throttle = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis], _throttleMode==ThrottleModeDownZero?false:_deadband);
+                axis = _rgFunctionAxis[yawFunction];
+                yaw = static_cast<float>(_rgAxisValues[axis]);
 
-            if ( _accumulator ) {
-                static float throttle_accu = 0.f;
-
-                throttle_accu += throttle*(40/1000.f); //for throttle to change from min to max it will take 1000ms (40ms is a loop time)
-
-                throttle_accu = std::max(static_cast<float>(-1.f), std::min(throttle_accu, static_cast<float>(1.f)));
-                throttle = throttle_accu;
+                axis = _rgFunctionAxis[throttleFunction];
+                throttle = static_cast<float>(_rgAxisValues[axis]);
             }
+            else {
+                int     axis = _rgFunctionAxis[rollFunction];
+                roll = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis], _deadband);
 
-            if ( _circleCorrection ) {
-                float roll_limited = std::max(static_cast<float>(-M_PI_4), std::min(roll, static_cast<float>(M_PI_4)));
-                float pitch_limited = std::max(static_cast<float>(-M_PI_4), std::min(pitch, static_cast<float>(M_PI_4)));
-                float yaw_limited = std::max(static_cast<float>(-M_PI_4), std::min(yaw, static_cast<float>(M_PI_4)));
-                float throttle_limited = std::max(static_cast<float>(-M_PI_4), std::min(throttle, static_cast<float>(M_PI_4)));
+                axis = _rgFunctionAxis[pitchFunction];
+                pitch = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis], _deadband);
 
-                // Map from unit circle to linear range and limit
-                roll =      std::max(-1.0f, std::min(tanf(asinf(roll_limited)), 1.0f));
-                pitch =     std::max(-1.0f, std::min(tanf(asinf(pitch_limited)), 1.0f));
-                yaw =       std::max(-1.0f, std::min(tanf(asinf(yaw_limited)), 1.0f));
-                throttle =  std::max(-1.0f, std::min(tanf(asinf(throttle_limited)), 1.0f));
-            }
+                axis = _rgFunctionAxis[yawFunction];
+                yaw = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis],_deadband);
 
-            if ( _exponential != 0 ) {
-                // Exponential (0% to -50% range like most RC radios)
-                //_exponential is set by a slider in joystickConfig.qml
+                axis = _rgFunctionAxis[throttleFunction];
+                throttle = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis], _deadband);
 
-                // Calculate new RPY with exponential applied
-                roll =      -_exponential*powf(roll,3) + (1+_exponential)*roll;
-                pitch =     -_exponential*powf(pitch,3) + (1+_exponential)*pitch;
-                yaw =       -_exponential*powf(yaw,3) + (1+_exponential)*yaw;
-            }
+                if ( _accumulator ) {
+                    static float throttle_accu = 0.f;
 
-            // Adjust throttle to 0:1 range
-            if (_throttleMode == ThrottleModeCenterZero && _activeVehicle->supportsThrottleModeCenterZero()) {
-                if (!_activeVehicle->supportsNegativeThrust() || !_negativeThrust) {
-                    throttle = std::max(0.0f, throttle);
+                    throttle_accu += throttle*(40/1000.f); //for throttle to change from min to max it will take 1000ms (40ms is a loop time)
+
+                    throttle_accu = std::max(static_cast<float>(-1.f), std::min(throttle_accu, static_cast<float>(1.f)));
+                    throttle = throttle_accu;
                 }
-            } else {
-                throttle = (throttle + 1.0f) / 2.0f;
+
+                if ( _circleCorrection ) {
+                    float roll_limited = std::max(static_cast<float>(-M_PI_4), std::min(roll, static_cast<float>(M_PI_4)));
+                    float pitch_limited = std::max(static_cast<float>(-M_PI_4), std::min(pitch, static_cast<float>(M_PI_4)));
+                    float yaw_limited = std::max(static_cast<float>(-M_PI_4), std::min(yaw, static_cast<float>(M_PI_4)));
+                    float throttle_limited = std::max(static_cast<float>(-M_PI_4), std::min(throttle, static_cast<float>(M_PI_4)));
+
+                    // Map from unit circle to linear range and limit
+                    roll =      std::max(-1.0f, std::min(tanf(asinf(roll_limited)), 1.0f));
+                    pitch =     std::max(-1.0f, std::min(tanf(asinf(pitch_limited)), 1.0f));
+                    yaw =       std::max(-1.0f, std::min(tanf(asinf(yaw_limited)), 1.0f));
+                    throttle =  std::max(-1.0f, std::min(tanf(asinf(throttle_limited)), 1.0f));
+                }
+
+                if ( _exponential != 0 ) {
+                    // Exponential (0% to -50% range like most RC radios)
+                    //_exponential is set by a slider in joystickConfig.qml
+
+                    // Calculate new RPY with exponential applied
+                    roll =      -_exponential*powf(roll,3) + (1+_exponential)*roll;
+                    pitch =     -_exponential*powf(pitch,3) + (1+_exponential)*pitch;
+                    yaw =       -_exponential*powf(yaw,3) + (1+_exponential)*yaw;
+                }
+
+                // Adjust throttle to 0:1 range
+                if (_throttleMode == ThrottleModeCenterZero && _activeVehicle->supportsThrottleModeCenterZero()) {
+                    if (!_activeVehicle->supportsNegativeThrust() || !_negativeThrust) {
+                        throttle = std::max(0.0f, throttle);
+                    }
+                } else {
+                    throttle = (throttle + 1.0f) / 2.0f;
+                }
+
+            }
+
+            // Gets additional axis information
+            if (_axisCount > 4 && _axisCount < 9)
+            {
+                for (int axisIndex=4; axisIndex<_axisCount; axisIndex++)
+                {
+                    addditional_axises[axisIndex - 4] = static_cast<float>(_rgAxisValues[axisIndex]);
+                    //((static_cast<float>(_rgAxisValues[axisIndex] + 32768)/65536.0f)*1000.0f + 1000.0f);
+                    //_adjustRange(_rgAxisValues[axisIndex], _rgCalibration[axisIndex], _deadband);
+                }
             }
 
             // Set up button pressed information
@@ -543,10 +574,10 @@ void Joystick::run(void)
 
             _lastButtonBits = newButtonBits;
 
-            qCDebug(JoystickValuesLog) << "name:roll:pitch:yaw:throttle" << name() << roll << -pitch << yaw << throttle;
+            qCDebug(JoystickValuesLog) << "name:roll:pitch:yaw:throttle" << name() << roll << -pitch << yaw << throttle << addditional_axises[0] << addditional_axises[1] << addditional_axises[2] << addditional_axises[3];
 
             // NOTE: The buttonPressedBits going to MANUAL_CONTROL are currently used by ArduSub.
-            emit manualControl(roll, -pitch, yaw, throttle, buttonPressedBits, _activeVehicle->joystickMode());
+            emit manualControl(roll, -pitch, yaw, throttle, buttonPressedBits, _activeVehicle->joystickMode(), addditional_axises[0], addditional_axises[1], addditional_axises[2], addditional_axises[3]);
         }
 
         // Sleep. Update rate of joystick is by default 25 Hz
