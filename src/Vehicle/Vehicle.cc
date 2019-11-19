@@ -837,6 +837,11 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         _handleWind(message);
         break;
 #endif
+
+    // Charging station RTK Survey In status message
+    case MAVLINK_MSG_ID_NAMED_VALUE_INT:
+        _handleNamedValueInt(message);
+        break;
     }
 
     // This must be emitted after the vehicle processes the message. This way the vehicle state is up to date when anyone else
@@ -1938,6 +1943,15 @@ void Vehicle::_handleScaledPressure3(mavlink_message_t& message) {
     mavlink_scaled_pressure3_t pressure;
     mavlink_msg_scaled_pressure3_decode(&message, &pressure);
     _temperatureFactGroup.temperature3()->setRawValue(pressure.temperature / 100.0);
+}
+
+void Vehicle::_handleNamedValueInt(mavlink_message_t& message)
+{
+    mavlink_named_value_int_t namedValueInt;
+    mavlink_msg_named_value_int_decode(&message, &namedValueInt);
+
+    if (QString(namedValueInt.name) == "rtk_survey")
+        _gpsFactGroup.rtkSurveyIn()->setRawValue(namedValueInt.value + 1) ;
 }
 
 bool Vehicle::_containsLink(LinkInterface* link)
@@ -3744,6 +3758,7 @@ const char* VehicleGPSFactGroup::_vdopFactName =                "vdop";
 const char* VehicleGPSFactGroup::_courseOverGroundFactName =    "courseOverGround";
 const char* VehicleGPSFactGroup::_countFactName =               "count";
 const char* VehicleGPSFactGroup::_lockFactName =                "lock";
+const char* VehicleGPSFactGroup::_rtkSurveyInFactName =         "rtkSurveyIn";
 
 VehicleGPSFactGroup::VehicleGPSFactGroup(QObject* parent)
     : FactGroup(1000, ":/json/Vehicle/GPSFact.json", parent)
@@ -3754,6 +3769,7 @@ VehicleGPSFactGroup::VehicleGPSFactGroup(QObject* parent)
     , _courseOverGroundFact (0, _courseOverGroundFactName,  FactMetaData::valueTypeDouble)
     , _countFact            (0, _countFactName,             FactMetaData::valueTypeInt32)
     , _lockFact             (0, _lockFactName,              FactMetaData::valueTypeInt32)
+    , _rtkSurveyInFact      (0, _rtkSurveyInFactName,       FactMetaData::valueTypeInt32)
 {
     _addFact(&_latFact,                 _latFactName);
     _addFact(&_lonFact,                 _lonFactName);
@@ -3762,6 +3778,7 @@ VehicleGPSFactGroup::VehicleGPSFactGroup(QObject* parent)
     _addFact(&_courseOverGroundFact,    _courseOverGroundFactName);
     _addFact(&_lockFact,                _lockFactName);
     _addFact(&_countFact,               _countFactName);
+    _addFact(&_rtkSurveyInFact,         _rtkSurveyInFactName);
 
     _latFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
     _lonFact.setRawValue(std::numeric_limits<float>::quiet_NaN());

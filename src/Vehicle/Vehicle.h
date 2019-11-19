@@ -218,6 +218,7 @@ public:
     Q_PROPERTY(Fact* courseOverGround   READ courseOverGround   CONSTANT)
     Q_PROPERTY(Fact* count              READ count              CONSTANT)
     Q_PROPERTY(Fact* lock               READ lock               CONSTANT)
+    Q_PROPERTY(Fact* rtkSurveyIn        READ rtkSurveyIn        CONSTANT)
 
     Fact* lat               (void) { return &_latFact; }
     Fact* lon               (void) { return &_lonFact; }
@@ -226,6 +227,7 @@ public:
     Fact* courseOverGround  (void) { return &_courseOverGroundFact; }
     Fact* count             (void) { return &_countFact; }
     Fact* lock              (void) { return &_lockFact; }
+    Fact* rtkSurveyIn       (void) { return &_rtkSurveyInFact; }
 
     static const char* _latFactName;
     static const char* _lonFactName;
@@ -234,6 +236,7 @@ public:
     static const char* _courseOverGroundFactName;
     static const char* _countFactName;
     static const char* _lockFactName;
+    static const char* _rtkSurveyInFactName;
 
 private:
     Fact        _latFact;
@@ -243,6 +246,7 @@ private:
     Fact        _courseOverGroundFact;
     Fact        _countFact;
     Fact        _lockFact;
+    Fact        _rtkSurveyInFact;
 };
 
 class VehicleBatteryFactGroup : public FactGroup
@@ -1388,6 +1392,7 @@ private:
     void _pidTuningAdjustRates(bool setRatesForTuning);
     void _handleUnsupportedRequestAutopilotCapabilities(void);
     void _handleUnsupportedRequestProtocolVersion(void);
+    void _handleNamedValueInt(mavlink_message_t& message);
 
     int     _id;                    ///< Mavlink system id
     int     _defaultComponentId;
