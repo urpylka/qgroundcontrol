@@ -82,6 +82,7 @@ const char* Vehicle::_battery2FactGroupName =           "battery2";
 const char* Vehicle::_windFactGroupName =               "wind";
 const char* Vehicle::_vibrationFactGroupName =          "vibration";
 const char* Vehicle::_temperatureFactGroupName =        "temperature";
+const char* Vehicle::_pressureFactGroupName =           "pressure";
 const char* Vehicle::_clockFactGroupName =              "clock";
 const char* Vehicle::_distanceSensorFactGroupName =     "distanceSensor";
 const char* Vehicle::_estimatorStatusFactGroupName =    "estimatorStatus";
@@ -212,6 +213,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _windFactGroup(this)
     , _vibrationFactGroup(this)
     , _temperatureFactGroup(this)
+    , _pressureFactGroup(this)
     , _clockFactGroup(this)
     , _distanceSensorFactGroup(this)
     , _estimatorStatusFactGroup(this)
@@ -500,6 +502,7 @@ void Vehicle::_commonInit(void)
     _addFactGroup(&_windFactGroup,              _windFactGroupName);
     _addFactGroup(&_vibrationFactGroup,         _vibrationFactGroupName);
     _addFactGroup(&_temperatureFactGroup,       _temperatureFactGroupName);
+    _addFactGroup(&_pressureFactGroup,          _pressureFactGroupName);
     _addFactGroup(&_clockFactGroup,             _clockFactGroupName);
     _addFactGroup(&_distanceSensorFactGroup,    _distanceSensorFactGroupName);
     _addFactGroup(&_estimatorStatusFactGroup,   _estimatorStatusFactGroupName);
@@ -837,11 +840,6 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         _handleWind(message);
         break;
 #endif
-
-    // Charging station RTK Survey In status message
-    case MAVLINK_MSG_ID_NAMED_VALUE_INT:
-        _handleNamedValueInt(message);
-        break;
     }
 
     // This must be emitted after the vehicle processes the message. This way the vehicle state is up to date when anyone else
@@ -1931,27 +1929,24 @@ void Vehicle::_handleScaledPressure(mavlink_message_t& message) {
     mavlink_scaled_pressure_t pressure;
     mavlink_msg_scaled_pressure_decode(&message, &pressure);
     _temperatureFactGroup.temperature1()->setRawValue(pressure.temperature / 100.0);
+    _pressureFactGroup.pressure1Abs()->setRawValue(pressure.press_abs);
+    _pressureFactGroup.pressure1Diff()->setRawValue(pressure.press_diff);
 }
 
 void Vehicle::_handleScaledPressure2(mavlink_message_t& message) {
     mavlink_scaled_pressure2_t pressure;
     mavlink_msg_scaled_pressure2_decode(&message, &pressure);
     _temperatureFactGroup.temperature2()->setRawValue(pressure.temperature / 100.0);
+    _pressureFactGroup.pressure2Abs()->setRawValue(pressure.press_abs);
+    _pressureFactGroup.pressure2Diff()->setRawValue(pressure.press_diff);
 }
 
 void Vehicle::_handleScaledPressure3(mavlink_message_t& message) {
     mavlink_scaled_pressure3_t pressure;
     mavlink_msg_scaled_pressure3_decode(&message, &pressure);
     _temperatureFactGroup.temperature3()->setRawValue(pressure.temperature / 100.0);
-}
-
-void Vehicle::_handleNamedValueInt(mavlink_message_t& message)
-{
-    mavlink_named_value_int_t namedValueInt;
-    mavlink_msg_named_value_int_decode(&message, &namedValueInt);
-
-    if (QString(namedValueInt.name) == "rtk_survey")
-        _gpsFactGroup.rtkSurveyIn()->setRawValue(namedValueInt.value + 1) ;
+    _pressureFactGroup.pressure3Abs()->setRawValue(pressure.press_abs);
+    _pressureFactGroup.pressure3Diff()->setRawValue(pressure.press_diff);
 }
 
 bool Vehicle::_containsLink(LinkInterface* link)
@@ -3758,7 +3753,6 @@ const char* VehicleGPSFactGroup::_vdopFactName =                "vdop";
 const char* VehicleGPSFactGroup::_courseOverGroundFactName =    "courseOverGround";
 const char* VehicleGPSFactGroup::_countFactName =               "count";
 const char* VehicleGPSFactGroup::_lockFactName =                "lock";
-const char* VehicleGPSFactGroup::_rtkSurveyInFactName =         "rtkSurveyIn";
 
 VehicleGPSFactGroup::VehicleGPSFactGroup(QObject* parent)
     : FactGroup(1000, ":/json/Vehicle/GPSFact.json", parent)
@@ -3769,7 +3763,6 @@ VehicleGPSFactGroup::VehicleGPSFactGroup(QObject* parent)
     , _courseOverGroundFact (0, _courseOverGroundFactName,  FactMetaData::valueTypeDouble)
     , _countFact            (0, _countFactName,             FactMetaData::valueTypeInt32)
     , _lockFact             (0, _lockFactName,              FactMetaData::valueTypeInt32)
-    , _rtkSurveyInFact      (0, _rtkSurveyInFactName,       FactMetaData::valueTypeInt32)
 {
     _addFact(&_latFact,                 _latFactName);
     _addFact(&_lonFact,                 _lonFactName);
@@ -3778,7 +3771,6 @@ VehicleGPSFactGroup::VehicleGPSFactGroup(QObject* parent)
     _addFact(&_courseOverGroundFact,    _courseOverGroundFactName);
     _addFact(&_lockFact,                _lockFactName);
     _addFact(&_countFact,               _countFactName);
-    _addFact(&_rtkSurveyInFact,         _rtkSurveyInFactName);
 
     _latFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
     _lonFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
@@ -4318,6 +4310,38 @@ VehicleTemperatureFactGroup::VehicleTemperatureFactGroup(QObject* parent)
     _temperature1Fact.setRawValue      (std::numeric_limits<float>::quiet_NaN());
     _temperature2Fact.setRawValue      (std::numeric_limits<float>::quiet_NaN());
     _temperature3Fact.setRawValue      (std::numeric_limits<float>::quiet_NaN());
+}
+
+const char* VehiclePressureFactGroup::_pressure1AbsFactName =      "pressure1abs";
+const char* VehiclePressureFactGroup::_pressure1DiffFactName =     "pressure1diff";
+const char* VehiclePressureFactGroup::_pressure2AbsFactName =      "pressure2abs";
+const char* VehiclePressureFactGroup::_pressure2DiffFactName =     "pressure2diff";
+const char* VehiclePressureFactGroup::_pressure3AbsFactName =      "pressure3abs";
+const char* VehiclePressureFactGroup::_pressure3DiffFactName =     "pressure3diff";
+
+VehiclePressureFactGroup::VehiclePressureFactGroup(QObject* parent)
+    : FactGroup(1000, ":/json/Vehicle/PressureFact.json", parent)
+    , _pressure1AbsFact    (0, _pressure1AbsFactName,     FactMetaData::valueTypeDouble)
+    , _pressure1DiffFact   (0, _pressure1DiffFactName,     FactMetaData::valueTypeDouble)
+    , _pressure2AbsFact    (0, _pressure2AbsFactName,     FactMetaData::valueTypeDouble)
+    , _pressure2DiffFact   (0, _pressure2DiffFactName,     FactMetaData::valueTypeDouble)
+    , _pressure3AbsFact    (0, _pressure3AbsFactName,     FactMetaData::valueTypeDouble)
+    , _pressure3DiffFact   (0, _pressure3DiffFactName,     FactMetaData::valueTypeDouble)
+{
+    _addFact(&_pressure1AbsFact,       _pressure1AbsFactName);
+    _addFact(&_pressure1DiffFact,      _pressure1DiffFactName);
+    _addFact(&_pressure2AbsFact,       _pressure2AbsFactName);
+    _addFact(&_pressure2DiffFact,      _pressure2DiffFactName);
+    _addFact(&_pressure3AbsFact,       _pressure3AbsFactName);
+    _addFact(&_pressure3DiffFact,      _pressure3DiffFactName);
+
+    // Start out as not available "--.--"
+    _pressure1AbsFact.setRawValue      (std::numeric_limits<float>::quiet_NaN());
+    _pressure1DiffFact.setRawValue     (std::numeric_limits<float>::quiet_NaN());
+    _pressure2AbsFact.setRawValue      (std::numeric_limits<float>::quiet_NaN());
+    _pressure2DiffFact.setRawValue     (std::numeric_limits<float>::quiet_NaN());
+    _pressure3AbsFact.setRawValue      (std::numeric_limits<float>::quiet_NaN());
+    _pressure3DiffFact.setRawValue     (std::numeric_limits<float>::quiet_NaN());
 }
 
 const char* VehicleClockFactGroup::_currentTimeFactName = "currentTime";

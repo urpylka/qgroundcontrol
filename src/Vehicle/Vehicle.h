@@ -218,7 +218,6 @@ public:
     Q_PROPERTY(Fact* courseOverGround   READ courseOverGround   CONSTANT)
     Q_PROPERTY(Fact* count              READ count              CONSTANT)
     Q_PROPERTY(Fact* lock               READ lock               CONSTANT)
-    Q_PROPERTY(Fact* rtkSurveyIn        READ rtkSurveyIn        CONSTANT)
 
     Fact* lat               (void) { return &_latFact; }
     Fact* lon               (void) { return &_lonFact; }
@@ -227,7 +226,6 @@ public:
     Fact* courseOverGround  (void) { return &_courseOverGroundFact; }
     Fact* count             (void) { return &_countFact; }
     Fact* lock              (void) { return &_lockFact; }
-    Fact* rtkSurveyIn       (void) { return &_rtkSurveyInFact; }
 
     static const char* _latFactName;
     static const char* _lonFactName;
@@ -236,7 +234,6 @@ public:
     static const char* _courseOverGroundFactName;
     static const char* _countFactName;
     static const char* _lockFactName;
-    static const char* _rtkSurveyInFactName;
 
 private:
     Fact        _latFact;
@@ -246,7 +243,6 @@ private:
     Fact        _courseOverGroundFact;
     Fact        _countFact;
     Fact        _lockFact;
-    Fact        _rtkSurveyInFact;
 };
 
 class VehicleBatteryFactGroup : public FactGroup
@@ -281,6 +277,7 @@ public:
     static const char* _mahConsumedFactName;
     static const char* _currentFactName;
     static const char* _temperatureFactName;
+    static const char* _pressureFactName;
     static const char* _cellCountFactName;
     static const char* _instantPowerFactName;
     static const char* _timeRemainingFactName;
@@ -335,6 +332,47 @@ private:
     Fact            _temperature1Fact;
     Fact            _temperature2Fact;
     Fact            _temperature3Fact;
+};
+
+class VehiclePressureFactGroup : public FactGroup
+{
+    Q_OBJECT
+
+public:
+    VehiclePressureFactGroup(QObject* parent = nullptr);
+
+    Q_PROPERTY(Fact* pressure1Abs       READ pressure1Abs       CONSTANT)
+    Q_PROPERTY(Fact* pressure1Diff      READ pressure1Diff      CONSTANT)
+    Q_PROPERTY(Fact* pressure2Abs       READ pressure2Abs       CONSTANT)
+    Q_PROPERTY(Fact* pressure2Diff      READ pressure2Diff      CONSTANT)
+    Q_PROPERTY(Fact* pressure3Abs       READ pressure3Abs       CONSTANT)
+    Q_PROPERTY(Fact* pressure3Diff      READ pressure3Diff      CONSTANT)
+
+    Fact* pressure1Abs (void) { return &_pressure1AbsFact; }
+    Fact* pressure1Diff (void) { return &_pressure1DiffFact; }
+    Fact* pressure2Abs (void) { return &_pressure2AbsFact; }
+    Fact* pressure2Diff (void) { return &_pressure2DiffFact; }
+    Fact* pressure3Abs (void) { return &_pressure3AbsFact; }
+    Fact* pressure3Diff (void) { return &_pressure3DiffFact; }
+
+    static const char* _pressure1AbsFactName;
+    static const char* _pressure1DiffFactName;
+    static const char* _pressure2AbsFactName;
+    static const char* _pressure2DiffFactName;
+    static const char* _pressure3AbsFactName;
+    static const char* _pressure3DiffFactName;
+
+    static const char* _settingsGroup;
+
+    static const double _pressureUnavailable;
+
+private:
+    Fact            _pressure1AbsFact;
+    Fact            _pressure1DiffFact;
+    Fact            _pressure2AbsFact;
+    Fact            _pressure2DiffFact;
+    Fact            _pressure3AbsFact;
+    Fact            _pressure3DiffFact;
 };
 
 class VehicleClockFactGroup : public FactGroup
@@ -1047,6 +1085,7 @@ public:
     FactGroup* windFactGroup            (void) { return &_windFactGroup; }
     FactGroup* vibrationFactGroup       (void) { return &_vibrationFactGroup; }
     FactGroup* temperatureFactGroup     (void) { return &_temperatureFactGroup; }
+    FactGroup* pressureFactGroup        (void) { return &_pressureFactGroup; }
     FactGroup* clockFactGroup           (void) { return &_clockFactGroup; }
     FactGroup* setpointFactGroup        (void) { return &_setpointFactGroup; }
     FactGroup* distanceSensorFactGroup  (void) { return &_distanceSensorFactGroup; }
@@ -1392,7 +1431,6 @@ private:
     void _pidTuningAdjustRates(bool setRatesForTuning);
     void _handleUnsupportedRequestAutopilotCapabilities(void);
     void _handleUnsupportedRequestProtocolVersion(void);
-    void _handleNamedValueInt(mavlink_message_t& message);
 
     int     _id;                    ///< Mavlink system id
     int     _defaultComponentId;
@@ -1630,6 +1668,7 @@ private:
     VehicleWindFactGroup            _windFactGroup;
     VehicleVibrationFactGroup       _vibrationFactGroup;
     VehicleTemperatureFactGroup     _temperatureFactGroup;
+    VehiclePressureFactGroup        _pressureFactGroup;
     VehicleClockFactGroup           _clockFactGroup;
     VehicleSetpointFactGroup        _setpointFactGroup;
     VehicleDistanceSensorFactGroup  _distanceSensorFactGroup;
@@ -1660,6 +1699,7 @@ private:
     static const char* _windFactGroupName;
     static const char* _vibrationFactGroupName;
     static const char* _temperatureFactGroupName;
+    static const char* _pressureFactGroupName;
     static const char* _clockFactGroupName;
     static const char* _distanceSensorFactGroupName;
     static const char* _estimatorStatusFactGroupName;

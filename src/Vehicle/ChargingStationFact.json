@@ -1,0 +1,10 @@
+[
+{
+    "name":             "rtkSurveyIn",
+    "shortDescription": "RTK Survey In",
+    "type":             "uint32",
+    "enumStrings":      "None,Completed,In progress",
+    "enumValues":       "0,1,2",
+    "decimalPlaces":    0
+}
+]

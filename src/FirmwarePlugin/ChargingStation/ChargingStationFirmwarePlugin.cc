@@ -2,6 +2,12 @@
 
 #include "ChargingStationFirmwarePlugin.h"
 
+ChargingStationFirmwarePlugin::ChargingStationFirmwarePlugin(void):
+    _rtkFactGroup(this)
+{
+    _nameToFactGroupMap.insert("Charging Station", &_rtkFactGroup);
+}
+
 QString ChargingStationFirmwarePlugin::vehicleImageOpaque(const Vehicle* vehicle) const
 {
     Q_UNUSED(vehicle);
@@ -114,4 +120,42 @@ QObject* ChargingStationFirmwarePlugin::loadParameterMetaData(const QString& met
         metaData->loadParameterFactMetaDataFile(metaDataFile);
     }
     return metaData;
+}
+
+void ChargingStationFirmwarePlugin::_handleNamedValueInt(mavlink_message_t* message)
+{
+    mavlink_named_value_int_t namedValueInt;
+    mavlink_msg_named_value_int_decode(message, &namedValueInt);
+
+    if (QString(namedValueInt.name) == "rtk_survey")
+        _rtkFactGroup.rtkSurveyIn()->setRawValue(namedValueInt.value + 1) ;
+}
+
+void ChargingStationFirmwarePlugin::_handleMavlinkMessage(mavlink_message_t* message)
+{
+    switch (message->msgid) {
+    // Charging station RTK Survey In status message
+    case MAVLINK_MSG_ID_NAMED_VALUE_INT:
+        _handleNamedValueInt(message);
+        break;
+    }
+}
+
+QMap<QString, FactGroup*>* ChargingStationFirmwarePlugin::factGroups(void) {
+    return &_nameToFactGroupMap;
+}
+
+bool ChargingStationFirmwarePlugin::adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message)
+{
+    _handleMavlinkMessage(message);
+    return true;
+}
+
+const char* ChargingStationFactGroup::_rtkSurveyInFactName = "rtkSurveyIn";
+
+ChargingStationFactGroup::ChargingStationFactGroup(QObject* parent):
+    FactGroup(1000, ":/json/Vehicle/ChargingStationFact.json", parent),
+    _rtkSurveyInFact(0, _rtkSurveyInFactName, FactMetaData::valueTypeInt32)
+{
+    _addFact(&_rtkSurveyInFact, _rtkSurveyInFactName);
 }

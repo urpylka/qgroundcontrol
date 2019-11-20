@@ -1,0 +1,44 @@
+[
+{
+    "name":             "pressure1abs",
+    "shortDescription": "Pressure (1) (Abs)",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "hPa"
+},
+{
+    "name":             "pressure1diff",
+    "shortDescription": "Pressure (1) (Diff)",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "hPa"
+},
+{
+    "name":             "pressure2abs",
+    "shortDescription": "Pressure (2) (Abs)",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "hPa"
+},
+{
+    "name":             "pressure2diff",
+    "shortDescription": "Pressure (2) (Diff)",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "hPa"
+},
+{
+    "name":             "pressure3abs",
+    "shortDescription": "Pressure (3) (Abs)",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "hPa"
+},
+{
+    "name":             "pressure3diff",
+    "shortDescription": "Pressure (3) (Diff)",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "hPa"
+}
+]

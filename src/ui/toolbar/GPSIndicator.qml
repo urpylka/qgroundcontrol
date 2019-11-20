@@ -66,14 +66,6 @@ Item {
                     QGCLabel { text: activeVehicle ? activeVehicle.gps.vdop.valueString : qsTr("--.--", "No data to display") }
                     QGCLabel { text: qsTr("Course Over Ground:") }
                     QGCLabel { text: activeVehicle ? activeVehicle.gps.courseOverGround.valueString : qsTr("--.--", "No data to display") }
-                    QGCLabel {
-                        text: qsTr("RTK Survey In:")
-                        visible: activeVehicle ? activeVehicle.gps.rtkSurveyIn.enumIndex : false
-                    }
-                    QGCLabel {
-                        text: activeVehicle ? activeVehicle.gps.rtkSurveyIn.enumStringValue : qsTr("N/A", "No data to display")
-                        visible: activeVehicle ? activeVehicle.gps.rtkSurveyIn.enumIndex : false
-                    }
                 }
             }
         }

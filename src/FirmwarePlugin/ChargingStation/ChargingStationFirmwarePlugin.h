@@ -9,11 +9,32 @@
 #define CUSTOM_MODE_CLOSED 3
 #define CUSTOM_MODE_CLOSING 4
 
+class ChargingStationFactGroup : public FactGroup
+{
+    Q_OBJECT
+
+public:
+    ChargingStationFactGroup(QObject* parent = nullptr);
+
+    Q_PROPERTY(Fact* rtkSurveyIn        READ rtkSurveyIn        CONSTANT)
+
+    Fact* rtkSurveyIn(void) { return &_rtkSurveyInFact; }
+
+    static const char* _rtkSurveyInFactName;
+
+    static const char* _settingsGroup;
+
+private:
+    Fact        _rtkSurveyInFact;
+};
+
 class ChargingStationFirmwarePlugin : public FirmwarePlugin
 {
     Q_OBJECT
 
 public:
+    ChargingStationFirmwarePlugin(void);
+
     QString vehicleImageOpaque(const Vehicle* vehicle) const override;
     QString vehicleImageOutline(const Vehicle* vehicle) const override;
     bool isCapable(const Vehicle *vehicle, FirmwareCapabilities capabilities) override;
@@ -30,8 +51,16 @@ public:
     QString brandImageIndoor(const Vehicle* vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/ChargingStation/BrandImage"); }
     QString brandImageOutdoor(const Vehicle* vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/ChargingStation/BrandImage"); }
 
+    virtual QMap<QString, FactGroup*>* factGroups(void) final;
+    bool  adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message) final;
 private:
+    void _handleNamedValueInt(mavlink_message_t* message);
+    void _handleMavlinkMessage(mavlink_message_t* message);
+
     QVariantList _toolBarIndicatorList;
+
+    ChargingStationFactGroup _rtkFactGroup;
+    QMap<QString, FactGroup*> _nameToFactGroupMap;
 };
 
 #endif
