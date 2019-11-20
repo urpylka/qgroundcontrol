@@ -16,16 +16,24 @@ class ChargingStationFactGroup : public FactGroup
 public:
     ChargingStationFactGroup(QObject* parent = nullptr);
 
-    Q_PROPERTY(Fact* rtkSurveyIn        READ rtkSurveyIn        CONSTANT)
+    Q_PROPERTY(Fact* rtkSurveyIn        READ rtkSurveyIn       CONSTANT)
+    Q_PROPERTY(Fact* weatherRain        READ weatherRain       CONSTANT)
+    Q_PROPERTY(Fact* weatherHumidity    READ weatherHumidity   CONSTANT)
 
     Fact* rtkSurveyIn(void) { return &_rtkSurveyInFact; }
+    Fact* weatherRain(void) { return &_weatherRainFact; }
+    Fact* weatherHumidity(void) { return &_weatherHumidityFact; }
 
     static const char* _rtkSurveyInFactName;
+    static const char* _weatherRainFactName;
+    static const char* _weatherHumidityFactName;
 
     static const char* _settingsGroup;
 
 private:
     Fact        _rtkSurveyInFact;
+    Fact        _weatherRainFact;
+    Fact        _weatherHumidityFact;
 };
 
 class ChargingStationFirmwarePlugin : public FirmwarePlugin
@@ -55,11 +63,12 @@ public:
     bool  adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message) final;
 private:
     void _handleNamedValueInt(mavlink_message_t* message);
+    void _handleNamedValueFloat(mavlink_message_t* message);
     void _handleMavlinkMessage(mavlink_message_t* message);
 
     QVariantList _toolBarIndicatorList;
 
-    ChargingStationFactGroup _rtkFactGroup;
+    ChargingStationFactGroup _chargingStationFactGroup;
     QMap<QString, FactGroup*> _nameToFactGroupMap;
 };
 

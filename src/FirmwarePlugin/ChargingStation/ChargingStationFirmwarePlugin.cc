@@ -3,9 +3,9 @@
 #include "ChargingStationFirmwarePlugin.h"
 
 ChargingStationFirmwarePlugin::ChargingStationFirmwarePlugin(void):
-    _rtkFactGroup(this)
+    _chargingStationFactGroup(this)
 {
-    _nameToFactGroupMap.insert("Charging Station", &_rtkFactGroup);
+    _nameToFactGroupMap.insert("Charging Station", &_chargingStationFactGroup);
 }
 
 QString ChargingStationFirmwarePlugin::vehicleImageOpaque(const Vehicle* vehicle) const
@@ -128,7 +128,18 @@ void ChargingStationFirmwarePlugin::_handleNamedValueInt(mavlink_message_t* mess
     mavlink_msg_named_value_int_decode(message, &namedValueInt);
 
     if (QString(namedValueInt.name) == "rtk_survey")
-        _rtkFactGroup.rtkSurveyIn()->setRawValue(namedValueInt.value + 1) ;
+        _chargingStationFactGroup.rtkSurveyIn()->setRawValue(namedValueInt.value + 1) ;
+}
+
+void ChargingStationFirmwarePlugin::_handleNamedValueFloat(mavlink_message_t *message)
+{
+    mavlink_named_value_float_t namedValueFloat;
+    mavlink_msg_named_value_float_decode(message, &namedValueFloat);
+
+    if (QString(namedValueFloat.name) == "rain")
+        _chargingStationFactGroup.weatherRain()->setRawValue(namedValueFloat.value);
+    else if (QString(namedValueFloat.name) == "humidity")
+        _chargingStationFactGroup.weatherHumidity()->setRawValue(namedValueFloat.value * 100);
 }
 
 void ChargingStationFirmwarePlugin::_handleMavlinkMessage(mavlink_message_t* message)
@@ -137,6 +148,9 @@ void ChargingStationFirmwarePlugin::_handleMavlinkMessage(mavlink_message_t* mes
     // Charging station RTK Survey In status message
     case MAVLINK_MSG_ID_NAMED_VALUE_INT:
         _handleNamedValueInt(message);
+        break;
+    case MAVLINK_MSG_ID_NAMED_VALUE_FLOAT:
+        _handleNamedValueFloat(message);
         break;
     }
 }
@@ -152,10 +166,19 @@ bool ChargingStationFirmwarePlugin::adjustIncomingMavlinkMessage(Vehicle* vehicl
 }
 
 const char* ChargingStationFactGroup::_rtkSurveyInFactName = "rtkSurveyIn";
+const char* ChargingStationFactGroup::_weatherRainFactName = "weatherRain";
+const char* ChargingStationFactGroup::_weatherHumidityFactName = "weatherHumidity";
 
 ChargingStationFactGroup::ChargingStationFactGroup(QObject* parent):
     FactGroup(1000, ":/json/Vehicle/ChargingStationFact.json", parent),
-    _rtkSurveyInFact(0, _rtkSurveyInFactName, FactMetaData::valueTypeInt32)
+    _rtkSurveyInFact(0, _rtkSurveyInFactName, FactMetaData::valueTypeInt32),
+    _weatherRainFact(0, _weatherRainFactName, FactMetaData::valueTypeFloat),
+    _weatherHumidityFact(0, _weatherHumidityFactName, FactMetaData::valueTypeFloat)
 {
     _addFact(&_rtkSurveyInFact, _rtkSurveyInFactName);
+    _addFact(&_weatherRainFact, _weatherRainFactName);
+    _addFact(&_weatherHumidityFact, _weatherHumidityFactName);
+
+    _weatherRainFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
+    _weatherHumidityFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
 }

@@ -6,5 +6,19 @@
     "enumStrings":      "None,Completed,In progress",
     "enumValues":       "0,1,2",
     "decimalPlaces":    0
+},
+{
+    "name":             "weatherRain",
+    "shortDescription": "Rain",
+    "type":             "float",
+    "decimalPlaces":    2,
+    "units":            "mm"
+},
+{
+    "name":             "weatherHumidity",
+    "shortDescription": "Humidity",
+    "type":             "float",
+    "decimalPlaces":    0,
+    "units":            "%"
 }
 ]
