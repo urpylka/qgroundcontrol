@@ -61,6 +61,7 @@ public:
 
     virtual QMap<QString, FactGroup*>* factGroups(void) final;
     bool  adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message) final;
+    FactGroup* chargingStationFactGroup(void) { return &_chargingStationFactGroup; }
 private:
     void _handleNamedValueInt(mavlink_message_t* message);
     void _handleNamedValueFloat(mavlink_message_t* message);

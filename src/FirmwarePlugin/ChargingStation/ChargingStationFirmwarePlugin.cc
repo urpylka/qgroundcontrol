@@ -127,7 +127,7 @@ void ChargingStationFirmwarePlugin::_handleNamedValueInt(mavlink_message_t* mess
     mavlink_named_value_int_t namedValueInt;
     mavlink_msg_named_value_int_decode(message, &namedValueInt);
 
-    if (QString(namedValueInt.name) == "rtk_survey")
+    if (QString(namedValueInt.name) == "rtk_surv")
         _chargingStationFactGroup.rtkSurveyIn()->setRawValue(namedValueInt.value + 1) ;
 }
 

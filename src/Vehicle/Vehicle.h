@@ -609,7 +609,7 @@ public:
     Q_PROPERTY(int                  rcRSSI                  READ rcRSSI                                                 NOTIFY rcRSSIChanged)
     Q_PROPERTY(bool                 px4Firmware             READ px4Firmware                                            NOTIFY firmwareTypeChanged)
     Q_PROPERTY(bool                 apmFirmware             READ apmFirmware                                            NOTIFY firmwareTypeChanged)
-    Q_PROPERTY(bool                 chargingStation         READ chargingStation                                        CONSTANT)
+    Q_PROPERTY(bool                 chargingStationFirmware READ chargingStationFirmware                                CONSTANT)
     Q_PROPERTY(bool                 soloFirmware            READ soloFirmware           WRITE setSoloFirmware           NOTIFY soloFirmwareChanged)
     Q_PROPERTY(bool                 genericFirmware         READ genericFirmware                                        CONSTANT)
     Q_PROPERTY(bool                 connectionLost          READ connectionLost                                         NOTIFY connectionLostChanged)
@@ -712,15 +712,16 @@ public:
     Q_PROPERTY(Fact* hobbs              READ hobbs              CONSTANT)
     Q_PROPERTY(Fact* throttlePct        READ throttlePct        CONSTANT)
 
-    Q_PROPERTY(FactGroup* gps               READ gpsFactGroup               CONSTANT)
-    Q_PROPERTY(FactGroup* battery           READ battery1FactGroup          CONSTANT)
-    Q_PROPERTY(FactGroup* battery2          READ battery2FactGroup          CONSTANT)
-    Q_PROPERTY(FactGroup* wind              READ windFactGroup              CONSTANT)
-    Q_PROPERTY(FactGroup* vibration         READ vibrationFactGroup         CONSTANT)
-    Q_PROPERTY(FactGroup* temperature       READ temperatureFactGroup       CONSTANT)
-    Q_PROPERTY(FactGroup* clock             READ clockFactGroup             CONSTANT)
-    Q_PROPERTY(FactGroup* setpoint          READ setpointFactGroup          CONSTANT)
-    Q_PROPERTY(FactGroup* estimatorStatus   READ estimatorStatusFactGroup   CONSTANT)
+    Q_PROPERTY(FactGroup* gps                   READ gpsFactGroup               CONSTANT)
+    Q_PROPERTY(FactGroup* battery               READ battery1FactGroup          CONSTANT)
+    Q_PROPERTY(FactGroup* battery2              READ battery2FactGroup          CONSTANT)
+    Q_PROPERTY(FactGroup* wind                  READ windFactGroup              CONSTANT)
+    Q_PROPERTY(FactGroup* vibration             READ vibrationFactGroup         CONSTANT)
+    Q_PROPERTY(FactGroup* temperature           READ temperatureFactGroup       CONSTANT)
+    Q_PROPERTY(FactGroup* clock                 READ clockFactGroup             CONSTANT)
+    Q_PROPERTY(FactGroup* setpoint              READ setpointFactGroup          CONSTANT)
+    Q_PROPERTY(FactGroup* estimatorStatus       READ estimatorStatusFactGroup   CONSTANT)
+    Q_PROPERTY(FactGroup* chargingStation       READ chargingStationFactGroup   CONSTANT)
 
     Q_PROPERTY(int      firmwareMajorVersion        READ firmwareMajorVersion       NOTIFY firmwareVersionChanged)
     Q_PROPERTY(int      firmwareMinorVersion        READ firmwareMinorVersion       NOTIFY firmwareVersionChanged)
@@ -1013,7 +1014,7 @@ public:
     int             rcRSSI                  () { return _rcRSSI; }
     bool            px4Firmware             () const { return _firmwareType == MAV_AUTOPILOT_PX4; }
     bool            apmFirmware             () const { return _firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA; }
-    bool            chargingStation         () const { return _vehicleType == MAV_TYPE_CHARGING_STATION; }
+    bool            chargingStationFirmware () const { return _vehicleType == MAV_TYPE_CHARGING_STATION; }
     bool            genericFirmware         () const { return !px4Firmware() && !apmFirmware(); }
     bool            connectionLost          () const { return _connectionLost; }
     bool            connectionLostEnabled   () const { return _connectionLostEnabled; }
@@ -1090,6 +1091,7 @@ public:
     FactGroup* setpointFactGroup        (void) { return &_setpointFactGroup; }
     FactGroup* distanceSensorFactGroup  (void) { return &_distanceSensorFactGroup; }
     FactGroup* estimatorStatusFactGroup (void) { return &_estimatorStatusFactGroup; }
+    FactGroup* chargingStationFactGroup (void);
 
     void setConnectionLostEnabled(bool connectionLostEnabled);
 

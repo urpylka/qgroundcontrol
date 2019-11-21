@@ -17,6 +17,7 @@
 #include "FirmwarePluginManager.h"
 #include "LinkManager.h"
 #include "FirmwarePlugin.h"
+#include "ChargingStationFirmwarePlugin.h"
 #include "UAS.h"
 #include "JoystickManager.h"
 #include "MissionManager.h"
@@ -609,7 +610,7 @@ QString Vehicle::firmwareTypeString(void) const
         return QStringLiteral("PX4 Pro");
     } else if (apmFirmware()) {
         return QStringLiteral("ArduPilot");
-    } else if (chargingStation()) {
+    } else if (chargingStationFirmware()) {
         return QStringLiteral("Charging Station");
     } else {
         return tr("MAVLink Generic");
@@ -4186,6 +4187,12 @@ void Vehicle::gimbalControlValue(double pitch, double yaw)
         0,                                   // Latitude (not used)
         0,                                   // Longitude (not used)
         MAV_MOUNT_MODE_MAVLINK_TARGETING);   // MAVLink Roll,Pitch,Yaw
+}
+
+FactGroup* Vehicle::chargingStationFactGroup(void)
+{
+    ChargingStationFirmwarePlugin* plugin = qobject_cast<ChargingStationFirmwarePlugin*>(_firmwarePlugin);
+    return (plugin) ? plugin->chargingStationFactGroup() : NULL;
 }
 
 //-----------------------------------------------------------------------------
