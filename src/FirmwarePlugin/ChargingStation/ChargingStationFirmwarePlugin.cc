@@ -161,6 +161,8 @@ QMap<QString, FactGroup*>* ChargingStationFirmwarePlugin::factGroups(void) {
 
 bool ChargingStationFirmwarePlugin::adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message)
 {
+    Q_UNUSED(vehicle);
+
     _handleMavlinkMessage(message);
     return true;
 }
