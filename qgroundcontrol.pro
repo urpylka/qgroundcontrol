@@ -48,6 +48,8 @@ LinuxBuild {
     CONFIG  += qesp_linux_udev
 }
 
+CONFIG += resources_big
+
 WindowsBuild {
     RC_ICONS = resources/icons/qgroundcontrol.ico
 }
