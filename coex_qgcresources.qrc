@@ -1,0 +1,13 @@
+<RCC>
+    <qresource prefix="/qmlimages">
+        <file alias="camera.svg">resources/camera.svg</file>
+        <file alias="ChargingStation.svg">src/FlightMap/Images/ChargingStation.svg</file>
+    </qresource>
+    <qresource prefix="/res">
+        <file alias="DropArrow.svg">resources/DropArrow.svg</file>
+        <file alias="QGCLogoFull">resources/QGCLogoFull.svg</file>
+    </qresource>
+    <qresource prefix="/res/firmware">
+        <file alias="cs.png">resources/firmware/cs.png</file>
+    </qresource>
+</RCC>

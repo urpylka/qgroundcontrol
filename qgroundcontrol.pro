@@ -48,8 +48,6 @@ LinuxBuild {
     CONFIG  += qesp_linux_udev
 }
 
-CONFIG += resources_big
-
 WindowsBuild {
     RC_ICONS = resources/icons/qgroundcontrol.ico
 }
@@ -333,7 +331,8 @@ CustomBuild {
     RESOURCES += \
         $$PWD/qgroundcontrol.qrc \
         $$PWD/qgcresources.qrc \
-        $$PWD/qgcimages.qrc
+        $$PWD/qgcimages.qrc \
+        $$PWD/coex_qgcresources.qrc
 }
 
 # On Qt 5.9 android versions there is the following bug: https://bugreports.qt.io/browse/QTBUG-61424
