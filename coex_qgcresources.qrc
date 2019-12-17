@@ -1,7 +1,7 @@
 <RCC>
     <qresource prefix="/qmlimages">
-        <file alias="camera.svg">resources/camera.svg</file>
         <file alias="ChargingStation.svg">src/FlightMap/Images/ChargingStation.svg</file>
+        <file alias="ChargingStation/BrandImage">src/FirmwarePlugin/ChargingStation/ChargingStationBrandImage.png</file>
     </qresource>
     <qresource prefix="/res">
         <file alias="DropArrow.svg">resources/DropArrow.svg</file>
