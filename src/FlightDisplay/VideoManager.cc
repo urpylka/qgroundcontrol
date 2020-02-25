@@ -60,11 +60,18 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
    qmlRegisterUncreatableType<VideoSurface> ("QGroundControl",              1, 0, "VideoSurface", "Reference only");
    _videoSettings = toolbox->settingsManager()->videoSettings();
    QString videoSource = _videoSettings->videoSource()->rawValue().toString();
+   QString csVideoSource = _videoSettings->csVideoSource()->rawValue().toString();
    connect(_videoSettings->videoSource(),   &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
+   connect(_videoSettings->csVehicleID(),   &Fact::rawValueChanged, this, &VideoManager::_csVehicleIDChanged);
+   connect(_videoSettings->csVideoSource(), &Fact::rawValueChanged, this, &VideoManager::_csVideoSourceChanged);
    connect(_videoSettings->udpPort(),       &Fact::rawValueChanged, this, &VideoManager::_udpPortChanged);
+   connect(_videoSettings->csUdpPort(),     &Fact::rawValueChanged, this, &VideoManager::_csUdpPortChanged);
    connect(_videoSettings->rtspUrl(),       &Fact::rawValueChanged, this, &VideoManager::_rtspUrlChanged);
+   connect(_videoSettings->csRtspUrl(),     &Fact::rawValueChanged, this, &VideoManager::_csRtspUrlChanged);
    connect(_videoSettings->tcpUrl(),        &Fact::rawValueChanged, this, &VideoManager::_tcpUrlChanged);
+   connect(_videoSettings->csTcpUrl(),      &Fact::rawValueChanged, this, &VideoManager::_csTcpUrlChanged);
    connect(_videoSettings->aspectRatio(),   &Fact::rawValueChanged, this, &VideoManager::_aspectRatioChanged);
+   connect(_videoSettings->csAspectRatio(), &Fact::rawValueChanged, this, &VideoManager::aspectRatioChanged);
    MultiVehicleManager *pVehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
    connect(pVehicleMgr, &MultiVehicleManager::activeVehicleChanged, this, &VideoManager::_setActiveVehicle);
 
@@ -75,7 +82,10 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
 #endif
 
     emit isGStreamerChanged();
+    emit isVideoEnabledChanged();
+    emit isCsVideoEnabledChanged();
     qCDebug(VideoManagerLog) << "New Video Source:" << videoSource;
+    qCDebug(VideoManagerLog) << "New CS Video Source:" << csVideoSource;
     _videoReceiver = toolbox->corePlugin()->createVideoReceiver(this);
     _thermalVideoReceiver = toolbox->corePlugin()->createVideoReceiver(this);
     _updateSettings();
@@ -108,13 +118,20 @@ VideoManager::stopVideo()
 //-----------------------------------------------------------------------------
 double VideoManager::aspectRatio()
 {
-    if(_activeVehicle && _activeVehicle->dynamicCameras()) {
+    if(_activeVehicle)
+      if (_activeVehicle->dynamicCameras()) {
         QGCVideoStreamInfo* pInfo = _activeVehicle->dynamicCameras()->currentStreamInstance();
         if(pInfo) {
             qCDebug(VideoManagerLog) << "Primary AR: " << pInfo->aspectRatio();
             return pInfo->aspectRatio();
         }
+
+        // Charging station video stream
+        if (_activeVehicle->id() == _videoSettings->csVehicleID()->rawValue())
+            return _videoSettings->csAspectRatio()->rawValue().toDouble();
     }
+
+    // Regular video stream
     return _videoSettings->aspectRatio()->rawValue().toDouble();
 }
 
@@ -186,16 +203,20 @@ void
 VideoManager::_updateUVC()
 {
 #ifndef QGC_DISABLE_UVC
-    QString videoSource = _videoSettings->videoSource()->rawValue().toString();
+    QString videoSource = (!_activeVehicle ||
+                            (_videoSettings->csVehicleID()->rawValue() != _activeVehicle->id())) ?
+                               _videoSettings->videoSource()->rawValue().toString() :
+                               _videoSettings->csVideoSource()->rawValue().toString();
     QList<QCameraInfo> cameras = QCameraInfo::availableCameras();
     for (const QCameraInfo &cameraInfo: cameras) {
-        if(cameraInfo.description() == videoSource) {
+        if (cameraInfo.description() == videoSource) {
             _videoSourceID = cameraInfo.deviceName();
             emit videoSourceIDChanged();
             qCDebug(VideoManagerLog) << "Found USB source:" << _videoSourceID << " Name:" << videoSource;
             break;
         }
     }
+    emit uvcEnabledChanged();
 #endif
 }
 
@@ -206,6 +227,31 @@ VideoManager::_videoSourceChanged()
     _updateUVC();
     emit hasVideoChanged();
     emit isGStreamerChanged();
+    emit isVideoEnabledChanged();
+    emit isCsVideoEnabledChanged();
+    emit isAutoStreamChanged();
+    restartVideo();
+}
+
+//-----------------------------------------------------------------------------
+void
+VideoManager::_csVehicleIDChanged()
+{
+    emit hasVideoChanged();
+    emit isGStreamerChanged();
+    emit isVideoEnabledChanged();
+    emit isCsVideoEnabledChanged();
+    restartVideo();
+}
+
+//-----------------------------------------------------------------------------
+void
+VideoManager::_csVideoSourceChanged()
+{
+    _updateUVC();
+    emit hasVideoChanged();
+    emit isGStreamerChanged();
+    emit isCsVideoEnabledChanged();
     emit isAutoStreamChanged();
     restartVideo();
 }
@@ -219,7 +265,21 @@ VideoManager::_udpPortChanged()
 
 //-----------------------------------------------------------------------------
 void
+VideoManager::_csUdpPortChanged()
+{
+    restartVideo();
+}
+
+//-----------------------------------------------------------------------------
+void
 VideoManager::_rtspUrlChanged()
+{
+    restartVideo();
+}
+
+//-----------------------------------------------------------------------------
+void
+VideoManager::_csRtspUrlChanged()
 {
     restartVideo();
 }
@@ -232,6 +292,13 @@ VideoManager::_tcpUrlChanged()
 }
 
 //-----------------------------------------------------------------------------
+void
+VideoManager::_csTcpUrlChanged()
+{
+    restartVideo();
+}
+
+//-----------------------------------------------------------------------------
 bool
 VideoManager::hasVideo()
 {
@@ -239,12 +306,48 @@ VideoManager::hasVideo()
         return true;
     }
     QString videoSource = _videoSettings->videoSource()->rawValue().toString();
-    return !videoSource.isEmpty() && videoSource != VideoSettings::videoSourceNoVideo && videoSource != VideoSettings::videoDisabled;
+    QString csVideoSource = _videoSettings->csVideoSource()->rawValue().toString();
+    int csVehicleID = _videoSettings->csVehicleID()->rawValue().toInt();
+    return ((!_activeVehicle || (csVehicleID != _activeVehicle->id())) &&
+            !videoSource.isEmpty() &&
+            videoSource != VideoSettings::videoSourceNoVideo &&
+            videoSource != VideoSettings::videoDisabled) ||
+           ((_activeVehicle && (csVehicleID == _activeVehicle->id())) &&
+            !csVideoSource.isEmpty() &&
+            csVideoSource != VideoSettings::videoSourceNoVideo &&
+            csVideoSource != VideoSettings::videoDisabled);
 }
 
 //-----------------------------------------------------------------------------
 bool
 VideoManager::isGStreamer()
+{
+#if defined(QGC_GST_STREAMING)
+    QString videoSource = _videoSettings->videoSource()->rawValue().toString();
+    QString csVideoSource = _videoSettings->csVideoSource()->rawValue().toString();
+    int csVehicleID = _videoSettings->csVehicleID()->rawValue().toInt();
+    return
+        ((!_activeVehicle || (csVehicleID != _activeVehicle->id())) &&
+            (videoSource == VideoSettings::videoSourceUDPH264 ||
+            videoSource == VideoSettings::videoSourceUDPH265 ||
+            videoSource == VideoSettings::videoSourceRTSP ||
+            videoSource == VideoSettings::videoSourceTCP ||
+            videoSource == VideoSettings::videoSourceMPEGTS)) ||
+        ((_activeVehicle && (csVehicleID == _activeVehicle->id()) &&
+            (csVideoSource == VideoSettings::videoSourceUDPH264 ||
+            csVideoSource == VideoSettings::videoSourceUDPH265 ||
+            csVideoSource == VideoSettings::videoSourceRTSP ||
+            csVideoSource == VideoSettings::videoSourceTCP ||
+            csVideoSource == VideoSettings::videoSourceMPEGTS))) ||
+        autoStreamConfigured();
+#else
+    return false;
+#endif
+}
+
+//-----------------------------------------------------------------------------
+bool
+VideoManager::isVideoEnabled()
 {
 #if defined(QGC_GST_STREAMING)
     QString videoSource = _videoSettings->videoSource()->rawValue().toString();
@@ -255,6 +358,23 @@ VideoManager::isGStreamer()
         videoSource == VideoSettings::videoSourceTCP ||
         videoSource == VideoSettings::videoSourceMPEGTS ||
         autoStreamConfigured();
+#else
+    return false;
+#endif
+}
+
+//-----------------------------------------------------------------------------
+bool
+VideoManager::isCsVideoEnabled()
+{
+#if defined(QGC_GST_STREAMING)
+    QString csVideoSource = _videoSettings->csVideoSource()->rawValue().toString();
+    return
+        csVideoSource == VideoSettings::videoSourceUDPH264 ||
+        csVideoSource == VideoSettings::videoSourceUDPH265 ||
+        csVideoSource == VideoSettings::videoSourceRTSP ||
+        csVideoSource == VideoSettings::videoSourceTCP ||
+        csVideoSource == VideoSettings::videoSourceMPEGTS;
 #else
     return false;
 #endif
@@ -325,17 +445,36 @@ VideoManager::_updateSettings()
             return;
         }
     }
-    QString source = _videoSettings->videoSource()->rawValue().toString();
-    if (source == VideoSettings::videoSourceUDPH264)
-        _videoReceiver->setUri(QStringLiteral("udp://0.0.0.0:%1").arg(_videoSettings->udpPort()->rawValue().toInt()));
-    else if (source == VideoSettings::videoSourceUDPH265)
-        _videoReceiver->setUri(QStringLiteral("udp265://0.0.0.0:%1").arg(_videoSettings->udpPort()->rawValue().toInt()));
-    else if (source == VideoSettings::videoSourceMPEGTS)
-        _videoReceiver->setUri(QStringLiteral("mpegts://0.0.0.0:%1").arg(_videoSettings->udpPort()->rawValue().toInt()));
-    else if (source == VideoSettings::videoSourceRTSP)
-        _videoReceiver->setUri(_videoSettings->rtspUrl()->rawValue().toString());
-    else if (source == VideoSettings::videoSourceTCP)
-        _videoReceiver->setUri(QStringLiteral("tcp://%1").arg(_videoSettings->tcpUrl()->rawValue().toString()));
+
+    // Regular video stream
+    if (!_activeVehicle || (_activeVehicle->id() != _videoSettings->csVehicleID()->rawValue())) {
+        qCDebug(VideoManagerLog) << "Selecting main video stream";
+        QString source = _videoSettings->videoSource()->rawValue().toString();
+        if (source == VideoSettings::videoSourceUDPH264)
+            _videoReceiver->setUri(QStringLiteral("udp://0.0.0.0:%1").arg(_videoSettings->udpPort()->rawValue().toInt()));
+        else if (source == VideoSettings::videoSourceUDPH265)
+            _videoReceiver->setUri(QStringLiteral("udp265://0.0.0.0:%1").arg(_videoSettings->udpPort()->rawValue().toInt()));
+        else if (source == VideoSettings::videoSourceMPEGTS)
+            _videoReceiver->setUri(QStringLiteral("mpegts://0.0.0.0:%1").arg(_videoSettings->udpPort()->rawValue().toInt()));
+        else if (source == VideoSettings::videoSourceRTSP)
+            _videoReceiver->setUri(_videoSettings->rtspUrl()->rawValue().toString());
+        else if (source == VideoSettings::videoSourceTCP)
+            _videoReceiver->setUri(QStringLiteral("tcp://%1").arg(_videoSettings->tcpUrl()->rawValue().toString()));
+    } else {
+        // Charging station video stream
+        qCDebug(VideoManagerLog) << "Selecting Charging Station video stream";
+        QString source = _videoSettings->csVideoSource()->rawValue().toString();
+        if (source == VideoSettings::videoSourceUDPH264)
+            _videoReceiver->setUri(QStringLiteral("udp://0.0.0.0:%1").arg(_videoSettings->csUdpPort()->rawValue().toInt()));
+        else if (source == VideoSettings::videoSourceUDPH265)
+            _videoReceiver->setUri(QStringLiteral("udp265://0.0.0.0:%1").arg(_videoSettings->csUdpPort()->rawValue().toInt()));
+        else if (source == VideoSettings::videoSourceMPEGTS)
+            _videoReceiver->setUri(QStringLiteral("mpegts://0.0.0.0:%1").arg(_videoSettings->csUdpPort()->rawValue().toInt()));
+        else if (source == VideoSettings::videoSourceRTSP)
+            _videoReceiver->setUri(_videoSettings->csRtspUrl()->rawValue().toString());
+        else if (source == VideoSettings::videoSourceTCP)
+            _videoReceiver->setUri(QStringLiteral("tcp://%1").arg(_videoSettings->csTcpUrl()->rawValue().toString()));
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -346,7 +485,11 @@ VideoManager::restartVideo()
     qCDebug(VideoManagerLog) << "Restart video streaming";
     stopVideo();
     _updateSettings();
-    startVideo();
+    // No need to start video for UVC
+    if (isGStreamer())
+        startVideo();
+    else
+        qCDebug(VideoManagerLog) << "UVC video streaming";
     emit aspectRatioChanged();
 #endif
 }
@@ -375,6 +518,9 @@ VideoManager::_setActiveVehicle(Vehicle* vehicle)
         }
     }
     emit autoStreamConfiguredChanged();
+    emit isGStreamerChanged();
+    emit hasVideoChanged();
+    _updateUVC();
     restartVideo();
 }
 

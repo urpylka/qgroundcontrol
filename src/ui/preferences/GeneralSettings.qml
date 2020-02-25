@@ -45,12 +45,20 @@ Rectangle {
     property real _margins:                     ScreenTools.defaultFontPixelWidth
 
     property string _videoSource:               QGroundControl.settingsManager.videoSettings.videoSource.value
+    property string _csVideoSource:             QGroundControl.settingsManager.videoSettings.csVideoSource.value
     property bool   _isGst:                     QGroundControl.videoManager.isGStreamer
-    property bool   _isUDP264:                  _isGst && _videoSource === QGroundControl.settingsManager.videoSettings.udp264VideoSource
-    property bool   _isUDP265:                  _isGst && _videoSource === QGroundControl.settingsManager.videoSettings.udp265VideoSource
-    property bool   _isRTSP:                    _isGst && _videoSource === QGroundControl.settingsManager.videoSettings.rtspVideoSource
-    property bool   _isTCP:                     _isGst && _videoSource === QGroundControl.settingsManager.videoSettings.tcpVideoSource
-    property bool   _isMPEGTS:                  _isGst && _videoSource === QGroundControl.settingsManager.videoSettings.mpegtsVideoSource
+    property bool   _isVideoEnabled:            QGroundControl.videoManager.isVideoEnabled
+    property bool   _isUDP264:                  _isVideoEnabled && _videoSource === QGroundControl.settingsManager.videoSettings.udp264VideoSource
+    property bool   _isUDP265:                  _isVideoEnabled && _videoSource === QGroundControl.settingsManager.videoSettings.udp265VideoSource
+    property bool   _isRTSP:                    _isVideoEnabled && _videoSource === QGroundControl.settingsManager.videoSettings.rtspVideoSource
+    property bool   _isTCP:                     _isVideoEnabled && _videoSource === QGroundControl.settingsManager.videoSettings.tcpVideoSource
+    property bool   _isMPEGTS:                  _isVideoEnabled && _videoSource === QGroundControl.settingsManager.videoSettings.mpegtsVideoSource
+    property bool   _isCsVideoEnabled:          QGroundControl.videoManager.isCsVideoEnabled
+    property bool   _isCsUDP264:                _isCsVideoEnabled && _csVideoSource === QGroundControl.settingsManager.videoSettings.udp264VideoSource
+    property bool   _isCsUDP265:                _isCsVideoEnabled && _csVideoSource === QGroundControl.settingsManager.videoSettings.udp265VideoSource
+    property bool   _isCsRTSP:                  _isCsVideoEnabled && _csVideoSource === QGroundControl.settingsManager.videoSettings.rtspVideoSource
+    property bool   _isCsTCP:                   _isCsVideoEnabled && _csVideoSource === QGroundControl.settingsManager.videoSettings.tcpVideoSource
+    property bool   _isCsMPEGTS:                _isCsVideoEnabled && _csVideoSource === QGroundControl.settingsManager.videoSettings.mpegtsVideoSource
 
     property string gpsDisabled: "Disabled"
     property string gpsUdpPort:  "UDP Port"
@@ -831,22 +839,107 @@ Rectangle {
                             }
                             QGCLabel {
                                 text:                   qsTr("Aspect Ratio")
-                                visible:                _isGst && QGroundControl.settingsManager.videoSettings.aspectRatio.visible
+                                visible:                _isVideoEnabled && QGroundControl.settingsManager.videoSettings.aspectRatio.visible
                             }
                             FactTextField {
                                 Layout.preferredWidth:  _comboFieldWidth
                                 fact:                   QGroundControl.settingsManager.videoSettings.aspectRatio
-                                visible:                _isGst && QGroundControl.settingsManager.videoSettings.aspectRatio.visible
+                                visible:                _isVideoEnabled && QGroundControl.settingsManager.videoSettings.aspectRatio.visible
                             }
 
                             QGCLabel {
                                 text:                   qsTr("Disable When Disarmed")
-                                visible:                _isGst && QGroundControl.settingsManager.videoSettings.disableWhenDisarmed.visible
+                                visible:                _isVideoEnabled && QGroundControl.settingsManager.videoSettings.disableWhenDisarmed.visible
                             }
                             FactCheckBox {
                                 text:                   ""
                                 fact:                   QGroundControl.settingsManager.videoSettings.disableWhenDisarmed
-                                visible:                _isGst && QGroundControl.settingsManager.videoSettings.disableWhenDisarmed.visible
+                                visible:                _isVideoEnabled && QGroundControl.settingsManager.videoSettings.disableWhenDisarmed.visible
+                            }
+                        }
+                    }
+
+                    Item { width: 1; height: _margins }
+
+                    QGCLabel {
+                        id:         csVideoSectionLabel
+                        text:       qsTr("Video from Charging Station")
+                        visible:    QGroundControl.settingsManager.videoSettings.visible && !QGroundControl.videoManager.autoStreamConfigured
+                    }
+                    Rectangle {
+                        Layout.preferredWidth:  csVideoGrid.width + (_margins * 2)
+                        Layout.preferredHeight: csVideoGrid.height + (_margins * 2)
+                        Layout.fillWidth:       true
+                        color:                  qgcPal.windowShade
+                        visible:                csVideoSectionLabel.visible
+
+                        GridLayout {
+                            id:                         csVideoGrid
+                            anchors.margins:            _margins
+                            anchors.top:                parent.top
+                            anchors.horizontalCenter:   parent.horizontalCenter
+                            Layout.fillWidth:           false
+                            Layout.fillHeight:          false
+                            columns:                    2
+                            QGCLabel {
+                                text:                   qsTr("Vehicle ID")
+                                visible:                QGroundControl.settingsManager.videoSettings.csVehicleID.visible
+                            }
+                            FactTextField {
+                                Layout.preferredWidth:  _comboFieldWidth
+                                fact:                   QGroundControl.settingsManager.videoSettings.csVehicleID
+                                visible:                QGroundControl.settingsManager.videoSettings.csVehicleID.visible
+                            }
+
+                            QGCLabel {
+                                text:                   qsTr("Video Source")
+                                visible:                QGroundControl.settingsManager.videoSettings.csVideoSource.visible
+                            }
+                            FactComboBox {
+                                id:                     csVideoSource
+                                Layout.preferredWidth:  _comboFieldWidth
+                                indexModel:             false
+                                fact:                   QGroundControl.settingsManager.videoSettings.csVideoSource
+                                visible:                QGroundControl.settingsManager.videoSettings.csVideoSource.visible
+                            }
+
+                            QGCLabel {
+                                text:                   qsTr("UDP Port")
+                                visible:                (_isCsUDP264 || _isCsUDP265 || _isCsMPEGTS)  && QGroundControl.settingsManager.videoSettings.csUdpPort.visible
+                            }
+                            FactTextField {
+                                Layout.preferredWidth:  _comboFieldWidth
+                                fact:                   QGroundControl.settingsManager.videoSettings.udpPort
+                                visible:                (_isCsUDP264 || _isCsUDP265 || _isCsMPEGTS) && QGroundControl.settingsManager.videoSettings.csUdpPort.visible
+                            }
+
+                            QGCLabel {
+                                text:                   qsTr("RTSP URL")
+                                visible:                _isCsRTSP && QGroundControl.settingsManager.videoSettings.csRtspUrl.visible
+                            }
+                            FactTextField {
+                                Layout.preferredWidth:  _comboFieldWidth
+                                fact:                   QGroundControl.settingsManager.videoSettings.csRtspUrl
+                                visible:                _isCsRTSP && QGroundControl.settingsManager.videoSettings.csRtspUrl.visible
+                            }
+
+                            QGCLabel {
+                                text:                   qsTr("TCP URL")
+                                visible:                _isCsTCP && QGroundControl.settingsManager.videoSettings.csTcpUrl.visible
+                            }
+                            FactTextField {
+                                Layout.preferredWidth:  _comboFieldWidth
+                                fact:                   QGroundControl.settingsManager.videoSettings.csTcpUrl
+                                visible:                _isCsTCP && QGroundControl.settingsManager.videoSettings.csTcpUrl.visible
+                            }
+                            QGCLabel {
+                                text:                   qsTr("Aspect Ratio")
+                                visible:                _isCsVideoEnabled && QGroundControl.settingsManager.videoSettings.csAspectRatio.visible
+                            }
+                            FactTextField {
+                                Layout.preferredWidth:  _comboFieldWidth
+                                fact:                   QGroundControl.settingsManager.videoSettings.csAspectRatio
+                                visible:                _isCsVideoEnabled && QGroundControl.settingsManager.videoSettings.csAspectRatio.visible
                             }
                         }
                     }

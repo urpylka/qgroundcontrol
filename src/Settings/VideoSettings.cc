@@ -59,6 +59,7 @@ DECLARE_SETTINGGROUP(Video, "Video")
         videoSourceVarList.append(QVariant::fromValue(videoSource));
     }
     _nameToMetaDataMap[videoSourceName]->setEnumInfo(videoSourceList, videoSourceVarList);
+    _nameToMetaDataMap[csVideoSourceName]->setEnumInfo(videoSourceList, videoSourceVarList);
     // Set default value for videoSource
     _setDefaults();
 }
@@ -83,6 +84,25 @@ DECLARE_SETTINGSFACT(VideoSettings, rtspTimeout)
 DECLARE_SETTINGSFACT(VideoSettings, streamEnabled)
 DECLARE_SETTINGSFACT(VideoSettings, disableWhenDisarmed)
 
+DECLARE_SETTINGSFACT(VideoSettings, csAspectRatio)
+DECLARE_SETTINGSFACT(VideoSettings, csVideoFit)
+DECLARE_SETTINGSFACT(VideoSettings, csGridLines)
+DECLARE_SETTINGSFACT(VideoSettings, csShowRecControl)
+DECLARE_SETTINGSFACT(VideoSettings, csRecordingFormat)
+DECLARE_SETTINGSFACT(VideoSettings, csMaxVideoSize)
+DECLARE_SETTINGSFACT(VideoSettings, csEnableStorageLimit)
+DECLARE_SETTINGSFACT(VideoSettings, csRtspTimeout)
+DECLARE_SETTINGSFACT(VideoSettings, csStreamEnabled)
+
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, csVehicleID)
+{
+    if (!_csVehicleIDFact) {
+        _csVehicleIDFact = _createSettingsFact(csVehicleIDName);
+        connect(_csVehicleIDFact, &Fact::valueChanged, this, &VideoSettings::_csConfigChanged);
+    }
+    return _csVehicleIDFact;
+}
+
 DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, videoSource)
 {
     if (!_videoSourceFact) {
@@ -100,6 +120,23 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, videoSource)
     return _videoSourceFact;
 }
 
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, csVideoSource)
+{
+    if (!_csVideoSourceFact) {
+        _csVideoSourceFact = _createSettingsFact(csVideoSourceName);
+        //-- Check for sources no longer available
+        if(!_csVideoSourceFact->enumStrings().contains(_csVideoSourceFact->rawValue().toString())) {
+            if (_noVideo) {
+                _csVideoSourceFact->setRawValue(videoSourceNoVideo);
+            } else {
+                _csVideoSourceFact->setRawValue(videoDisabled);
+            }
+        }
+        connect(_csVideoSourceFact, &Fact::valueChanged, this, &VideoSettings::_csConfigChanged);
+    }
+    return _csVideoSourceFact;
+}
+
 DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, udpPort)
 {
     if (!_udpPortFact) {
@@ -107,6 +144,15 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, udpPort)
         connect(_udpPortFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
     }
     return _udpPortFact;
+}
+
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, csUdpPort)
+{
+    if (!_csUdpPortFact) {
+        _csUdpPortFact = _createSettingsFact(csUdpPortName);
+        connect(_csUdpPortFact, &Fact::valueChanged, this, &VideoSettings::_csConfigChanged);
+    }
+    return _csUdpPortFact;
 }
 
 DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, rtspUrl)
@@ -118,6 +164,15 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, rtspUrl)
     return _rtspUrlFact;
 }
 
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, csRtspUrl)
+{
+    if (!_csRtspUrlFact) {
+        _csRtspUrlFact = _createSettingsFact(csRtspUrlName);
+        connect(_csRtspUrlFact, &Fact::valueChanged, this, &VideoSettings::_csConfigChanged);
+    }
+    return _csRtspUrlFact;
+}
+
 DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, tcpUrl)
 {
     if (!_tcpUrlFact) {
@@ -125,6 +180,15 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, tcpUrl)
         connect(_tcpUrlFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
     }
     return _tcpUrlFact;
+}
+
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, csTcpUrl)
+{
+    if (!_csTcpUrlFact) {
+        _csTcpUrlFact = _createSettingsFact(csTcpUrlName);
+        connect(_csTcpUrlFact, &Fact::valueChanged, this, &VideoSettings::_csConfigChanged);
+    }
+    return _csTcpUrlFact;
 }
 
 bool VideoSettings::streamConfigured(void)
@@ -165,7 +229,50 @@ bool VideoSettings::streamConfigured(void)
     return false;
 }
 
+bool VideoSettings::csStreamConfigured(void)
+{
+#if !defined(QGC_GST_STREAMING)
+    return false;
+#endif
+    //-- First, check if it's autoconfigured
+    if(qgcApp()->toolbox()->videoManager()->autoStreamConfigured()) {
+        qCDebug(VideoManagerLog) << "Stream auto configured";
+        return true;
+    }
+    //-- Check if it's disabled
+    QString vSource = csVideoSource()->rawValue().toString();
+    if(vSource == videoSourceNoVideo || vSource == videoDisabled) {
+        return false;
+    }
+    //-- If UDP, check if port is set
+    if(vSource == videoSourceUDPH264 || vSource == videoSourceUDPH265) {
+        qCDebug(VideoManagerLog) << "Testing configuration for UDP Stream:" << csUdpPort()->rawValue().toInt();
+        return csUdpPort()->rawValue().toInt() != 0;
+    }
+    //-- If RTSP, check for URL
+    if(vSource == videoSourceRTSP) {
+        qCDebug(VideoManagerLog) << "Testing configuration for RTSP Stream:" << csRtspUrl()->rawValue().toString();
+        return !csRtspUrl()->rawValue().toString().isEmpty();
+    }
+    //-- If TCP, check for URL
+    if(vSource == videoSourceTCP) {
+        qCDebug(VideoManagerLog) << "Testing configuration for TCP Stream:" << csTcpUrl()->rawValue().toString();
+        return !csTcpUrl()->rawValue().toString().isEmpty();
+    }
+    //-- If MPEG-TS, check if port is set
+    if(vSource == videoSourceMPEGTS) {
+        qCDebug(VideoManagerLog) << "Testing configuration for MPEG-TS Stream:" << csUdpPort()->rawValue().toInt();
+        return csUdpPort()->rawValue().toInt() != 0;
+    }
+    return false;
+}
+
 void VideoSettings::_configChanged(QVariant)
 {
     emit streamConfiguredChanged();
+}
+
+void VideoSettings::_csConfigChanged(QVariant)
+{
+    emit csStreamConfiguredChanged();
 }

@@ -38,10 +38,8 @@ public:
 
     Q_PROPERTY(bool             hasVideo                READ    hasVideo                                    NOTIFY hasVideoChanged)
     Q_PROPERTY(bool             isGStreamer             READ    isGStreamer                                 NOTIFY isGStreamerChanged)
-    Q_PROPERTY(bool             isTaisync               READ    isTaisync       WRITE   setIsTaisync        NOTIFY isTaisyncChanged)
-    Q_PROPERTY(QString          videoSourceID           READ    videoSourceID                               NOTIFY videoSourceIDChanged)
-    Q_PROPERTY(bool             uvcEnabled              READ    uvcEnabled                                  CONSTANT)
-    Q_PROPERTY(bool             fullScreen              READ    fullScreen      WRITE   setfullScreen       NOTIFY fullScreenChanged)
+    Q_PROPERTY(bool             isVideoEnabled          READ    isVideoEnabled                              NOTIFY isVideoEnabledChanged)
+    Q_PROPERTY(bool             isCsVideoEnabled        READ    isCsVideoEnabled                            NOTIFY isCsVideoEnabledChanged)
     Q_PROPERTY(VideoReceiver*   videoReceiver           READ    videoReceiver                               CONSTANT)
     Q_PROPERTY(VideoReceiver*   thermalVideoReceiver    READ    thermalVideoReceiver                        CONSTANT)
     Q_PROPERTY(double           aspectRatio             READ    aspectRatio                                 NOTIFY aspectRatioChanged)
@@ -50,9 +48,13 @@ public:
     Q_PROPERTY(double           thermalHfov             READ    thermalHfov                                 NOTIFY aspectRatioChanged)
     Q_PROPERTY(bool             autoStreamConfigured    READ    autoStreamConfigured                        NOTIFY autoStreamConfiguredChanged)
     Q_PROPERTY(bool             hasThermal              READ    hasThermal                                  NOTIFY aspectRatioChanged)
+    Q_PROPERTY(bool             uvcEnabled              READ    uvcEnabled                                  NOTIFY uvcEnabledChanged)
+    Q_PROPERTY(QString          videoSourceID           READ    videoSourceID                               NOTIFY videoSourceIDChanged)
 
     bool        hasVideo            ();
     bool        isGStreamer         ();
+    bool        isVideoEnabled      ();
+    bool        isCsVideoEnabled    ();
     bool        isAutoStream        ();
     bool        isTaisync           () { return _isTaisync; }
     bool        fullScreen          () { return _fullScreen; }
@@ -67,6 +69,7 @@ public:
 
     VideoReceiver*  videoReceiver           () { return _videoReceiver; }
     VideoReceiver*  thermalVideoReceiver    () { return _thermalVideoReceiver; }
+    Vehicle*        getActiveVehicle        () { return _activeVehicle; }
 
 #if defined(QGC_DISABLE_UVC)
     bool        uvcEnabled          () { return false; }
@@ -86,18 +89,26 @@ public:
 signals:
     void hasVideoChanged            ();
     void isGStreamerChanged         ();
+    void isVideoEnabledChanged      ();
+    void isCsVideoEnabledChanged    ();
     void videoSourceIDChanged       ();
     void fullScreenChanged          ();
     void isAutoStreamChanged        ();
     void isTaisyncChanged           ();
     void aspectRatioChanged         ();
     void autoStreamConfiguredChanged();
+    void uvcEnabledChanged          ();
 
 private slots:
     void _videoSourceChanged        ();
+    void _csVehicleIDChanged        ();
+    void _csVideoSourceChanged      ();
     void _udpPortChanged            ();
+    void _csUdpPortChanged          ();
     void _rtspUrlChanged            ();
+    void _csRtspUrlChanged          ();
     void _tcpUrlChanged             ();
+    void _csTcpUrlChanged           ();
     void _updateUVC                 ();
     void _setActiveVehicle          (Vehicle* vehicle);
     void _aspectRatioChanged        ();

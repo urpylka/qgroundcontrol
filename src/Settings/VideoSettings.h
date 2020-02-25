@@ -35,7 +35,23 @@ public:
     DEFINE_SETTINGFACT(streamEnabled)
     DEFINE_SETTINGFACT(disableWhenDisarmed)
 
+    DEFINE_SETTINGFACT(csVehicleID)
+    DEFINE_SETTINGFACT(csVideoSource)
+    DEFINE_SETTINGFACT(csUdpPort)
+    DEFINE_SETTINGFACT(csTcpUrl)
+    DEFINE_SETTINGFACT(csRtspUrl)
+    DEFINE_SETTINGFACT(csAspectRatio)
+    DEFINE_SETTINGFACT(csVideoFit)
+    DEFINE_SETTINGFACT(csGridLines)
+    DEFINE_SETTINGFACT(csShowRecControl)
+    DEFINE_SETTINGFACT(csRecordingFormat)
+    DEFINE_SETTINGFACT(csMaxVideoSize)
+    DEFINE_SETTINGFACT(csEnableStorageLimit)
+    DEFINE_SETTINGFACT(csRtspTimeout)
+    DEFINE_SETTINGFACT(csStreamEnabled)
+
     Q_PROPERTY(bool     streamConfigured        READ streamConfigured       NOTIFY streamConfiguredChanged)
+    Q_PROPERTY(bool     csStreamConfigured      READ csStreamConfigured     NOTIFY csStreamConfiguredChanged)
     Q_PROPERTY(QString  rtspVideoSource         READ rtspVideoSource        CONSTANT)
     Q_PROPERTY(QString  udp264VideoSource       READ udp264VideoSource      CONSTANT)
     Q_PROPERTY(QString  udp265VideoSource       READ udp265VideoSource      CONSTANT)
@@ -43,6 +59,7 @@ public:
     Q_PROPERTY(QString  mpegtsVideoSource       READ mpegtsVideoSource      CONSTANT)
 
     bool     streamConfigured       ();
+    bool     csStreamConfigured     ();
     QString  rtspVideoSource        () { return videoSourceRTSP; }
     QString  udp264VideoSource      () { return videoSourceUDPH264; }
     QString  udp265VideoSource      () { return videoSourceUDPH265; }
@@ -59,9 +76,11 @@ public:
 
 signals:
     void streamConfiguredChanged    ();
+    void csStreamConfiguredChanged  ();
 
 private slots:
     void _configChanged             (QVariant value);
+    void _csConfigChanged           (QVariant value);
 
 private:
     void _setDefaults               ();

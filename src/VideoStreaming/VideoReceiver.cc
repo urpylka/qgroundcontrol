@@ -168,11 +168,18 @@ VideoReceiver::start()
     if(qgcApp()->runningUnitTests()) {
         return;
     }
-    if(!_videoSettings->streamEnabled()->rawValue().toBool() ||
-       !_videoSettings->streamConfigured()) {
-        qCDebug(VideoReceiverLog) << "start() but not enabled/configured";
-        return;
-    }
+
+    Vehicle* activeVehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
+    int csVehicleID = _videoSettings->csVehicleID()->rawValue().toInt();
+    if (((!activeVehicle || (activeVehicle->id() != csVehicleID)) &&
+                (!_videoSettings->streamEnabled()->rawValue().toBool() ||
+                !_videoSettings->streamConfigured())) ||
+        (activeVehicle && (activeVehicle->id() == csVehicleID) &&
+                (!_videoSettings->csStreamEnabled()->rawValue().toBool() ||
+                !_videoSettings->csStreamConfigured()))) {
+            qCDebug(VideoReceiverLog) << "start() but not enabled/configured";
+            return;
+        }
 
 #if defined(QGC_GST_STREAMING)
     _stop = false;
@@ -919,4 +926,3 @@ VideoReceiver::_updateTimer()
     }
 #endif
 }
-

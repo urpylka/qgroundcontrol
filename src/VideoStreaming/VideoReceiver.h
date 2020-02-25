@@ -29,6 +29,7 @@
 Q_DECLARE_LOGGING_CATEGORY(VideoReceiverLog)
 
 class VideoSettings;
+class Vehicle;
 
 class VideoReceiver : public QObject
 {
