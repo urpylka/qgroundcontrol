@@ -161,7 +161,8 @@ signals:
     ///     @param throttle Range is 0:1, 0 meaning no throttle, 1 meaning full throttle
     ///     @param mode     See Vehicle::JoystickMode_t enum
     ///     @param axis4-7  Additional axises from joystick (Taranis QX7 for example)
-    void manualControl(float roll, float pitch, float yaw, float throttle, quint16 buttons, int joystickMmode, float axis4, float axis5, float axis6, float axis7);
+    ///     @param buttonsToAxis    An array with mappings (if any) buttons to axises
+    void manualControl(float roll, float pitch, float yaw, float throttle, quint16 buttons, int joystickMmode, QVector<int> additionalAxes);
 
     void buttonActionTriggered(int action);
 
@@ -176,6 +177,7 @@ protected:
     void    _loadSettings(void);
     float   _adjustRange(int value, Calibration_t calibration, bool withDeadbands);
     void    _buttonAction(const QString& action);
+    void    _buttonUp(const QString& action);
     bool    _validAxis(int axis);
     bool    _validButton(int button);
 
@@ -233,6 +235,8 @@ protected:
 
     MultiVehicleManager*    _multiVehicleManager;
 
+    QVector<int>            _additionalAxes; // Additional axises. It could be real exises or buttons mapping.
+                                             // It will be passed to manualControl signal and then to RC Override command
 private:
     static const char*  _rgFunctionSettingsKey[maxFunction];
 
@@ -262,6 +266,35 @@ private:
     static const char* _buttonActionPreviousStream;
     static const char* _buttonActionNextCamera;
     static const char* _buttonActionPreviousCamera;
+
+    static const char* _buttonActionRcChannel5Max;
+    static const char* _buttonActionRcChannel5Min;
+    static const char* _buttonActionRcChannel6Max;
+    static const char* _buttonActionRcChannel6Min;
+    static const char* _buttonActionRcChannel7Max;
+    static const char* _buttonActionRcChannel7Min;
+    static const char* _buttonActionRcChannel8Max;
+    static const char* _buttonActionRcChannel8Min;
+    static const char* _buttonActionRcChannel9Max;
+    static const char* _buttonActionRcChannel9Min;
+    static const char* _buttonActionRcChannel10Max;
+    static const char* _buttonActionRcChannel10Min;
+    static const char* _buttonActionRcChannel11Max;
+    static const char* _buttonActionRcChannel11Min;
+    static const char* _buttonActionRcChannel12Max;
+    static const char* _buttonActionRcChannel12Min;
+    static const char* _buttonActionRcChannel13Max;
+    static const char* _buttonActionRcChannel13Min;
+    static const char* _buttonActionRcChannel14Max;
+    static const char* _buttonActionRcChannel14Min;
+    static const char* _buttonActionRcChannel15Max;
+    static const char* _buttonActionRcChannel15Min;
+    static const char* _buttonActionRcChannel16Max;
+    static const char* _buttonActionRcChannel16Min;
+    static const char* _buttonActionRcChannel17Max;
+    static const char* _buttonActionRcChannel17Min;
+    static const char* _buttonActionRcChannel18Max;
+    static const char* _buttonActionRcChannel18Min;
 
 private slots:
     void _activeVehicleChanged(Vehicle* activeVehicle);

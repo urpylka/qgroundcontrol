@@ -49,6 +49,35 @@ const char* Joystick::_buttonActionPreviousStream =     QT_TR_NOOP("Previous Vid
 const char* Joystick::_buttonActionNextCamera =         QT_TR_NOOP("Next Camera");
 const char* Joystick::_buttonActionPreviousCamera =     QT_TR_NOOP("Previous Camera");
 
+const char* Joystick::_buttonActionRcChannel5Max =     QT_TR_NOOP("RC Channel 5 Max");
+const char* Joystick::_buttonActionRcChannel5Min =     QT_TR_NOOP("RC Channel 5 Min");
+const char* Joystick::_buttonActionRcChannel6Max =     QT_TR_NOOP("RC Channel 6 Max");
+const char* Joystick::_buttonActionRcChannel6Min =     QT_TR_NOOP("RC Channel 6 Min");
+const char* Joystick::_buttonActionRcChannel7Max =     QT_TR_NOOP("RC Channel 7 Max");
+const char* Joystick::_buttonActionRcChannel7Min =     QT_TR_NOOP("RC Channel 7 Min");
+const char* Joystick::_buttonActionRcChannel8Max =     QT_TR_NOOP("RC Channel 8 Max");
+const char* Joystick::_buttonActionRcChannel8Min =     QT_TR_NOOP("RC Channel 8 Min");
+const char* Joystick::_buttonActionRcChannel9Max =     QT_TR_NOOP("RC Channel 9 Max");
+const char* Joystick::_buttonActionRcChannel9Min =     QT_TR_NOOP("RC Channel 9 Min");
+const char* Joystick::_buttonActionRcChannel10Max =     QT_TR_NOOP("RC Channel 10 Max");
+const char* Joystick::_buttonActionRcChannel10Min =     QT_TR_NOOP("RC Channel 10 Min");
+const char* Joystick::_buttonActionRcChannel11Max =     QT_TR_NOOP("RC Channel 11 Max");
+const char* Joystick::_buttonActionRcChannel11Min =     QT_TR_NOOP("RC Channel 11 Min");
+const char* Joystick::_buttonActionRcChannel12Max =     QT_TR_NOOP("RC Channel 12 Max");
+const char* Joystick::_buttonActionRcChannel12Min =     QT_TR_NOOP("RC Channel 12 Min");
+const char* Joystick::_buttonActionRcChannel13Max =     QT_TR_NOOP("RC Channel 13 Max");
+const char* Joystick::_buttonActionRcChannel13Min =     QT_TR_NOOP("RC Channel 13 Min");
+const char* Joystick::_buttonActionRcChannel14Max =     QT_TR_NOOP("RC Channel 14 Max");
+const char* Joystick::_buttonActionRcChannel14Min =     QT_TR_NOOP("RC Channel 14 Min");
+const char* Joystick::_buttonActionRcChannel15Max =     QT_TR_NOOP("RC Channel 15 Max");
+const char* Joystick::_buttonActionRcChannel15Min =     QT_TR_NOOP("RC Channel 15 Min");
+const char* Joystick::_buttonActionRcChannel16Max =     QT_TR_NOOP("RC Channel 16 Max");
+const char* Joystick::_buttonActionRcChannel16Min =     QT_TR_NOOP("RC Channel 16 Min");
+const char* Joystick::_buttonActionRcChannel17Max =     QT_TR_NOOP("RC Channel 17 Max");
+const char* Joystick::_buttonActionRcChannel17Min =     QT_TR_NOOP("RC Channel 17 Min");
+const char* Joystick::_buttonActionRcChannel18Max =     QT_TR_NOOP("RC Channel 18 Max");
+const char* Joystick::_buttonActionRcChannel18Min =     QT_TR_NOOP("RC Channel 18 Min");
+
 const char* Joystick::_rgFunctionSettingsKey[Joystick::maxFunction] = {
     "RollAxis",
     "PitchAxis",
@@ -81,6 +110,7 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int hatC
     , _activeVehicle(nullptr)
     , _pollingStartedForCalibration(false)
     , _multiVehicleManager(multiVehicleManager)
+    , _additionalAxes(14, 0) // 14 additional axises filled with zeroes
 {
 
     _rgAxisValues = new int[_axisCount];
@@ -460,8 +490,9 @@ void Joystick::run(void)
             }
         }
 
+//        qCDebug(JoystickLog) << "button values: " << buttonIndex;
+
         if (_activeVehicle->joystickEnabled() && !_calibrationMode && _calibrated) {
-            float addditional_axises[4] = {0, 0, 0, 0};
             float roll, pitch, yaw, throttle;
 
             if (_activeVehicle->joystickMode() == Vehicle::JoystickModeRCOverride)
@@ -539,7 +570,7 @@ void Joystick::run(void)
             {
                 for (int axisIndex=4; axisIndex<_axisCount; axisIndex++)
                 {
-                    addditional_axises[axisIndex - 4] = static_cast<float>(_rgAxisValues[axisIndex]);
+                    _additionalAxes[axisIndex - 4] = static_cast<float>(_rgAxisValues[axisIndex]);
                     //((static_cast<float>(_rgAxisValues[axisIndex] + 32768)/65536.0f)*1000.0f + 1000.0f);
                     //_adjustRange(_rgAxisValues[axisIndex], _rgCalibration[axisIndex], _deadband);
                 }
@@ -556,6 +587,16 @@ void Joystick::run(void)
                 if (!_rgButtonValues[buttonIndex]) {
                     // Button up, just record it
                     newButtonBits |= buttonBit;
+
+                    if (!(_lastButtonBits & buttonBit)) {
+                        // Button was down last time through, but is now up which indicates a button release
+                        qCDebug(JoystickLog) << "button up" << buttonIndex;
+
+                        QString buttonAction =_rgButtonActions[buttonIndex];
+                        if (!buttonAction.isEmpty()) {
+                            _buttonUp(buttonAction);
+                        }
+                    }
                 } else {
                     if (_lastButtonBits & buttonBit) {
                         // Button was up last time through, but is now down which indicates a button press
@@ -574,10 +615,10 @@ void Joystick::run(void)
 
             _lastButtonBits = newButtonBits;
 
-            qCDebug(JoystickValuesLog) << "name:roll:pitch:yaw:throttle" << name() << roll << -pitch << yaw << throttle << addditional_axises[0] << addditional_axises[1] << addditional_axises[2] << addditional_axises[3];
+            qCDebug(JoystickValuesLog) << "name:roll:pitch:yaw:throttle" << name() << roll << -pitch << yaw << throttle << _additionalAxes[0] << _additionalAxes[1] << _additionalAxes[2] << _additionalAxes[3];
 
             // NOTE: The buttonPressedBits going to MANUAL_CONTROL are currently used by ArduSub.
-            emit manualControl(roll, -pitch, yaw, throttle, buttonPressedBits, _activeVehicle->joystickMode(), addditional_axises[0], addditional_axises[1], addditional_axises[2], addditional_axises[3]);
+            emit manualControl(roll, -pitch, yaw, throttle, buttonPressedBits, _activeVehicle->joystickMode(), _additionalAxes);
         }
 
         // Sleep. Update rate of joystick is by default 25 Hz
@@ -700,6 +741,20 @@ QStringList Joystick::actions(void)
     list << _buttonActionZoomIn << _buttonActionZoomOut;
     list << _buttonActionNextStream << _buttonActionPreviousStream;
     list << _buttonActionNextCamera << _buttonActionPreviousCamera;
+    list << _buttonActionRcChannel5Max << _buttonActionRcChannel5Min;
+    list << _buttonActionRcChannel6Max << _buttonActionRcChannel6Min;
+    list << _buttonActionRcChannel7Max << _buttonActionRcChannel7Min;
+    list << _buttonActionRcChannel8Max << _buttonActionRcChannel8Min;
+    list << _buttonActionRcChannel9Max << _buttonActionRcChannel9Min;
+    list << _buttonActionRcChannel10Max << _buttonActionRcChannel10Min;
+    list << _buttonActionRcChannel11Max << _buttonActionRcChannel11Min;
+    list << _buttonActionRcChannel12Max << _buttonActionRcChannel12Min;
+    list << _buttonActionRcChannel13Max << _buttonActionRcChannel13Min;
+    list << _buttonActionRcChannel14Max << _buttonActionRcChannel14Min;
+    list << _buttonActionRcChannel15Max << _buttonActionRcChannel15Min;
+    list << _buttonActionRcChannel16Max << _buttonActionRcChannel16Min;
+    list << _buttonActionRcChannel17Max << _buttonActionRcChannel17Min;
+    list << _buttonActionRcChannel18Max << _buttonActionRcChannel18Min;
     return list;
 }
 
@@ -854,6 +909,43 @@ void Joystick::setCalibrationMode(bool calibrating)
     }
 }
 
+void Joystick::_buttonUp(const QString& action)
+{
+    qCDebug(JoystickLog) << "button action release" << action;
+
+    // "Release" action drops the trigger into "middle" position
+    if(action == _buttonActionRcChannel5Max || action == _buttonActionRcChannel5Min) {
+        _additionalAxes[0] = 0;
+    } else if(action == _buttonActionRcChannel6Max || action == _buttonActionRcChannel6Min) {
+        _additionalAxes[1] = 0;
+    } else if(action == _buttonActionRcChannel7Max || action == _buttonActionRcChannel7Min) {
+        _additionalAxes[2] = 0;
+    } else if(action == _buttonActionRcChannel8Max || action == _buttonActionRcChannel8Min) {
+        _additionalAxes[3] = 0;
+    } else if(action == _buttonActionRcChannel9Max || action == _buttonActionRcChannel9Min) {
+        _additionalAxes[4] = 0;
+    } else if(action == _buttonActionRcChannel10Max || action == _buttonActionRcChannel10Min) {
+        _additionalAxes[5] = 0;
+    } else if(action == _buttonActionRcChannel11Max || action == _buttonActionRcChannel11Min) {
+        _additionalAxes[6] = 0;
+    } else if(action == _buttonActionRcChannel12Max || action == _buttonActionRcChannel12Min) {
+        _additionalAxes[7] = 0;
+    } else if(action == _buttonActionRcChannel13Max || action == _buttonActionRcChannel13Min) {
+        _additionalAxes[8] = 0;
+    } else if(action == _buttonActionRcChannel14Max || action == _buttonActionRcChannel14Min) {
+        _additionalAxes[9] = 0;
+    } else if(action == _buttonActionRcChannel15Max || action == _buttonActionRcChannel15Min) {
+        _additionalAxes[10] = 0;
+    } else if(action == _buttonActionRcChannel16Max || action == _buttonActionRcChannel16Min) {
+        _additionalAxes[11] = 0;
+    } else if(action == _buttonActionRcChannel17Max || action == _buttonActionRcChannel17Min) {
+        _additionalAxes[12] = 0;
+    } else if(action == _buttonActionRcChannel18Max || action == _buttonActionRcChannel18Min) {
+        _additionalAxes[13] = 0;
+    }
+
+    return;
+}
 
 void Joystick::_buttonAction(const QString& action)
 {
@@ -877,6 +969,36 @@ void Joystick::_buttonAction(const QString& action)
         emit stepStream(action == _buttonActionNextStream ? 1 : -1);
     } else if(action == _buttonActionNextCamera || action == _buttonActionPreviousCamera) {
         emit stepCamera(action == _buttonActionNextCamera ? 1 : -1);
+
+    } else if(action == _buttonActionRcChannel5Max || action == _buttonActionRcChannel5Min) {
+        _additionalAxes[0] = action == _buttonActionRcChannel5Max ? 32767 : -32767;
+    } else if(action == _buttonActionRcChannel6Max || action == _buttonActionRcChannel6Min) {
+        _additionalAxes[1] = action == _buttonActionRcChannel6Max ? 32767 : -32767;
+    } else if(action == _buttonActionRcChannel7Max || action == _buttonActionRcChannel7Min) {
+        _additionalAxes[2] = action == _buttonActionRcChannel7Max ? 32767 : -32767;
+    } else if(action == _buttonActionRcChannel8Max || action == _buttonActionRcChannel8Min) {
+        _additionalAxes[3] = action == _buttonActionRcChannel8Max ? 32767 : -32767;
+    } else if(action == _buttonActionRcChannel9Max || action == _buttonActionRcChannel9Min) {
+        _additionalAxes[4] = action == _buttonActionRcChannel9Max ? 32767 : -32767;
+    } else if(action == _buttonActionRcChannel10Max || action == _buttonActionRcChannel10Min) {
+        _additionalAxes[5] = action == _buttonActionRcChannel10Max ? 32767 : -32767;
+    } else if(action == _buttonActionRcChannel11Max || action == _buttonActionRcChannel11Min) {
+        _additionalAxes[6] = action == _buttonActionRcChannel11Max ? 32767 : -32767;
+    } else if(action == _buttonActionRcChannel12Max || action == _buttonActionRcChannel12Min) {
+        _additionalAxes[7] = action == _buttonActionRcChannel12Max ? 32767 : -32767;
+    } else if(action == _buttonActionRcChannel13Max || action == _buttonActionRcChannel13Min) {
+        _additionalAxes[8] = action == _buttonActionRcChannel13Max ? 32767 : -32767;
+    } else if(action == _buttonActionRcChannel14Max || action == _buttonActionRcChannel14Min) {
+        _additionalAxes[9] = action == _buttonActionRcChannel14Max ? 32767 : -32767;
+    } else if(action == _buttonActionRcChannel15Max || action == _buttonActionRcChannel15Min) {
+        _additionalAxes[10] = action == _buttonActionRcChannel15Max ? 32767 : -32767;
+    } else if(action == _buttonActionRcChannel16Max || action == _buttonActionRcChannel16Min) {
+        _additionalAxes[11] = action == _buttonActionRcChannel16Max ? 32767 : -32767;
+    } else if(action == _buttonActionRcChannel17Max || action == _buttonActionRcChannel17Min) {
+        _additionalAxes[12] = action == _buttonActionRcChannel17Max ? 32767 : -32767;
+    } else if(action == _buttonActionRcChannel18Max || action == _buttonActionRcChannel18Min) {
+        _additionalAxes[13] = action == _buttonActionRcChannel18Max ? 32767 : -32767;
+
     } else {
         qCDebug(JoystickLog) << "_buttonAction unknown action:" << action;
     }

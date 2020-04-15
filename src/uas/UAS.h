@@ -263,7 +263,7 @@ public slots:
 #endif
 
     /** @brief Set the values for the manual control of the vehicle */
-    void setExternalControlSetpoint(float roll, float pitch, float yaw, float thrust, quint16 buttons, int joystickMode, float axis4 = 0, float axis5 = 0, float axis6 = 0, float axis7 = 0);
+    void setExternalControlSetpoint(float roll, float pitch, float yaw, float thrust, quint16 buttons, int joystickMode, QVector<int> additionalAxes);
 
     /** @brief Set the values for the 6dof manual control of the vehicle */
 #ifndef __mobile__

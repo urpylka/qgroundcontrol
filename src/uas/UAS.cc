@@ -847,7 +847,7 @@ uint16_t _convertUintToPWM(float val)
 * Set the manual control commands.
 * This can only be done if the system has manual inputs enabled and is armed.
 */
-void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float thrust, quint16 buttons, int joystickMode, float axis4, float axis5, float axis6, float axis7)
+void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float thrust, quint16 buttons, int joystickMode, QVector<int> additionalAxes)
 {
     if (!_vehicle) {
         return;
@@ -1044,20 +1044,20 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
                                                        _convertUintToPWM(roll),
                                                        _convertUintToPWM(thrust),
                                                        _convertUintToPWM(yaw),
-                                                       _convertUintToPWM(axis4),
-                                                       _convertUintToPWM(axis5),
-                                                       _convertUintToPWM(axis6),
-                                                       _convertUintToPWM(axis7),
-                                                       0,
-                                                       0,
-                                                       0,
-                                                       0,
-                                                       0,
-                                                       0,
-                                                       0,
-                                                       0,
-                                                       0,
-                                                       0
+                                                       _convertUintToPWM(additionalAxes[0]),
+                                                       _convertUintToPWM(additionalAxes[1]),
+                                                       _convertUintToPWM(additionalAxes[2]),
+                                                       _convertUintToPWM(additionalAxes[3]),
+                                                       _convertUintToPWM(additionalAxes[4]),
+                                                       _convertUintToPWM(additionalAxes[5]),
+                                                       _convertUintToPWM(additionalAxes[6]),
+                                                       _convertUintToPWM(additionalAxes[7]),
+                                                       _convertUintToPWM(additionalAxes[8]),
+                                                       _convertUintToPWM(additionalAxes[9]),
+                                                       _convertUintToPWM(additionalAxes[10]),
+                                                       _convertUintToPWM(additionalAxes[11]),
+                                                       _convertUintToPWM(additionalAxes[12]),
+                                                       _convertUintToPWM(additionalAxes[13])
                                                        );
 
         }
