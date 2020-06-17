@@ -21,6 +21,11 @@
 Q_DECLARE_LOGGING_CATEGORY(JoystickLog)
 Q_DECLARE_LOGGING_CATEGORY(JoystickValuesLog)
 
+#define RC_CHANNEL_PROPERTY_AXIS        0
+#define RC_CHANNEL_PROPERTY_PRESSED     1
+#define RC_CHANNEL_PROPERTY_RELEASED    2
+#define RC_CHANNEL_PROPERTY_HOLD        3
+
 class Joystick : public QThread
 {
     Q_OBJECT
@@ -71,6 +76,10 @@ public:
     Q_INVOKABLE void setButtonAction(int button, const QString& action);
     Q_INVOKABLE QString getButtonAction(int button);
 
+    Q_PROPERTY(QVariantList additionalAxes READ getAdditionalAxes CONSTANT)
+    Q_INVOKABLE void setAdditionalAxisButtonProperty(int button, int propertyId, int val);
+    Q_INVOKABLE int getAdditionalAxisButtonProperty(int button, int propertyId);
+
     Q_PROPERTY(int throttleMode READ throttleMode WRITE setThrottleMode NOTIFY throttleModeChanged)
     Q_PROPERTY(bool negativeThrust READ negativeThrust WRITE setNegativeThrust NOTIFY negativeThrustChanged)
     Q_PROPERTY(float exponential READ exponential WRITE setExponential NOTIFY exponentialChanged)
@@ -96,6 +105,7 @@ public:
 
     QStringList actions(void);
     QVariantList buttonActions(void);
+    QVariantList getAdditionalAxes(void);
 
     QString name(void) { return _name; }
 /*
@@ -176,8 +186,8 @@ protected:
     void    _saveSettings(void);
     void    _loadSettings(void);
     float   _adjustRange(int value, Calibration_t calibration, bool withDeadbands);
-    void    _buttonAction(const QString& action);
-    void    _buttonUp(const QString& action);
+    void    _buttonDown(int buttonIndex);
+    void    _buttonUp(int buttonIndex);
     bool    _validAxis(int axis);
     bool    _validButton(int button);
 
@@ -237,12 +247,19 @@ protected:
 
     QVector<int>            _additionalAxes; // Additional axises. It could be real exises or buttons mapping.
                                              // It will be passed to manualControl signal and then to RC Override command
+
+    QMap<int, QVector<int>> _buttonToAxisMap;
+    QMap<int, int> _buttonToAxisPressCounter;
 private:
     static const char*  _rgFunctionSettingsKey[maxFunction];
 
     static const char* _settingsGroup;
     static const char* _calibratedSettingsKey;
     static const char* _buttonActionSettingsKey;
+    static const char* _buttonRcAxisKey;
+    static const char* _buttonRcPressedValKey;
+    static const char* _buttonRcReleasedValKey;
+    static const char* _buttonRcHoldKey;
     static const char* _throttleModeSettingsKey;
     static const char* _exponentialSettingsKey;
     static const char* _accumulatorSettingsKey;
@@ -267,34 +284,8 @@ private:
     static const char* _buttonActionNextCamera;
     static const char* _buttonActionPreviousCamera;
 
-    static const char* _buttonActionRcChannel5Max;
-    static const char* _buttonActionRcChannel5Min;
-    static const char* _buttonActionRcChannel6Max;
-    static const char* _buttonActionRcChannel6Min;
-    static const char* _buttonActionRcChannel7Max;
-    static const char* _buttonActionRcChannel7Min;
-    static const char* _buttonActionRcChannel8Max;
-    static const char* _buttonActionRcChannel8Min;
-    static const char* _buttonActionRcChannel9Max;
-    static const char* _buttonActionRcChannel9Min;
-    static const char* _buttonActionRcChannel10Max;
-    static const char* _buttonActionRcChannel10Min;
-    static const char* _buttonActionRcChannel11Max;
-    static const char* _buttonActionRcChannel11Min;
-    static const char* _buttonActionRcChannel12Max;
-    static const char* _buttonActionRcChannel12Min;
-    static const char* _buttonActionRcChannel13Max;
-    static const char* _buttonActionRcChannel13Min;
-    static const char* _buttonActionRcChannel14Max;
-    static const char* _buttonActionRcChannel14Min;
-    static const char* _buttonActionRcChannel15Max;
-    static const char* _buttonActionRcChannel15Min;
-    static const char* _buttonActionRcChannel16Max;
-    static const char* _buttonActionRcChannel16Min;
-    static const char* _buttonActionRcChannel17Max;
-    static const char* _buttonActionRcChannel17Min;
-    static const char* _buttonActionRcChannel18Max;
-    static const char* _buttonActionRcChannel18Min;
+    static const char* _buttonActionSetRcChannelValue;
+
 
 private slots:
     void _activeVehicleChanged(Vehicle* activeVehicle);

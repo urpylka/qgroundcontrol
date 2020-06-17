@@ -606,38 +606,123 @@ SetupPage {
 
                                     property bool pressed
 
-                                    QGCCheckBox {
-                                        anchors.verticalCenter:     parent.verticalCenter
-                                        checked:                    _activeJoystick ? _activeJoystick.buttonActions[modelData] !== "" : false
+                                    Column {
 
-                                        onClicked: _activeJoystick.setButtonAction(modelData, checked ? buttonActionCombo.textAt(buttonActionCombo.currentIndex) : "")
-                                    }
-
-                                    Rectangle {
-                                        anchors.verticalCenter:     parent.verticalCenter
-                                        width:                      ScreenTools.defaultFontPixelHeight * 1.5
-                                        height:                     width
-                                        border.width:               1
-                                        border.color:               qgcPal.text
-                                        color:                      pressed ? qgcPal.buttonHighlight : qgcPal.button
-
-
-                                        QGCLabel {
-                                            anchors.fill:           parent
-                                            color:                  pressed ? qgcPal.buttonHighlightText : qgcPal.buttonText
-                                            horizontalAlignment:    Text.AlignHCenter
-                                            verticalAlignment:      Text.AlignVCenter
-                                            text:                   modelData
+                                        Row {
+                                            spacing: ScreenTools.defaultFontPixelWidth
+                                            visible: !activeVehicle.supportsJSButton
+                                            QGCCheckBox {
+                                                anchors.verticalCenter:     parent.verticalCenter
+                                                checked:                    _activeJoystick ? _activeJoystick.buttonActions[modelData] !== "" : false
+        
+                                                onClicked: _activeJoystick.setButtonAction(modelData, checked ? buttonActionCombo.textAt(buttonActionCombo.currentIndex) : "")
+                                            }
+        
+                                            Rectangle {
+                                                anchors.verticalCenter:     parent.verticalCenter
+                                                width:                      ScreenTools.defaultFontPixelHeight * 1.5
+                                                height:                     width
+                                                border.width:               1
+                                                border.color:               qgcPal.text
+                                                color:                      pressed ? qgcPal.buttonHighlight : qgcPal.button
+        
+        
+                                                QGCLabel {
+                                                    anchors.fill:           parent
+                                                    color:                  pressed ? qgcPal.buttonHighlightText : qgcPal.buttonText
+                                                    horizontalAlignment:    Text.AlignHCenter
+                                                    verticalAlignment:      Text.AlignVCenter
+                                                    text:                   modelData
+                                                }
+                                            }
+        
+                                            QGCComboBox {
+                                                id:             buttonActionCombo
+                                                width:          ScreenTools.defaultFontPixelWidth * 20
+                                                model:          _activeJoystick ? _activeJoystick.actions : 0
+        
+                                                onActivated:            _activeJoystick.setButtonAction(modelData, textAt(index))
+                                                Component.onCompleted:  currentIndex = find(_activeJoystick.buttonActions[modelData])
+                                            }
+        
                                         }
-                                    }
-
-                                    QGCComboBox {
-                                        id:             buttonActionCombo
-                                        width:          ScreenTools.defaultFontPixelWidth * 20
-                                        model:          _activeJoystick ? _activeJoystick.actions : 0
-
-                                        onActivated:            _activeJoystick.setButtonAction(modelData, textAt(index))
-                                        Component.onCompleted:  currentIndex = find(_activeJoystick.buttonActions[modelData])
+    
+                                        Row {
+                                            spacing: ScreenTools.defaultFontPixelWidth
+                                            visible: !activeVehicle.supportsJSButton
+                                            QGCLabel {
+        //                                        anchors.fill:           parent
+        //                                        horizontalAlignment:    Text.AlignHCenter
+        //                                        verticalAlignment:      Text.AlignVCenter
+                                                text:                   "RC:"
+                                                visible:        buttonAdditionalAxisCombo.visible
+                                            }
+        
+                                            QGCComboBox {
+                                                id:             buttonAdditionalAxisCombo
+                                                width:          40
+                                                model:          _activeJoystick ? _activeJoystick.additionalAxes : 0
+                                                visible:        _activeJoystick.buttonActions[modelData] === "Set RC Channel Value"
+        
+                                                onActivated:    _activeJoystick.setAdditionalAxisButtonProperty(modelData, 0, textAt(index));
+                                                Component.onCompleted:  {
+                                                    currentIndex = _activeJoystick.getAdditionalAxisButtonProperty(modelData, 0) - 5
+                                                }
+                                            }
+        
+                                            QGCLabel {
+        //                                        anchors.fill:           parent
+        //                                        horizontalAlignment:    Text.AlignHCenter
+        //                                        verticalAlignment:      Text.AlignVCenter
+                                                text:                   "Down:"
+                                                visible:        buttonAdditionalAxisCombo.visible
+                                            }
+        
+                                            SpinBox {
+                                                width: 55
+                                                id: pressedValueBox
+                                                value: _activeJoystick.getAdditionalAxisButtonProperty(modelData, 1)
+                                                minimumValue: -100
+                                                maximumValue: 100
+                                                stepSize: 5
+                                                visible:        buttonAdditionalAxisCombo.visible
+                                                onValueChanged: _activeJoystick.setAdditionalAxisButtonProperty(modelData, 1, value);
+                                            }
+        
+                                            QGCLabel {
+        //                                        anchors.fill:           parent
+        //                                        horizontalAlignment:    Text.AlignHCenter
+        //                                        verticalAlignment:      Text.AlignVCenter
+                                                text:                   "Up:"
+                                                visible:        buttonAdditionalAxisCombo.visible
+                                            }
+        
+                                            SpinBox {
+                                                width: 55
+                                                id: releasedValueBox
+                                                value: _activeJoystick.getAdditionalAxisButtonProperty(modelData, 2)
+                                                minimumValue: -100
+                                                maximumValue: 100
+                                                stepSize: 5
+                                                visible:        buttonAdditionalAxisCombo.visible
+                                                onValueChanged: _activeJoystick.setAdditionalAxisButtonProperty(modelData, 2, value);
+                                            }
+        
+                                            QGCLabel {
+        //                                        anchors.fill:           parent
+        //                                        horizontalAlignment:    Text.AlignHCenter
+        //                                        verticalAlignment:      Text.AlignVCenter
+                                                text:                   "Hold:"
+                                                visible:        buttonAdditionalAxisCombo.visible
+                                            }
+        
+                                            CheckBox{
+                                                id: holdCheckBox
+                                                checked: _activeJoystick.getAdditionalAxisButtonProperty(modelData, 3)
+                                                onClicked: _activeJoystick.setAdditionalAxisButtonProperty(modelData, 3, checked);
+                                                visible:        buttonAdditionalAxisCombo.visible
+                                            }
+                                        }
                                     }
                                 }
                             } // Repeater
