@@ -17,6 +17,10 @@ add_library(FirmwarePlugin
 	PX4/PX4FirmwarePluginFactory.cc
 	PX4/PX4ParameterMetaData.cc
 	PX4/PX4Resources.qrc
+
+	ChargingStation/ChargingStationFirmwarePlugin.cc
+	ChargingStation/ChargingStationFirmwarePluginFactory.cc
+	ChargingStation/ChargingStationResources.qrc
 )
 
 target_link_libraries(FirmwarePlugin
@@ -27,6 +31,8 @@ target_link_libraries(FirmwarePlugin
 target_include_directories(FirmwarePlugin
 	INTERFACE
 		${CMAKE_CURRENT_SOURCE_DIR}
-                APM
+				APM
+				ChargingStation
+				PX4
 	)
 
