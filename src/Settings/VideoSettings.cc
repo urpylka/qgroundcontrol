@@ -26,6 +26,7 @@ const char* VideoSettings::videoSourceUDPH264   = "UDP h.264 Video Stream";
 const char* VideoSettings::videoSourceUDPH265   = "UDP h.265 Video Stream";
 const char* VideoSettings::videoSourceTCP       = "TCP-MPEG2 Video Stream";
 const char* VideoSettings::videoSourceMPEGTS    = "MPEG-TS (h.264) Video Stream";
+const char* VideoSettings::videoSourceUDP264RAW = "Raw UDP h.264 Stream";
 
 DECLARE_SETTINGGROUP(Video, "Video")
 {
@@ -41,6 +42,9 @@ DECLARE_SETTINGGROUP(Video, "Video")
 #endif
     videoSourceList.append(videoSourceTCP);
     videoSourceList.append(videoSourceMPEGTS);
+#ifndef NO_UDP_VIDEO
+    videoSourceList.append(videoSourceUDP264RAW);
+#endif
 #endif
 #ifndef QGC_DISABLE_UVC
     QList<QCameraInfo> cameras = QCameraInfo::availableCameras();
@@ -207,7 +211,7 @@ bool VideoSettings::streamConfigured(void)
         return false;
     }
     //-- If UDP, check if port is set
-    if(vSource == videoSourceUDPH264 || vSource == videoSourceUDPH265) {
+    if(vSource == videoSourceUDPH264 || vSource == videoSourceUDPH265 || vSource == videoSourceUDP264RAW) {
         qCDebug(VideoManagerLog) << "Testing configuration for UDP Stream:" << udpPort()->rawValue().toInt();
         return udpPort()->rawValue().toInt() != 0;
     }
@@ -245,7 +249,7 @@ bool VideoSettings::csStreamConfigured(void)
         return false;
     }
     //-- If UDP, check if port is set
-    if(vSource == videoSourceUDPH264 || vSource == videoSourceUDPH265) {
+    if(vSource == videoSourceUDPH264 || vSource == videoSourceUDPH265 || vSource == videoSourceUDP264RAW) {
         qCDebug(VideoManagerLog) << "Testing configuration for UDP Stream:" << csUdpPort()->rawValue().toInt();
         return csUdpPort()->rawValue().toInt() != 0;
     }

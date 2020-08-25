@@ -332,13 +332,15 @@ VideoManager::isGStreamer()
             videoSource == VideoSettings::videoSourceUDPH265 ||
             videoSource == VideoSettings::videoSourceRTSP ||
             videoSource == VideoSettings::videoSourceTCP ||
-            videoSource == VideoSettings::videoSourceMPEGTS)) ||
+            videoSource == VideoSettings::videoSourceMPEGTS ||
+            videoSource == VideoSettings::videoSourceUDP264RAW)) ||
         ((_activeVehicle && (csVehicleID == _activeVehicle->id()) &&
             (csVideoSource == VideoSettings::videoSourceUDPH264 ||
             csVideoSource == VideoSettings::videoSourceUDPH265 ||
             csVideoSource == VideoSettings::videoSourceRTSP ||
             csVideoSource == VideoSettings::videoSourceTCP ||
-            csVideoSource == VideoSettings::videoSourceMPEGTS))) ||
+            csVideoSource == VideoSettings::videoSourceMPEGTS ||
+            csVideoSource == VideoSettings::videoSourceUDP264RAW))) ||
         autoStreamConfigured();
 #else
     return false;
@@ -357,6 +359,7 @@ VideoManager::isVideoEnabled()
         videoSource == VideoSettings::videoSourceRTSP ||
         videoSource == VideoSettings::videoSourceTCP ||
         videoSource == VideoSettings::videoSourceMPEGTS ||
+        videoSource == VideoSettings::videoSourceUDP264RAW ||
         autoStreamConfigured();
 #else
     return false;
@@ -374,7 +377,8 @@ VideoManager::isCsVideoEnabled()
         csVideoSource == VideoSettings::videoSourceUDPH265 ||
         csVideoSource == VideoSettings::videoSourceRTSP ||
         csVideoSource == VideoSettings::videoSourceTCP ||
-        csVideoSource == VideoSettings::videoSourceMPEGTS;
+        csVideoSource == VideoSettings::videoSourceMPEGTS ||
+        csVideoSource == VideoSettings::videoSourceUDP264RAW;
 #else
     return false;
 #endif
@@ -460,6 +464,8 @@ VideoManager::_updateSettings()
             _videoReceiver->setUri(_videoSettings->rtspUrl()->rawValue().toString());
         else if (source == VideoSettings::videoSourceTCP)
             _videoReceiver->setUri(QStringLiteral("tcp://%1").arg(_videoSettings->tcpUrl()->rawValue().toString()));
+        else if (source == VideoSettings::videoSourceUDP264RAW)
+            _videoReceiver->setUri(QStringLiteral("udpraw://0.0.0.0:%1").arg(_videoSettings->udpPort()->rawValue().toInt()));
     } else {
         // Charging station video stream
         qCDebug(VideoManagerLog) << "Selecting Charging Station video stream";
@@ -474,6 +480,8 @@ VideoManager::_updateSettings()
             _videoReceiver->setUri(_videoSettings->csRtspUrl()->rawValue().toString());
         else if (source == VideoSettings::videoSourceTCP)
             _videoReceiver->setUri(QStringLiteral("tcp://%1").arg(_videoSettings->csTcpUrl()->rawValue().toString()));
+        else if (source == VideoSettings::videoSourceUDP264RAW)
+            _videoReceiver->setUri(QStringLiteral("udpraw://0.0.0.0:%1").arg(_videoSettings->csUdpPort()->rawValue().toInt()));
     }
 }
 

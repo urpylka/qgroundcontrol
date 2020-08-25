@@ -53,12 +53,14 @@ Rectangle {
     property bool   _isRTSP:                    _isVideoEnabled && _videoSource === QGroundControl.settingsManager.videoSettings.rtspVideoSource
     property bool   _isTCP:                     _isVideoEnabled && _videoSource === QGroundControl.settingsManager.videoSettings.tcpVideoSource
     property bool   _isMPEGTS:                  _isVideoEnabled && _videoSource === QGroundControl.settingsManager.videoSettings.mpegtsVideoSource
+    property bool   _isUDP264RAW:               _isVideoEnabled && _videoSource === QGroundControl.settingsManager.videoSettings.udp264RawVideoSource
     property bool   _isCsVideoEnabled:          QGroundControl.videoManager.isCsVideoEnabled
     property bool   _isCsUDP264:                _isCsVideoEnabled && _csVideoSource === QGroundControl.settingsManager.videoSettings.udp264VideoSource
     property bool   _isCsUDP265:                _isCsVideoEnabled && _csVideoSource === QGroundControl.settingsManager.videoSettings.udp265VideoSource
     property bool   _isCsRTSP:                  _isCsVideoEnabled && _csVideoSource === QGroundControl.settingsManager.videoSettings.rtspVideoSource
     property bool   _isCsTCP:                   _isCsVideoEnabled && _csVideoSource === QGroundControl.settingsManager.videoSettings.tcpVideoSource
     property bool   _isCsMPEGTS:                _isCsVideoEnabled && _csVideoSource === QGroundControl.settingsManager.videoSettings.mpegtsVideoSource
+    property bool   _isCsUDP264RAW:             _isCsVideoEnabled && _csVideoSource === QGroundControl.settingsManager.videoSettings.udp264RawVideoSource
 
     property string gpsDisabled: "Disabled"
     property string gpsUdpPort:  "UDP Port"
@@ -810,12 +812,12 @@ Rectangle {
 
                             QGCLabel {
                                 text:                   qsTr("UDP Port")
-                                visible:                (_isUDP264 || _isUDP265 || _isMPEGTS)  && QGroundControl.settingsManager.videoSettings.udpPort.visible
+                                visible:                (_isUDP264 || _isUDP265 || _isMPEGTS || _isUDP264RAW)  && QGroundControl.settingsManager.videoSettings.udpPort.visible
                             }
                             FactTextField {
                                 Layout.preferredWidth:  _comboFieldWidth
                                 fact:                   QGroundControl.settingsManager.videoSettings.udpPort
-                                visible:                (_isUDP264 || _isUDP265 || _isMPEGTS) && QGroundControl.settingsManager.videoSettings.udpPort.visible
+                                visible:                (_isUDP264 || _isUDP265 || _isMPEGTS || _isUDP264RAW) && QGroundControl.settingsManager.videoSettings.udpPort.visible
                             }
 
                             QGCLabel {
@@ -905,12 +907,12 @@ Rectangle {
 
                             QGCLabel {
                                 text:                   qsTr("UDP Port")
-                                visible:                (_isCsUDP264 || _isCsUDP265 || _isCsMPEGTS)  && QGroundControl.settingsManager.videoSettings.csUdpPort.visible
+                                visible:                (_isCsUDP264 || _isCsUDP265 || _isCsMPEGTS || _isCsUDP264RAW)  && QGroundControl.settingsManager.videoSettings.csUdpPort.visible
                             }
                             FactTextField {
                                 Layout.preferredWidth:  _comboFieldWidth
                                 fact:                   QGroundControl.settingsManager.videoSettings.udpPort
-                                visible:                (_isCsUDP264 || _isCsUDP265 || _isCsMPEGTS) && QGroundControl.settingsManager.videoSettings.csUdpPort.visible
+                                visible:                (_isCsUDP264 || _isCsUDP265 || _isCsMPEGTS || _isCsUDP264RAW) && QGroundControl.settingsManager.videoSettings.csUdpPort.visible
                             }
 
                             QGCLabel {
