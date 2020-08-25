@@ -27,6 +27,8 @@ add_library(AutoPilotPlugins
 
 	Generic/GenericAutoPilotPlugin.cc
 
+	Generic/RTKGPSComponent.cc
+
 	PX4/AirframeComponent.cc
 	PX4/AirframeComponentAirframes.cc
 	PX4/AirframeComponentController.cc
